@@ -152,7 +152,7 @@ export function DashboardClient() {
             <Input
               type="search"
               placeholder="Search sprints..."
-              className="w-full rounded-full bg-accent pl-10 h-10"
+              className="w-full rounded-full bg-blue-100/50 pl-10 h-10 border-blue-200/50 focus-visible:shadow-lg focus-visible:shadow-blue-500/10 focus-visible:ring-blue-400"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
