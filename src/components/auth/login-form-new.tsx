@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
@@ -61,13 +61,16 @@ export function LoginForm() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+      router.refresh();
     } catch (error: any) {
       toast({
         title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
       setIsLoading(false);
     }
   }
