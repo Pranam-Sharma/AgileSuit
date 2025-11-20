@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithRedirect, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithRedirect, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
@@ -31,6 +31,12 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const [isIframe, setIsIframe] = React.useState(false);
+
+  React.useEffect(() => {
+    // This code runs only on the client-side
+    setIsIframe(window.self !== window.top);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,7 +67,15 @@ export function LoginForm() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithRedirect(auth, provider);
+      if (isIframe) {
+        // Use popup for iframe environments like the workstation
+        await signInWithPopup(auth, provider);
+        router.push('/dashboard');
+        router.refresh();
+      } else {
+        // Use redirect for a normal browser tab
+        await signInWithRedirect(auth, provider);
+      }
     } catch (error: any) {
       toast({
         title: 'Error signing in with Google',
