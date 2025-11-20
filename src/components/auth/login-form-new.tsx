@@ -56,19 +56,19 @@ export function LoginForm() {
     }
   }
 
-  const inputStyles = "h-12 text-base border-none bg-accent placeholder:text-accent-foreground/50 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0";
+  const inputStyles = "h-14 text-lg border-none bg-accent placeholder:text-accent-foreground/50 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0";
 
   return (
     <div className="grid gap-8">
       <div>
-        <h1 className="text-3xl font-bold text-blue-700">Welcome</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-bold text-blue-700">Welcome</h1>
+        <p className="text-muted-foreground mt-2">
           Login in to your account to continue
         </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
           <FormField
             control={form.control}
             name="email"
@@ -109,7 +109,7 @@ export function LoginForm() {
               forgot your password?
             </Link>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-bold rounded-full">
+          <Button type="submit" disabled={isLoading} className="w-full h-14 text-lg font-bold rounded-full">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             LOG IN
           </Button>
