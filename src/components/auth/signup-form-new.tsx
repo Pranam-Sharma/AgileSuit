@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import {
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -74,9 +74,7 @@ export function SignUpForm() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-      router.refresh();
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
        toast({
         title: 'Error signing in with Google',
