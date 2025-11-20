@@ -129,7 +129,7 @@ export function LoginForm() {
               forgot your password?
             </Link>
           </div>
-          <Button type="submit" disabled={isLoading} className="w-full h-14 text-lg font-bold rounded-full">
+          <Button type="submit" disabled={isLoading} className="w-full h-14 text-lg font-bold rounded-full bg-gradient-to-r from-blue-500 to-fuchsia-500 text-white shadow-md hover:shadow-lg transition-shadow">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             LOG IN
           </Button>
