@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/hooks/use-user';
 
 const sprintSchema = z
   .object({
@@ -40,10 +41,8 @@ const sprintSchema = z
   })
   .refine(
     (data) => {
-      if (!data.isFacilitator && !data.facilitatorName) {
-        return false;
-      }
-      return true;
+      if (data.isFacilitator) return true;
+      return !!data.facilitatorName;
     },
     {
       message: 'Facilitator name is required if you are not the facilitator.',
@@ -51,14 +50,19 @@ const sprintSchema = z
     }
   );
 
-type SprintFormValues = z.infer<typeof sprintSchema>;
+export type Sprint = z.infer<typeof sprintSchema>;
 
-export function CreateSprintDialog() {
+type CreateSprintDialogProps = {
+  onCreateSprint: (sprint: Sprint) => void;
+};
+
+export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
+  const { user } = useUser();
 
-  const form = useForm<SprintFormValues>({
+  const form = useForm<Sprint>({
     resolver: zodResolver(sprintSchema),
     defaultValues: {
       sprintNumber: '',
@@ -73,13 +77,20 @@ export function CreateSprintDialog() {
 
   const isFacilitator = form.watch('isFacilitator');
 
-  async function onSubmit(values: SprintFormValues) {
+  async function onSubmit(values: Sprint) {
     setIsLoading(true);
-    console.log(values);
-    // Here you would typically handle form submission, e.g., send to an API
-    // For now, we'll just simulate a delay and show a success toast.
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     
+    let finalValues = { ...values };
+    if (values.isFacilitator) {
+      finalValues.facilitatorName = user?.displayName ?? user?.email ?? 'Me';
+    }
+
+    // Here you would typically handle form submission, e.g., send to an API
+    // For now, we'll just simulate a delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    
+    onCreateSprint(finalValues);
+
     toast({
       title: 'Sprint Created!',
       description: `Sprint "${values.sprintName}" has been successfully created.`,

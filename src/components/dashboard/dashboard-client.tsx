@@ -22,7 +22,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CreateSprintDialog } from './create-sprint-dialog';
+import { CreateSprintDialog, type Sprint } from './create-sprint-dialog';
+import { SprintCard } from './sprint-card';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -69,6 +70,11 @@ function UserNav({ user }: { user: User }) {
 export function DashboardClient() {
   const { user, isLoading } = useUser();
   const router = useRouter();
+  const [sprints, setSprints] = React.useState<Sprint[]>([]);
+
+  const handleCreateSprint = (sprintData: Sprint) => {
+    setSprints((prevSprints) => [...prevSprints, sprintData]);
+  };
 
   React.useEffect(() => {
     if (!isLoading && !user) {
@@ -89,7 +95,7 @@ export function DashboardClient() {
       <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
         <Logo />
         <div className="flex items-center gap-4">
-          <CreateSprintDialog />
+          <CreateSprintDialog onCreateSprint={handleCreateSprint} />
           <Button variant="outline" className="gap-2 rounded-full">
             <ListFilter className="h-4 w-4" />
             <span>Filter</span>
@@ -112,9 +118,11 @@ export function DashboardClient() {
               improvement and smarter collaboration.
             </p>
           </div>
-          {/* Sprint cards will be added here later */}
+          
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-             {/* Example placeholder for where sprint cards will go */}
+             {sprints.map((sprint, index) => (
+                <SprintCard key={index} sprint={sprint} />
+             ))}
           </div>
         </div>
       </main>
