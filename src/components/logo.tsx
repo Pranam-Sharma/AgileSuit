@@ -9,7 +9,7 @@ export function Logo({ className }: { className?: string }) {
       className={cn('flex items-center gap-2', className)}
       aria-label="AgileSuit Home"
     >
-      <div className="bg-blue-600 p-2 rounded-lg">
+      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-fuchsia-500">
         <Package className="h-6 w-6 text-white" />
       </div>
       <span className={cn("text-2xl font-bold tracking-tight text-foreground font-headline", className)}>
