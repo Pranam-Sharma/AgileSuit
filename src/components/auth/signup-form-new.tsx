@@ -19,9 +19,12 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import {
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { GoogleIcon } from '../icons/google-icon';
 
 const formSchema = z
   .object({
@@ -59,6 +62,24 @@ export function SignUpForm() {
     } catch (error: any) {
       toast({
         title: 'Error creating account',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+      router.refresh();
+    } catch (error: any) {
+      toast({
+        title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
@@ -129,6 +150,29 @@ export function SignUpForm() {
           </Button>
         </form>
       </Form>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        className="w-full h-14 text-lg font-bold rounded-full"
+        onClick={handleGoogleSignIn}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <GoogleIcon className="mr-2 h-4 w-4" />
+        )}
+        Google
+      </Button>
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link href="/login" className="font-semibold text-blue-700 hover:underline">
