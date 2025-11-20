@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -67,14 +67,44 @@ function UserNav({ user }: { user: User }) {
   );
 }
 
+type Filters = {
+  department: string[];
+  team: string[];
+};
+
 export function DashboardClient() {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const [sprints, setSprints] = React.useState<Sprint[]>([]);
+  const [filters, setFilters] = React.useState<Filters>({
+    department: [],
+    team: [],
+  });
 
   const handleCreateSprint = (sprintData: Sprint) => {
     setSprints((prevSprints) => [...prevSprints, sprintData]);
   };
+  
+  const allDepartments = React.useMemo(() => Array.from(new Set(sprints.map(s => s.department))), [sprints]);
+  const allTeams = React.useMemo(() => Array.from(new Set(sprints.map(s => s.team))), [sprints]);
+
+  const handleFilterChange = (category: keyof Filters, value: string) => {
+    setFilters(prev => {
+        const newFilters = prev[category].includes(value)
+            ? prev[category].filter(item => item !== value)
+            : [...prev[category], value];
+        return { ...prev, [category]: newFilters };
+    });
+  };
+
+  const filteredSprints = React.useMemo(() => {
+    return sprints.filter(sprint => {
+        const departmentMatch = filters.department.length === 0 || filters.department.includes(sprint.department);
+        const teamMatch = filters.team.length === 0 || filters.team.includes(sprint.team);
+        return departmentMatch && teamMatch;
+    });
+  }, [sprints, filters]);
+
 
   React.useEffect(() => {
     if (!isLoading && !user) {
@@ -96,10 +126,48 @@ export function DashboardClient() {
         <Logo />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
-          <Button variant="outline" className="gap-2 rounded-full">
-            <ListFilter className="h-4 w-4" />
-            <span>Filter</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 rounded-full">
+                    <ListFilter className="h-4 w-4" />
+                    <span>Filter</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {allDepartments.length > 0 && (
+                    <>
+                        <DropdownMenuLabel className='font-normal text-muted-foreground'>Department</DropdownMenuLabel>
+                        {allDepartments.map(department => (
+                            <DropdownMenuCheckboxItem
+                                key={department}
+                                checked={filters.department.includes(department)}
+                                onCheckedChange={() => handleFilterChange('department', department)}
+                            >
+                                {department}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                        <DropdownMenuSeparator />
+                    </>
+                )}
+                {allTeams.length > 0 && (
+                     <>
+                        <DropdownMenuLabel className='font-normal text-muted-foreground'>Team</DropdownMenuLabel>
+                        {allTeams.map(team => (
+                            <DropdownMenuCheckboxItem
+                                key={team}
+                                checked={filters.team.includes(team)}
+                                onCheckedChange={() => handleFilterChange('team', team)}
+                            >
+                                {team}
+                            </DropdownMenuCheckboxItem>
+                        ))}
+                    </>
+                )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="ghost" size="icon" className="rounded-full">
             <Search className="h-5 w-5" />
           </Button>
@@ -120,7 +188,7 @@ export function DashboardClient() {
           </div>
           
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-             {sprints.map((sprint, index) => (
+             {filteredSprints.map((sprint, index) => (
                 <SprintCard key={index} sprint={sprint} />
              ))}
           </div>
