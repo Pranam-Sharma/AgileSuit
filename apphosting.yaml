@@ -1,6 +1,12 @@
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
+# Grant the Cloud Build service account permissions to upload to Artifact Registry.
+# This is a common fix for deployment issues.
+iam:
+  - role: roles/artifactregistry.writer
+    member: serviceAccount:{{project_number}}@cloudbuild.gserviceaccount.com
+
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
