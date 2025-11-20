@@ -82,3 +82,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .animate-gradient-bg {
+    background-size: 200% 200%;
+    animation: gradient-bg 10s ease infinite;
+  }
+  @keyframes gradient-bg {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .animate-wave-1 {
+    animation: wave 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+  }
+  .animate-wave-2 {
+    animation: wave 12s cubic-bezier(0.36, 0.45, 0.63, 0.53) -.125s infinite,
+      swell 7s ease -1.25s infinite;
+  }
+  .animate-wave-3 {
+    animation: wave 14s cubic-bezier(0.36, 0.45, 0.63, 0.53) -.25s infinite;
+  }
+
+  @keyframes wave {
+    0% {
+      d: path("M -50,150 Q 150,50 450,150");
+    }
+    50% {
+      d: path("M -50,150 Q 150,250 450,150");
+    }
+    100% {
+      d: path("M -50,150 Q 150,50 450,150");
+    }
+  }
+
+  @keyframes swell {
+    0%,
+    100% {
+      transform: translate3d(0, 5px, 0);
+    }
+    50% {
+      transform: translate3d(0, -5px, 0);
+    }
+  }
+}
