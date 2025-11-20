@@ -10,10 +10,10 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <div className='z-10'>
             <Logo className="text-white" />
             <h2 className="mt-4 text-lg text-blue-100">The Operating system for Agile Teams</h2>
+             <p className="text-sm text-blue-100 z-10 mt-auto">
+              AgileSuit is a central place to manage sprints, insights, and team performance , it helps team plan better, deliver faster and improve continuosly
+            </p>
           </div>
-          <p className="text-sm text-blue-100 z-10">
-            AgileSuit is a central place to manage sprints, insights, and team performance , it helps team plan better, deliver faster and improve continuosly
-          </p>
         </div>
         <div className="bg-card p-8 sm:p-12 flex flex-col justify-center">
           {children}
