@@ -1,0 +1,8 @@
+# Specifies the Firebase configuration for the project.
+# https://firebase.google.com/docs/hosting/full-config#firebase-yaml-options
+
+# A list of Google Cloud APIs that are required for this project.
+# These APIs will be enabled automatically when you deploy.
+requiredAPIs:
+  - serviceName: cloudbuild.googleapis.com
+    reason: Required for building the application with App Hosting.
