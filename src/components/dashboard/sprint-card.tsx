@@ -13,7 +13,7 @@ type SprintCardProps = {
 
 export function SprintCard({ sprint }: SprintCardProps) {
   return (
-    <div className="p-0.5 rounded-2xl bg-gradient-to-br from-pink-400 via-blue-400 to-green-400 shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <div className="p-0.5 rounded-2xl bg-gradient-to-br from-pink-400 via-blue-400 to-green-400 shadow-blue-400/20 shadow-lg hover:shadow-blue-400/40 hover:shadow-xl transition-all duration-300">
       <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
         <CardHeader>
           <CardDescription className='text-xs'>{sprint.projectName}</CardDescription>
