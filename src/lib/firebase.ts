@@ -8,6 +8,7 @@ const firebaseConfig = {
   "apiKey": "AIzaSyAeHovZiIfMso8YAw4ProjG3wLiHfU6SKg",
   "authDomain": "studio-5544143673-c70bc.firebaseapp.com",
   "messagingSenderId": "841445316402",
+  "storageBucket": "studio-5544143673-c70bc.firebasestorage.app",
 };
 
 // Initialize Firebase
