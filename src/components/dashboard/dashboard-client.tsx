@@ -25,6 +25,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CreateSprintDialog, type Sprint } from './create-sprint-dialog';
 import { SprintCard } from './sprint-card';
+import { Input } from '../ui/input';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -77,6 +78,7 @@ export function DashboardClient() {
   const { user, isLoading } = useUser();
   const router = useRouter();
   const [sprints, setSprints] = React.useState<Sprint[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<Filters>({
     department: [],
     team: [],
@@ -99,12 +101,29 @@ export function DashboardClient() {
   };
 
   const filteredSprints = React.useMemo(() => {
+    const lowercasedQuery = searchQuery.toLowerCase();
     return sprints.filter(sprint => {
         const departmentMatch = filters.department.length === 0 || filters.department.includes(sprint.department);
         const teamMatch = filters.team.length === 0 || filters.team.includes(sprint.team);
-        return departmentMatch && teamMatch;
+        
+        if (!departmentMatch || !teamMatch) {
+            return false;
+        }
+
+        if (searchQuery === '') {
+            return true;
+        }
+
+        return (
+            sprint.sprintNumber.toLowerCase().includes(lowercasedQuery) ||
+            sprint.sprintName.toLowerCase().includes(lowercasedQuery) ||
+            sprint.projectName.toLowerCase().includes(lowercasedQuery) ||
+            sprint.department.toLowerCase().includes(lowercasedQuery) ||
+            sprint.team.toLowerCase().includes(lowercasedQuery) ||
+            (sprint.facilitatorName && sprint.facilitatorName.toLowerCase().includes(lowercasedQuery))
+        );
     });
-  }, [sprints, filters]);
+  }, [sprints, filters, searchQuery]);
 
 
   React.useEffect(() => {
@@ -127,6 +146,18 @@ export function DashboardClient() {
         <Logo />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
+          
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search sprints..."
+              className="w-full rounded-full bg-accent pl-10 h-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2 rounded-full">
@@ -169,9 +200,6 @@ export function DashboardClient() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Search className="h-5 w-5" />
-          </Button>
           <UserNav user={user} />
         </div>
       </header>
@@ -198,3 +226,5 @@ export function DashboardClient() {
     </div>
   );
 }
+
+    
