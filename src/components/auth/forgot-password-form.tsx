@@ -37,6 +37,15 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    if (!auth) {
+        toast({
+            title: 'Error sending reset email',
+            description: 'Firebase not configured.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
     try {
       await sendPasswordResetEmail(auth, values.email);
       toast({

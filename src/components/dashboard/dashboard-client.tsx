@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { getRedirectResult, onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
@@ -14,41 +14,28 @@ export function DashboardClient() {
   const [isLoading, setIsLoading] = React.useState(true);
   
   React.useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        // If we get a result, a user has just signed in via redirect.
-        if (result && result.user) {
-          setUser(result.user);
-          setIsLoading(false);
-          // We can remove the hash from the URL
-          router.replace('/dashboard');
-          return; // Early exit, we have the user.
-        }
-      } catch (error) {
-        console.error("Error getting redirect result:", error);
-        // Fall through to the onAuthStateChanged listener
+    if (!auth) {
+      // Firebase might not be configured
+      setIsLoading(false);
+      // Optionally, redirect to an error page or show a message
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        router.push('/login');
       }
+      setIsLoading(false);
+    });
 
-      // This will run if there's no redirect result, or after it has been handled.
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          setUser(currentUser);
-        } else {
-          // Only redirect if we are done with the initial loading and have no user.
-          router.push('/login');
-        }
-        setIsLoading(false);
-      });
-
-      return () => unsubscribe();
-    };
-
-    handleAuth();
+    return () => unsubscribe();
   }, [router]);
 
 
   const handleSignOut = async () => {
+    if (!auth) return;
     await signOut(auth);
     router.push('/login');
   };

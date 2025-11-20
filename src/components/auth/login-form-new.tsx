@@ -42,6 +42,15 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    if (!auth) {
+        toast({
+            title: 'Error logging in',
+            description: 'Firebase not configured.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       router.push('/dashboard');
@@ -59,6 +68,15 @@ export function LoginForm() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
+    if (!auth) {
+        toast({
+            title: 'Error signing in with Google',
+            description: 'Firebase not configured.',
+            variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+    }
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
