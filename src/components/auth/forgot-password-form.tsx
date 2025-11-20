@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
   return (
     <div className="grid gap-8">
       <div>
-        <h1 className="text-4xl font-bold text-blue-700">Forgot Password</h1>
+        <h1 className="text-4xl font-bold text-fuchsia-600">Forgot Password</h1>
         <p className="text-muted-foreground mt-2">
           Enter your email to get a reset link
         </p>
@@ -97,7 +97,7 @@ export function ForgotPasswordForm() {
       </Form>
       <div className="text-center text-sm text-muted-foreground">
         Remember your password?{' '}
-        <Link href="/login" className="font-semibold text-blue-700 hover:underline">
+        <Link href="/login" className="font-semibold text-fuchsia-600 hover:underline">
           Sign In
         </Link>
       </div>

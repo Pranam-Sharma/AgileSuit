@@ -95,7 +95,7 @@ export function SignUpForm() {
   return (
      <div className="w-full max-w-sm mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-4xl font-bold text-blue-700">Create Account</h1>
+        <h1 className="text-4xl font-bold text-fuchsia-600">Create Account</h1>
         <p className="text-muted-foreground mt-2">
           Create an account to get started
         </p>
@@ -177,7 +177,7 @@ export function SignUpForm() {
       </Button>
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="font-semibold text-blue-700 hover:underline">
+        <Link href="/login" className="font-semibold text-fuchsia-600 hover:underline">
           Sign In
         </Link>
       </div>

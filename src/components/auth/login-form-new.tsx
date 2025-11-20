@@ -81,7 +81,7 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm mx-auto flex flex-col gap-8">
       <div>
-        <h1 className="text-4xl font-bold text-blue-700">Welcome</h1>
+        <h1 className="text-4xl font-bold text-fuchsia-600">Welcome</h1>
         <p className="text-muted-foreground mt-2">
           Login in to your account to continue
         </p>
@@ -162,7 +162,7 @@ export function LoginForm() {
 
       <div className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-semibold text-blue-700 hover:underline">
+        <Link href="/signup" className="font-semibold text-fuchsia-600 hover:underline">
           Sign Up
         </Link>
       </div>
