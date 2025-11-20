@@ -12,34 +12,39 @@ export function DashboardClient() {
   const router = useRouter();
   const [user, setUser] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
-
+  
   React.useEffect(() => {
-    // This effect handles the result from a redirect sign-in
-    getRedirectResult(auth)
-      .then((result) => {
+    const handleAuth = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        // If we get a result, a user has just signed in via redirect.
         if (result && result.user) {
-          // User is signed in via redirect.
           setUser(result.user);
-          router.replace('/dashboard');
-        }
-        // No redirect result, proceed with auth state observer.
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        console.error("Error getting redirect result:", error);
-      })
-      .finally(() => {
-        // Set up the regular auth state listener
-        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-          if (currentUser) {
-            setUser(currentUser);
-          } else {
-            router.push('/login');
-          }
           setIsLoading(false);
-        });
-        return () => unsubscribe();
+          // We can remove the hash from the URL
+          router.replace('/dashboard');
+          return; // Early exit, we have the user.
+        }
+      } catch (error) {
+        console.error("Error getting redirect result:", error);
+        // Fall through to the onAuthStateChanged listener
+      }
+
+      // This will run if there's no redirect result, or after it has been handled.
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          // Only redirect if we are done with the initial loading and have no user.
+          router.push('/login');
+        }
+        setIsLoading(false);
       });
+
+      return () => unsubscribe();
+    };
+
+    handleAuth();
   }, [router]);
 
 
