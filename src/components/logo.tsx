@@ -10,7 +10,7 @@ export function Logo({ className }: { className?: string }) {
       aria-label="AgileSuit Home"
     >
       <Package className="h-7 w-7 text-primary" />
-      <span className="text-2xl font-bold tracking-tight text-foreground font-headline">
+      <span className={cn("text-2xl font-bold tracking-tight text-foreground font-headline", className)}>
         AgileSuit
       </span>
     </Link>
