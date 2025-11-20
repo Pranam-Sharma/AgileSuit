@@ -7,7 +7,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-5xl grid md:grid-cols-2 rounded-3xl shadow-2xl overflow-hidden">
         <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-400 to-blue-600 text-white relative">
            <div className="absolute inset-0 bg-no-repeat bg-center opacity-10" style={{backgroundImage: 'url(/wavy-bg.svg)'}}></div>
-          <div className='z-10'>
+          <div className='z-10 mt-4'>
             <Logo className="text-white" />
           </div>
           <div className="z-10 mt-auto">
