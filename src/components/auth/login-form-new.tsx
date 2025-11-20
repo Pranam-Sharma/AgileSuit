@@ -18,9 +18,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
+import { useAuth } from '@/firebase/provider';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -31,6 +31,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,15 +43,6 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!auth) {
-        toast({
-            title: 'Error logging in',
-            description: 'Firebase not configured.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       router.push('/dashboard');
@@ -68,15 +60,6 @@ export function LoginForm() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
-    if (!auth) {
-        toast({
-            title: 'Error signing in with Google',
-            description: 'Firebase not configured.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);

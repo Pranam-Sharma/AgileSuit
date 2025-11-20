@@ -22,9 +22,9 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
+import { useAuth } from '@/firebase/provider';
 
 const formSchema = z
   .object({
@@ -43,6 +43,7 @@ export function SignUpForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -55,15 +56,7 @@ export function SignUpForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!auth) {
-        toast({
-            title: 'Error creating account',
-            description: 'Firebase not configured.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
+
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
       router.push('/dashboard');
@@ -81,15 +74,6 @@ export function SignUpForm() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
-    if (!auth) {
-        toast({
-            title: 'Error signing in with Google',
-            description: 'Firebase not configured.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);

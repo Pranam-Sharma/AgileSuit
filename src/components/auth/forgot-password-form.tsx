@@ -17,8 +17,8 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/firebase/provider';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -27,6 +27,7 @@ const formSchema = z.object({
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
+  const auth = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,15 +38,6 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!auth) {
-        toast({
-            title: 'Error sending reset email',
-            description: 'Firebase not configured.',
-            variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-    }
     try {
       await sendPasswordResetEmail(auth, values.email);
       toast({

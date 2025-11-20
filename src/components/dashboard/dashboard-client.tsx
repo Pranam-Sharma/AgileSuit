@@ -3,24 +3,18 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/firebase/provider';
 
 export function DashboardClient() {
   const router = useRouter();
   const [user, setUser] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const auth = useAuth();
   
   React.useEffect(() => {
-    if (!auth) {
-      // Firebase might not be configured
-      setIsLoading(false);
-      // Optionally, redirect to an error page or show a message
-      return;
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -31,11 +25,10 @@ export function DashboardClient() {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [router, auth]);
 
 
   const handleSignOut = async () => {
-    if (!auth) return;
     await signOut(auth);
     router.push('/login');
   };
