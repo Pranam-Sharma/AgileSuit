@@ -4,7 +4,7 @@ import { Logo } from '@/components/logo';
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4 md:p-8">
-      <div className="w-full max-w-lg grid md:grid-cols-2 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-xl grid md:grid-cols-2 rounded-3xl shadow-2xl overflow-hidden">
         <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-400 to-blue-600 text-white relative">
            <div className="absolute inset-0 bg-no-repeat bg-center opacity-10" style={{backgroundImage: 'url(/wavy-bg.svg)'}}></div>
           <div className='z-10 mt-4'>
