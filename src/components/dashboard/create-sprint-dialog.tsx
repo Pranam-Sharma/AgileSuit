@@ -104,7 +104,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 rounded-full">
+        <Button className="gap-2 rounded-full bg-gradient-to-r from-blue-500 to-fuchsia-500 text-white font-bold shadow-md hover:shadow-lg transition-shadow">
           <PlusCircle className="h-4 w-4" />
           <span>Create Sprint</span>
         </Button>
