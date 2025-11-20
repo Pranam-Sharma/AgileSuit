@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
+import { getRedirectResult, onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
@@ -14,17 +14,34 @@ export function DashboardClient() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        router.push('/login');
-      }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    // This effect handles the result from a redirect sign-in
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result && result.user) {
+          // User is signed in via redirect.
+          setUser(result.user);
+          router.replace('/dashboard');
+        }
+        // No redirect result, proceed with auth state observer.
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        console.error("Error getting redirect result:", error);
+      })
+      .finally(() => {
+        // Set up the regular auth state listener
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+          if (currentUser) {
+            setUser(currentUser);
+          } else {
+            router.push('/login');
+          }
+          setIsLoading(false);
+        });
+        return () => unsubscribe();
+      });
   }, [router]);
+
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -40,7 +57,7 @@ export function DashboardClient() {
   }
 
   if (!user) {
-    return null; // The redirect is happening
+    return null; // The redirect to /login is happening
   }
 
   return (
