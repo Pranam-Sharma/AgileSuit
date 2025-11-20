@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { CreateSprintDialog } from './create-sprint-dialog';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -88,6 +89,7 @@ export function DashboardClient() {
       <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
         <Logo />
         <div className="flex items-center gap-4">
+          <CreateSprintDialog />
           <Button variant="outline" className="gap-2 rounded-full">
             <ListFilter className="h-4 w-4" />
             <span>Filter</span>
