@@ -15,38 +15,50 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 
-const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-});
+const formSchema = z
+  .object({
+    email: z.string().email({ message: 'Please enter a valid email.' }),
+    password: z
+      .string()
+      .min(6, { message: 'Password must be at least 6 characters.' }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
-export function ForgotPasswordForm() {
+export function SignUpForm() {
   const [isLoading, setIsLoading] = React.useState(false);
+  const router = useRouter();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await sendPasswordResetEmail(auth, values.email);
-      toast({
-        title: 'Password Reset Email Sent',
-        description: 'Check your inbox for a link to reset your password.',
-      });
-      form.reset();
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      router.push('/dashboard');
+      router.refresh();
     } catch (error: any) {
       toast({
-        title: 'Error sending reset email',
+        title: 'Error creating account',
         description: error.message,
         variant: 'destructive',
       });
@@ -54,16 +66,15 @@ export function ForgotPasswordForm() {
       setIsLoading(false);
     }
   }
-
+  
   const inputStyles = "h-14 text-lg border-none bg-accent placeholder:text-accent-foreground/50 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0";
 
-
   return (
-    <div className="grid gap-8">
+     <div className="grid gap-8">
       <div>
-        <h1 className="text-4xl font-bold text-blue-700">Forgot Password</h1>
+        <h1 className="text-4xl font-bold text-blue-700">Create Account</h1>
         <p className="text-muted-foreground mt-2">
-          Enter your email to get a reset link
+          Create an account to get started
         </p>
       </div>
       <Form {...form}>
@@ -75,7 +86,7 @@ export function ForgotPasswordForm() {
               <FormItem>
                 <FormControl>
                   <Input
-                    placeholder="name@example.com"
+                    placeholder="Email"
                     autoCapitalize="none"
                     autoComplete="email"
                     autoCorrect="off"
@@ -88,14 +99,38 @@ export function ForgotPasswordForm() {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input type="password" placeholder="Password" disabled={isLoading} className={cn(inputStyles)} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input type="password" placeholder="Confirm Password" disabled={isLoading} className={cn(inputStyles)} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <Button type="submit" disabled={isLoading} className="w-full h-14 text-lg font-bold rounded-full">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Send Reset Link
+            SIGN UP
           </Button>
         </form>
       </Form>
       <div className="text-center text-sm text-muted-foreground">
-        Remember your password?{' '}
+        Already have an account?{' '}
         <Link href="/login" className="font-semibold text-blue-700 hover:underline">
           Sign In
         </Link>

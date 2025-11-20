@@ -1,5 +1,5 @@
-import { AuthLayout } from '@/components/auth/auth-layout';
-import { SignUpForm } from '@/components/auth/signup-form';
+import { AuthLayout } from '@/components/auth/auth-layout-new';
+import { SignUpForm } from '@/components/auth/signup-form-new';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <AuthLayout
-      title="Create an account"
-      description="Enter your email below to create your account"
-    >
+    <AuthLayout>
       <SignUpForm />
     </AuthLayout>
   );

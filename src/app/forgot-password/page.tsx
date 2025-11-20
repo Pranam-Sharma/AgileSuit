@@ -1,4 +1,4 @@
-import { AuthLayout } from '@/components/auth/auth-layout';
+import { AuthLayout } from '@/components/auth/auth-layout-new';
 import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 import type { Metadata } from 'next';
 
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthLayout
-      title="Forgot Password"
-      description="Enter your email to receive a password reset link."
-    >
+    <AuthLayout>
       <ForgotPasswordForm />
     </AuthLayout>
   );
