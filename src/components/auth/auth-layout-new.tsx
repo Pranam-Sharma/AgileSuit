@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { BluebackLogo } from '@/components/logo-new';
+import { Logo } from '@/components/logo';
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,10 +8,11 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="hidden md:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-400 to-blue-600 text-white relative">
            <div className="absolute inset-0 bg-no-repeat bg-center opacity-10" style={{backgroundImage: 'url(/wavy-bg.svg)'}}></div>
           <div className='z-10'>
-            <BluebackLogo />
+            <Logo className="text-white" />
+            <h2 className="mt-4 text-lg text-blue-100">The Operating system for Agile Teams</h2>
           </div>
           <p className="text-sm text-blue-100 z-10">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            AgileSuit is a central place to manage sprints, insights, and team performance , it helps team plan better, deliver faster and improve continuosly
           </p>
         </div>
         <div className="bg-card p-8 sm:p-12 flex flex-col justify-center">
