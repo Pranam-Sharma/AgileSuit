@@ -3,7 +3,15 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut, type User } from 'firebase/auth';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Loader2,
+  LogOut,
+  ListFilter,
+  Search,
+} from 'lucide-react';
+import { useAuth } from '@/firebase/provider';
+import { useUser } from '@/hooks/use-user';
+import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,28 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  LayoutDashboard,
-  Loader2,
-  LogOut,
-  FolderKanban,
-  Settings,
-} from 'lucide-react';
-import { useAuth } from '@/firebase/provider';
-import { useUser } from '@/hooks/use-user';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarTrigger,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarFooter,
-} from '@/components/ui/sidebar';
-import { Logo } from '../logo';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -97,56 +84,38 @@ export function DashboardClient() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="/dashboard" isActive>
-                <LayoutDashboard />
-                Dashboard
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <FolderKanban />
-                Projects
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Settings />
-                Settings
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
-            <SidebarTrigger className="md:hidden"/>
-            <div className="flex items-center gap-4 ml-auto">
-                <UserNav user={user} />
-            </div>
-        </header>
-        <main className="flex-1 p-4 sm:p-8">
-          <div className="space-y-4 rounded-lg border bg-card p-8 shadow-sm">
-            <h1 className="text-3xl font-bold font-headline">
-              Welcome to AgileSuit
+    <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-blue-50 via-fuchsia-50 to-orange-50">
+      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
+        <Logo />
+        <div className="flex items-center gap-4">
+          <Button variant="outline" className="gap-2 rounded-full">
+            <ListFilter className="h-4 w-4" />
+            <span>Filter</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Search className="h-5 w-5" />
+          </Button>
+          <UserNav user={user} />
+        </div>
+      </header>
+      <main className="flex-1 p-4 sm:p-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-12 rounded-2xl bg-white/50 p-8 text-center shadow-sm backdrop-blur-sm">
+            <h1 className="text-4xl font-bold font-headline text-red-800/80">
+              The Heart of Agile Excellence
             </h1>
-            <p className="text-muted-foreground">
-              This is your new dashboard. Ready for action!
+            <p className="mt-4 text-lg text-foreground/70">
+              AgileSuit brings clarity, structure, and insight to every sprint -
+              empowering teams to deliver better outcomes through continuous
+              improvement and smarter collaboration.
             </p>
           </div>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+          {/* Sprint cards will be added here later */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+             {/* Example placeholder for where sprint cards will go */}
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
