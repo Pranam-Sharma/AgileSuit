@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import {
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -74,16 +74,13 @@ export function SignUpForm() {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-      router.refresh();
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
       toast({
         title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   }
@@ -91,7 +88,7 @@ export function SignUpForm() {
   const inputStyles = "h-14 text-lg border-none bg-accent placeholder:text-accent-foreground/50 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0";
 
   return (
-     <div className="grid gap-8">
+     <div className="w-full max-w-sm mx-auto flex flex-col gap-8">
       <div>
         <h1 className="text-4xl font-bold text-blue-700">Create Account</h1>
         <p className="text-muted-foreground mt-2">
