@@ -20,7 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import {
   createUserWithEmailAndPassword,
   signInWithRedirect,
-  signInWithPopup,
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -75,38 +74,14 @@ export function SignUpForm() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // First, try to sign in with a popup. This is better for desktop environments.
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      await signInWithRedirect(auth, provider);
     } catch (error: any) {
-       // If the popup is blocked or fails, fall back to redirect.
-      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-        setIsLoading(false);
-        return;
-      }
-      if (error.code === 'auth/popup-blocked') {
-        toast({
-          title: 'Popup Blocked',
-          description: 'Popup was blocked by the browser. Trying to sign in with a redirect instead.',
-        });
-        try {
-          await signInWithRedirect(auth, provider);
-        } catch (redirectError: any) {
-          toast({
-            title: 'Error signing in with Google',
-            description: redirectError.message,
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-        }
-      } else {
-        toast({
-          title: 'Error signing in with Google',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-      }
+       toast({
+        title: 'Error signing in with Google',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsLoading(false);
     }
   }
   
