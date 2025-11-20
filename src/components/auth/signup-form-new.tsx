@@ -84,11 +84,15 @@ export function SignUpForm() {
        if (isIframe) {
         // Use popup for iframe environments like the workstation
         await signInWithPopup(auth, provider);
-        router.push('/dashboard');
-        router.refresh();
       } else {
         // Use redirect for a normal browser tab
         await signInWithRedirect(auth, provider);
+      }
+      // The redirect logic in dashboard-client will handle navigation
+      // For popups, we can navigate directly
+      if (isIframe) {
+        router.push('/dashboard');
+        router.refresh();
       }
     } catch (error: any) {
        toast({
