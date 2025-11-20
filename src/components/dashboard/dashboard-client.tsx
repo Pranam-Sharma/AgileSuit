@@ -205,7 +205,7 @@ export function DashboardClient() {
       </header>
       <main className="flex-1 p-4 sm:p-8">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-12 rounded-2xl bg-white/50 p-8 text-center shadow-sm backdrop-blur-sm">
+          <div className="mb-12 rounded-2xl bg-white/50 p-8 text-center shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
             <h1 className="text-4xl font-bold font-headline text-red-800/80">
               The Heart of Agile Excellence
             </h1>
@@ -226,5 +226,3 @@ export function DashboardClient() {
     </div>
   );
 }
-
-    
