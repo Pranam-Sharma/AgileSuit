@@ -109,7 +109,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
           <span>Create Sprint</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl bg-background/95 backdrop-blur-sm shadow-2xl shadow-blue-500/10 border-0">
         <DialogHeader>
           <DialogTitle>Create New Sprint</DialogTitle>
           <DialogDescription>
