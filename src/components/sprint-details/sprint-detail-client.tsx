@@ -101,7 +101,7 @@ const velocityData = [
 
 function StatCard({ title, value, children }: { title: string; value: string; children?: React.ReactNode }) {
     return (
-        <Card className="shadow-sm">
+        <Card className="shadow-sm bg-violet-50/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
             </CardHeader>
@@ -201,9 +201,9 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-violet-50/50">
+            <div className="border-b bg-white">
               <div className="mx-auto max-w-7xl p-6 lg:p-8">
-                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+                <div className="flex flex-col items-start gap-4 rounded-xl bg-violet-50 p-6 md:flex-row md:items-center">
                     <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
                         <div className='text-center'>
                             <p className='text-sm font-bold -mb-1'>sprint</p>
@@ -406,5 +406,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
       </main>
     </div>
   );
+
+    
 
     
