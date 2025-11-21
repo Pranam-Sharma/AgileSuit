@@ -9,6 +9,7 @@ import {
   LogOut,
   ListFilter,
   Search,
+  Shield,
 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
@@ -29,6 +30,7 @@ import { SprintCard } from './sprint-card';
 import { Input } from '../ui/input';
 import { getSprints } from '@/lib/sprints';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 
 function UserNav({ user }: { user: User }) {
@@ -178,7 +180,12 @@ export function DashboardClient() {
         <Logo className="text-white" />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
-          
+          <Link href="/admin">
+            <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <Shield className="h-4 w-4" />
+                <span>Admin</span>
+            </Button>
+          </Link>
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
