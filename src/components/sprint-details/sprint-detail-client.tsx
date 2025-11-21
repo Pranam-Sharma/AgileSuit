@@ -8,7 +8,7 @@ import {
   LogOut,
   ChevronLeft,
 } from 'lucide-react';
-import { useAuth } from '@/firebase/provider';
+import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Sprint } from '../dashboard/create-sprint-dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -67,12 +69,58 @@ function UserNav({ user }: { user: User }) {
 }
 
 type SprintDetailClientProps = {
-    sprint: Sprint & { id: string };
+    sprintId: string;
 };
 
-export function SprintDetailClient({ sprint }: SprintDetailClientProps) {
+export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
   const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!firestore || !user) return;
+
+    const fetchSprint = async () => {
+      setIsLoading(true);
+      try {
+        const sprintDocRef = doc(firestore, 'sprints', sprintId);
+        const sprintDoc = await getDoc(sprintDocRef);
+
+        if (sprintDoc.exists()) {
+          const sprintData = sprintDoc.data() as Sprint;
+          // Security check: ensure the user owns this sprint
+          if (sprintData.userId === user.uid) {
+            setSprint({ id: sprintDoc.id, ...sprintData });
+          } else {
+            // If not the owner, treat as not found.
+            setSprint(null);
+            toast({
+                title: 'Access Denied',
+                description: "You don't have permission to view this sprint.",
+                variant: 'destructive',
+            });
+            router.push('/dashboard');
+          }
+        } else {
+          setSprint(null);
+        }
+      } catch (error: any) {
+        toast({
+          title: 'Error fetching sprint',
+          description: error.message || 'Could not load sprint details.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSprint();
+  }, [sprintId, firestore, user, toast, router]);
   
   if (isUserLoading || !user) {
     return (
@@ -98,25 +146,39 @@ export function SprintDetailClient({ sprint }: SprintDetailClientProps) {
       </header>
       <main className="flex-1 p-4 sm:p-8">
         <div className="mx-auto max-w-5xl">
-            <Card className="w-full shadow-lg shadow-blue-200/50">
-                <CardHeader>
-                    <CardDescription>{sprint.projectName} / Sprint {sprint.sprintNumber}</CardDescription>
-                    <CardTitle className='text-3xl font-bold text-fuchsia-700'>{sprint.sprintName}</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-6 md:grid-cols-2">
-                    <div className="space-y-4">
-                        <h3 className="font-semibold">Details</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div className="font-medium text-muted-foreground">Department</div>
-                            <div>{sprint.department}</div>
-                            <div className="font-medium text-muted-foreground">Team</div>
-                            <div>{sprint.team}</div>
-                            <div className="font-medium text-muted-foreground">Facilitator</div>
-                            <div>{sprint.facilitatorName}</div>
+            {isLoading ? (
+                <div className="flex items-center justify-center pt-20">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            ) : sprint ? (
+                <Card className="w-full shadow-lg shadow-blue-200/50">
+                    <CardHeader>
+                        <CardDescription>{sprint.projectName} / Sprint {sprint.sprintNumber}</CardDescription>
+                        <CardTitle className='text-3xl font-bold text-fuchsia-700'>{sprint.sprintName}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-4">
+                            <h3 className="font-semibold">Details</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="font-medium text-muted-foreground">Department</div>
+                                <div>{sprint.department}</div>
+                                <div className="font-medium text-muted-foreground">Team</div>
+                                <div>{sprint.team}</div>
+                                <div className="font-medium text-muted-foreground">Facilitator</div>
+                                <div>{sprint.facilitatorName}</div>
+                            </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            ) : (
+                <div className="flex flex-col items-center justify-center pt-20 text-center">
+                    <h2 className="text-2xl font-bold">Sprint Not Found</h2>
+                    <p className="text-muted-foreground">The sprint you are looking for does not exist or you do not have permission to view it.</p>
+                    <Button onClick={() => router.push('/dashboard')} className="mt-4">
+                        Back to Dashboard
+                    </Button>
+                </div>
+            )}
         </div>
       </main>
     </div>

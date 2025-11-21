@@ -1,7 +1,5 @@
 import { SprintDetailClient } from '@/components/sprint-details/sprint-detail-client';
 import type { Metadata } from 'next';
-import { getSprintById } from '@/lib/sprints.server';
-import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 type SprintDetailPageProps = {
     params: {
@@ -9,28 +7,16 @@ type SprintDetailPageProps = {
     };
 };
 
-export async function generateMetadata({ params }: SprintDetailPageProps): Promise<Metadata> {
-    const sprint = await getSprintById(params.sprintId);
-
-    if (!sprint) {
-        return {
-            title: 'Sprint Not Found',
-        };
-    }
-
-    return {
-        title: `Sprint: ${sprint.sprintName}`,
-        description: `Details for sprint ${sprint.sprintName}`,
-    };
-}
+// Metadata can still be generic or loaded separately if needed,
+// but for now, we'll keep it simple to ensure the page loads.
+export const metadata: Metadata = {
+    title: 'Sprint Details',
+    description: 'Details for the selected sprint.',
+};
 
 
-export default async function SprintDetailPage({ params }: SprintDetailPageProps) {
-    const sprint = await getSprintById(params.sprintId);
-
-    if (!sprint) {
-        return <div className="flex min-h-screen items-center justify-center">Sprint not found.</div>;
-    }
-
-    return <SprintDetailClient sprint={sprint} />;
+export default function SprintDetailPage({ params }: SprintDetailPageProps) {
+    // This page now acts as a shell that renders the client component,
+    // which will be responsible for its own data fetching.
+    return <SprintDetailClient sprintId={params.sprintId} />;
 }
