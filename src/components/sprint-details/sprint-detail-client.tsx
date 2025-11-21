@@ -16,7 +16,8 @@ import {
   ClipboardList,
   Briefcase,
 } from 'lucide-react';
-import { useAuth, useFirestore, useUser } from '@/firebase/provider';
+import { useAuth, useFirestore } from '@/firebase/provider';
+import { useUser } from '@/hooks/use-user';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
 import {
