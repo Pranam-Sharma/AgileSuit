@@ -40,6 +40,8 @@ const sprintSchema = z.object({
     team: z.string().min(1, 'Team is required.'),
     isFacilitator: z.boolean().default(false),
     facilitatorName: z.string().optional(),
+    plannedPoints: z.coerce.number().optional(),
+    completedPoints: z.coerce.number().optional(),
   }).refine(
     (data) => {
       if (data.isFacilitator) return true;
@@ -74,6 +76,8 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
       team: '',
       isFacilitator: false,
       facilitatorName: '',
+      plannedPoints: 0,
+      completedPoints: 0,
     },
   });
 
@@ -197,6 +201,35 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
                     <FormLabel>Team</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Frontend" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+               <FormField
+                control={form.control}
+                name="plannedPoints"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Planned Story Points</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 40" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="completedPoints"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Completed Story Points</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 25" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

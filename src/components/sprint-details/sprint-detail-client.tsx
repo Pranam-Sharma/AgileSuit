@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -164,6 +165,13 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
     fetchSprint();
   }, [sprintId, firestore, user, toast, router]);
   
+  const goalsAchieved = React.useMemo(() => {
+    if (!sprint || !sprint.plannedPoints || sprint.plannedPoints === 0) {
+        return 0;
+    }
+    return Math.round(((sprint.completedPoints ?? 0) / sprint.plannedPoints) * 100);
+  }, [sprint]);
+
   if (isUserLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -211,10 +219,10 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                 </div>
 
                 <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                    <StatCard title="Planned Points" value="40" />
-                    <StatCard title="Completed" value="25" />
+                    <StatCard title="Planned Points" value={sprint.plannedPoints?.toString() ?? '0'} />
+                    <StatCard title="Completed" value={sprint.completedPoints?.toString() ?? '0'} />
                     <StatCard title="Velocity" value="12,5 SP" />
-                    <StatCard title="Goals Achieved" value="75%">
+                    <StatCard title="Goals Achieved" value={`${goalsAchieved}%`}>
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
                                 <defs>
