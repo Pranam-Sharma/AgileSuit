@@ -1,15 +1,15 @@
 'use server';
 
-import { initializeFirebase } from '@/firebase/index';
-import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
+import { getAdminApp } from '@/firebase/server';
+import { collection, addDoc, getDocs, query, where, orderBy, Firestore } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 // Initialize firebase on the server
-const { firestore } = initializeFirebase();
+const db = getAdminApp().firestore as unknown as Firestore;
 
 export async function createSprint(sprintData: Sprint & { userId: string }) {
     try {
-        const docRef = await addDoc(collection(firestore, "sprints"), sprintData);
+        const docRef = await addDoc(collection(db, "sprints"), sprintData);
         return { id: docRef.id, ...sprintData };
     } catch (e) {
         console.error("Error adding document: ", e);
@@ -20,7 +20,7 @@ export async function createSprint(sprintData: Sprint & { userId: string }) {
 export async function getSprints(userId: string): Promise<(Sprint & { id: string })[]> {
     try {
         const q = query(
-            collection(firestore, "sprints"), 
+            collection(db, "sprints"), 
             where("userId", "==", userId),
             orderBy("sprintNumber", "desc")
         );
@@ -28,7 +28,7 @@ export async function getSprints(userId: string): Promise<(Sprint & { id: string
         const querySnapshot = await getDocs(q);
         const sprints: (Sprint & { id: string })[] = [];
         querySnapshot.forEach((doc) => {
-            sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id: string });
+            sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id:string });
         });
         return sprints;
     } catch (error) {
