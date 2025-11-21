@@ -14,9 +14,9 @@ import {
   TrendingDown,
   Smile,
   ClipboardList,
+  Briefcase,
 } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase/provider';
-import { useUser } from '@/hooks/use-user';
+import { useAuth, useFirestore, useUser } from '@/firebase/provider';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
 import {
@@ -152,30 +152,29 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           <UserNav user={user} />
         </div>
       </header>
-      <main className="flex-1 p-4 sm:p-8">
-        <div className="mx-auto max-w-5xl">
-            {isLoading ? (
-                <div className="flex items-center justify-center pt-20">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-            ) : sprint ? (
-              <Tabs defaultValue="summary" className="w-full">
-                 <div className="mb-8 rounded-2xl bg-fuchsia-50/50 p-4 shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="flex h-20 w-20 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
-                            <span className="text-lg font-bold">Spt</span>
-                            <span className="text-2xl font-extrabold">{sprint.sprintNumber}</span>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-800">
-                                {sprint.sprintName}
-                            </h1>
-                            <p className="mt-1 text-sm text-gray-600">
-                                Facilitator: {sprint.facilitatorName}
-                            </p>
-                        </div>
+       <main className="flex-1">
+        {isLoading ? (
+          <div className="flex items-center justify-center pt-20">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        ) : sprint ? (
+          <>
+            <div className="border-b bg-background/50 p-4 sm:px-8 sm:py-6">
+                <div className="flex items-center gap-6">
+                    <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-fuchsia-500 text-white shadow-lg">
+                        <Briefcase className="h-10 w-10" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-primary">{sprint.projectName} / Sprint {sprint.sprintNumber}</p>
+                        <h1 className="text-3xl font-bold text-foreground">
+                            {sprint.sprintName}
+                        </h1>
                     </div>
                 </div>
+            </div>
+
+            <div className="mx-auto max-w-5xl p-4 sm:p-8">
+              <Tabs defaultValue="summary" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto mb-6">
                     <TabsTrigger value="ai-report"><Bot className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>AI Report</span></TabsTrigger>
                     <TabsTrigger value="timeline"><Calendar className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Timeline</span></TabsTrigger>
@@ -208,18 +207,20 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                    Mood trend over sprints Content
                 </TabsContent>
                 <TabsContent value="summary">
+                  {/* The content for the summary tab can go here if needed in the future */}
                 </TabsContent>
               </Tabs>
-            ) : (
-                <div className="flex flex-col items-center justify-center pt-20 text-center">
-                    <h2 className="text-2xl font-bold">Sprint Not Found</h2>
-                    <p className="text-muted-foreground">The sprint you are looking for does not exist or you do not have permission to view it.</p>
-                    <Button onClick={() => router.push('/dashboard')} className="mt-4">
-                        Back to Dashboard
-                    </Button>
-                </div>
-            )}
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center pt-20 text-center">
+            <h2 className="text-2xl font-bold">Sprint Not Found</h2>
+            <p className="text-muted-foreground">The sprint you are looking for does not exist or you do not have permission to view it.</p>
+            <Button onClick={() => router.push('/dashboard')} className="mt-4">
+              Back to Dashboard
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );
