@@ -1,6 +1,7 @@
 import { SprintDetailClient } from '@/components/sprint-details/sprint-detail-client';
-import { getSprintById } from '@/lib/sprints';
 import type { Metadata } from 'next';
+import { getSprintById } from '@/lib/sprints.server';
+import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 type SprintDetailPageProps = {
     params: {
