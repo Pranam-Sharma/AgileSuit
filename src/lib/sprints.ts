@@ -1,6 +1,3 @@
-
-'use client';
-
 import { collection, addDoc, getDocs, query, where, orderBy, Firestore, deleteDoc, doc, getDoc } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
