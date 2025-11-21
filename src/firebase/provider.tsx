@@ -18,8 +18,10 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initialize Firebase on the client side and only once.
-    const instances = initializeFirebase();
-    setValue(instances);
+    if (typeof window !== "undefined") {
+      const instances = initializeFirebase();
+      setValue(instances);
+    }
   }, []);
 
   if (!value) {
@@ -42,4 +44,8 @@ export const useFirebase = () => {
 
 export const useAuth = () => {
   return useFirebase().auth;
+};
+
+export const useFirestore = () => {
+    return useFirebase().firestore;
 };

@@ -13,7 +13,7 @@ export async function createSprint(sprintData: Sprint & { userId: string }) {
         return { id: docRef.id, ...sprintData };
     } catch (e) {
         console.error("Error adding document: ", e);
-        throw new Error('Failed to create sprint');
+        throw new Error('Failed to create sprint. Please check Firestore rules and configuration.');
     }
 }
 
