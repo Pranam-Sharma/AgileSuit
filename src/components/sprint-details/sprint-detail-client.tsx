@@ -181,7 +181,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gray-50">
+    <div className="flex min-h-screen w-full flex-col bg-white">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
         <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
@@ -407,5 +407,3 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
     </div>
   );
 }
-
-    
