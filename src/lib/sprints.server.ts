@@ -6,7 +6,7 @@ import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 // This function will handle initialization internally to avoid top-level execution errors.
 export async function getSprintById(sprintId: string): Promise<(Sprint & { id: string }) | null> {
     // In this environment, Firebase Admin SDK can auto-discover credentials.
-    // We ensure the app is initialized only once.
+    // We ensure the app is initialized only once by checking the apps length.
     if (admin.apps.length === 0) {
         admin.initializeApp();
     }
