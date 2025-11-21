@@ -36,6 +36,7 @@ function UserNav({ user }: { user: User }) {
   const auth = useAuth();
 
   const handleSignOut = async () => {
+    if (!auth) return;
     await signOut(auth);
     router.push('/login');
   };
@@ -97,6 +98,7 @@ export function DashboardClient() {
       router.push('/login');
       return;
     }
+    if (!firestore) return;
 
     async function fetchSprints() {
       setIsSprintsLoading(true);

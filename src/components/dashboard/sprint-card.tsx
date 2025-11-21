@@ -44,6 +44,7 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
     const handleDeleteConfirm = async () => {
         setIsDeleting(true);
         try {
+            if (!firestore) throw new Error("Firestore is not initialized");
             await deleteSprint(firestore, sprint.id);
             toast({
                 title: 'Sprint Deleted',

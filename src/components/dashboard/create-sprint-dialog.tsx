@@ -97,6 +97,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
     }
 
     try {
+        if (!firestore) throw new Error("Firestore is not initialized");
         const newSprint = await createSprint(firestore, { ...finalValues, userId: user.uid });
         onCreateSprint(newSprint);
         toast({

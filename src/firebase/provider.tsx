@@ -19,8 +19,10 @@ let firebaseInstances: FirebaseInstances | null = null;
 
 function initializeFirebase(): FirebaseInstances {
   if (typeof window === 'undefined') {
+    // This should not happen in a client component, but as a safeguard:
     throw new Error("Firebase should only be initialized on the client side.");
   }
+  
   if (firebaseInstances) {
     return firebaseInstances;
   }
@@ -51,15 +53,14 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Initialize Firebase on the client side and only once.
-    if (typeof window !== "undefined") {
-      const instances = initializeFirebase();
-      setValue(instances);
-    }
+    const instances = initializeFirebase();
+    setValue(instances);
   }, []);
 
   // Return a loading state or null until Firebase is initialized.
   if (!value) {
-    return null;
+    // Or a loading spinner, etc.
+    return null; 
   }
 
   return (
@@ -67,18 +68,14 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useFirebase = (): FirebaseInstances => {
-  const context = useContext(FirebaseContext);
-  if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
-  }
-  return context;
+export const useFirebase = (): FirebaseInstances | null => {
+  return useContext(FirebaseContext);
 };
 
-export const useAuth = (): Auth => {
-  return useFirebase().auth;
+export const useAuth = (): Auth | null => {
+  return useFirebase()?.auth ?? null;
 };
 
-export const useFirestore = (): Firestore => {
-    return useFirebase().firestore;
+export const useFirestore = (): Firestore | null => {
+    return useFirebase()?.firestore ?? null;
 };
