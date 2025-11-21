@@ -175,25 +175,25 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                     <TabsTrigger value="summary"><ClipboardList className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Summary</span></TabsTrigger>
                 </TabsList>
                 <TabsContent value="ai-report">
-                  <Card><CardContent className='p-6'>AI Report Content</CardContent></Card>
+                  AI Report Content
                 </TabsContent>
                 <TabsContent value="timeline">
-                  <Card><CardContent className='p-6'>Project Timeline Content</CardContent></Card>
+                  Project Timeline Content
                 </TabsContent>
                 <TabsContent value="huddle">
-                  <Card><CardContent className='p-6'>Daily Huddle Report Content</CardContent></Card>
+                  Daily Huddle Report Content
                 </TabsContent>
                 <TabsContent value="sprint-charts">
-                   <Card><CardContent className='p-6'>Sprint Summary Chart Content</CardContent></Card>
+                   Sprint Summary Chart Content
                 </TabsContent>
                  <TabsContent value="burndown">
-                   <Card><CardContent className='p-6'>Daily Burndown Chart Content</CardContent></Card>
+                   Daily Burndown Chart Content
                 </TabsContent>
                  <TabsContent value="performance">
-                   <Card><CardContent className='p-6'>Individual Performance Content</CardContent></Card>
+                   Individual Performance Content
                 </TabsContent>
                  <TabsContent value="mood">
-                   <Card><CardContent className='p-6'>Mood trend over sprints Content</CardContent></Card>
+                   Mood trend over sprints Content
                 </TabsContent>
                 <TabsContent value="summary">
                 </TabsContent>
