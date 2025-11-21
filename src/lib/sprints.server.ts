@@ -10,9 +10,9 @@ export async function getSprintById(sprintId: string): Promise<(Sprint & { id: s
             admin.initializeApp();
         } catch (error: any) {
             console.error("Firebase admin initialization error", error);
-            // We'll throw a more specific error to avoid crashing the whole page if possible
-            // but for now, re-throwing is okay to see the error.
-            throw new Error("Failed to initialize Firebase Admin SDK.");
+            // In a production app, you might want to throw a more user-friendly error
+            // or handle this case more gracefully.
+            throw new Error("Failed to initialize Firebase Admin SDK. Server-side data fetching is unavailable.");
         }
     }
 
