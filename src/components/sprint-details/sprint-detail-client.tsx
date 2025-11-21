@@ -159,7 +159,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
             ) : sprint ? (
-              <Tabs defaultValue="summary" className="w-full">
+              <Tabs defaultValue="ai-report" className="w-full">
                 <Card className="w-full shadow-lg shadow-blue-200/50 mb-6">
                     <CardHeader>
                         <CardDescription>{sprint.projectName} / Sprint {sprint.sprintNumber}</CardDescription>
@@ -200,21 +200,6 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                    <Card><CardContent className='p-6'>Mood trend over sprints Content</CardContent></Card>
                 </TabsContent>
                 <TabsContent value="summary">
-                    <Card>
-                        <CardHeader>
-                          <CardTitle>Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-6 md:grid-cols-2">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="font-medium text-muted-foreground">Department</div>
-                                <div>{sprint.department}</div>
-                                <div className="font-medium text-muted-foreground">Team</div>
-                                <div>{sprint.team}</div>
-                                <div className="font-medium text-muted-foreground">Facilitator</div>
-                                <div>{sprint.facilitatorName}</div>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </TabsContent>
               </Tabs>
             ) : (
