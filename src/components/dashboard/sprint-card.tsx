@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
-import { UserCircle2, Trash2 } from 'lucide-react';
+import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { deleteSprint } from '@/lib/sprints';
 import { useFirestore } from '@/firebase/provider';
@@ -22,6 +22,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from "@/components/ui/dropdown-menu"
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -85,9 +91,34 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
             </div>
           </CardContent>
           <CardFooter>
-            <Link href={`/sprint/${sprint.id}`} className="w-full">
-              <Button className="w-full rounded-full font-bold">View Details</Button>
-            </Link>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button className="w-full rounded-full font-bold">
+                        <span>View Details</span>
+                        <ChevronDown className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className='w-56' align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href={`/sprint/${sprint.id}/planning`}>
+                            <ListTodo className="mr-2 h-4 w-4" />
+                            <span>Planning</span>
+                        </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                         <Link href={`/sprint/${sprint.id}/retrospective`}>
+                            <History className="mr-2 h-4 w-4" />
+                            <span>Retrospective</span>
+                        </Link>
+                    </DropdownMenuItem>
+                     <DropdownMenuItem asChild>
+                         <Link href={`/sprint/${sprint.id}`}>
+                            <Rocket className="mr-2 h-4 w-4" />
+                            <span>Track</span>
+                        </Link>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
           </CardFooter>
         </Card>
       </div>
