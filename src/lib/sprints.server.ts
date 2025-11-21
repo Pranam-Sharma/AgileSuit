@@ -1,5 +1,5 @@
 
-import 'server-only';
+'use server';
 import * as admin from 'firebase-admin';
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
