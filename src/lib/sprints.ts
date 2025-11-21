@@ -1,6 +1,6 @@
 
 'use server';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase/index';
 import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
@@ -17,7 +17,7 @@ export async function createSprint(sprintData: Sprint & { userId: string }) {
     }
 }
 
-export async function getSprints(userId: string): Promise<Sprint[]> {
+export async function getSprints(userId: string): Promise<(Sprint & { id: string })[]> {
     try {
         const q = query(
             collection(firestore, "sprints"), 
@@ -26,7 +26,7 @@ export async function getSprints(userId: string): Promise<Sprint[]> {
         );
 
         const querySnapshot = await getDocs(q);
-        const sprints: Sprint[] = [];
+        const sprints: (Sprint & { id: string })[] = [];
         querySnapshot.forEach((doc) => {
             sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id: string });
         });
