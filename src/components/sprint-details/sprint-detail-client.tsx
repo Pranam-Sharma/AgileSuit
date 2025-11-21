@@ -39,7 +39,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { Badge } from '../ui/badge';
 
 function UserNav({ user }: { user: User }) {
@@ -193,13 +193,13 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 lg:px-8">
+            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 lg:p-8">
               <div className="mx-auto max-w-7xl">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                     <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
                         <div className='text-center'>
-                            <p className='text-sm font-bold -mb-1'>Sht</p>
-                            <p className='text-4xl font-extrabold tracking-tighter'>46</p>
+                            <p className='text-sm font-bold -mb-1'>sprint</p>
+                            <p className='text-4xl font-extrabold tracking-tighter'>{sprint.sprintNumber}</p>
                         </div>
                     </div>
                     <div>
@@ -246,16 +246,39 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
             </div>
 
             <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-              <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="mb-6 bg-transparent p-0 border-b-2 border-gray-200 rounded-none justify-start">
-                    <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Overview</TabsTrigger>
-                    <TabsTrigger value="planning" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Planning</TabsTrigger>
-                    <TabsTrigger value="retrospective" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Retrospective</TabsTrigger>
-                    <TabsTrigger value="tracking" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Tracking</TabsTrigger>
-                    <TabsTrigger value="reports" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Reports</TabsTrigger>
-                    <TabsTrigger value="insights" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Insights</TabsTrigger>
+              <Tabs defaultValue="summary" className="w-full">
+                <TabsList className="mb-6 grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent p-0 border-b-2 border-gray-200 rounded-none justify-start">
+                    <TabsTrigger value="ai-report">AI Report</TabsTrigger>
+                    <TabsTrigger value="timeline">Project Timeline</TabsTrigger>
+                    <TabsTrigger value="huddle">Daily Huddle Report</TabsTrigger>
+                    <TabsTrigger value="chart-view">Sprint Summary Chart View</TabsTrigger>
+                    <TabsTrigger value="burndown">Daily Burndown Chart</TabsTrigger>
+                    <TabsTrigger value="performance">🏆 Individual Performance</TabsTrigger>
+                    <TabsTrigger value="mood">😊 Mood trend over sprints</TabsTrigger>
+                    <TabsTrigger value="summary">📋 Sprint Summary</TabsTrigger>
                 </TabsList>
-                <TabsContent value="overview">
+                <TabsContent value="ai-report">
+                    <p>AI Report Content</p>
+                </TabsContent>
+                <TabsContent value="timeline">
+                    <p>Project Timeline Content</p>
+                </TabsContent>
+                <TabsContent value="huddle">
+                    <p>Daily Huddle Report Content</p>
+                </TabsContent>
+                <TabsContent value="chart-view">
+                    <p>Sprint Summary Chart View Content</p>
+                </TabsContent>
+                <TabsContent value="burndown">
+                    <p>Daily Burndown Chart Content</p>
+                </TabsContent>
+                <TabsContent value="performance">
+                    <p>Individual Performance Content</p>
+                </TabsContent>
+                <TabsContent value="mood">
+                    <p>Mood trend over sprints Content</p>
+                </TabsContent>
+                <TabsContent value="summary">
                   <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     <div className="lg:col-span-1 space-y-6">
                         <Card>
@@ -331,11 +354,11 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                              <CardHeader><CardTitle>Velocity Chart</CardTitle></CardHeader>
                              <CardContent className="h-[180px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={velocityData}>
+                                    <RechartsBarChart data={velocityData}>
                                         <XAxis dataKey="name" />
                                         <YAxis />
                                         <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                                    </BarChart>
+                                    </RechartsBarChart>
                                 </ResponsiveContainer>
                              </CardContent>
                         </Card>
@@ -359,21 +382,6 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                         </Card>
                     </div>
                   </div>
-                </TabsContent>
-                <TabsContent value="planning">
-                  Planning Content
-                </TabsContent>
-                <TabsContent value="retrospective">
-                  Retrospective Content
-                </TabsContent>
-                <TabsContent value="tracking">
-                  Tracking Content
-                </TabsContent>
-                 <TabsContent value="reports">
-                   Reports Content
-                </TabsContent>
-                 <TabsContent value="insights">
-                    Insights Content
                 </TabsContent>
               </Tabs>
             </div>
