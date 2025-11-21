@@ -1,9 +1,14 @@
+
 import 'server-only';
-import { initializeServerApp } from '@/firebase/server';
+import * as admin from 'firebase-admin';
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
+if (admin.apps.length === 0) {
+    admin.initializeApp();
+}
+
 export async function getSprintById(sprintId: string): Promise<(Sprint & { id: string }) | null> {
-    const { firestore } = initializeServerApp();
+    const firestore = admin.firestore();
     try {
         const docRef = firestore.collection('sprints').doc(sprintId);
         const docSnap = await docRef.get();
