@@ -1,5 +1,4 @@
 import 'server-only';
-import { getFirestore } from 'firebase-admin/firestore';
 import { initializeServerApp } from '@/firebase/server';
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
