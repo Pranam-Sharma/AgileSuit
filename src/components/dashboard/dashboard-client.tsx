@@ -174,7 +174,7 @@ export function DashboardClient() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-blue-50 via-fuchsia-50 to-orange-50">
-      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
+      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 px-4 backdrop-blur-sm sm:px-8">
         <Logo />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
