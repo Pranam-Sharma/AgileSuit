@@ -247,18 +247,18 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
 
             <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
               <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="mb-6 grid w-full grid-cols-4 sm:grid-cols-8 bg-transparent p-0 border-b-2 border-gray-200 rounded-none justify-start">
-                    <TabsTrigger value="ai-report">AI Report</TabsTrigger>
+                <TabsList className="mb-6 grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted text-muted-foreground p-1 rounded-lg">
+                    <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
                     <TabsTrigger value="timeline">Project Timeline</TabsTrigger>
-                    <TabsTrigger value="huddle">Daily Huddle Report</TabsTrigger>
-                    <TabsTrigger value="chart-view">Sprint Summary Chart View</TabsTrigger>
-                    <TabsTrigger value="burndown">Daily Burndown Chart</TabsTrigger>
-                    <TabsTrigger value="performance">🏆 Individual Performance</TabsTrigger>
-                    <TabsTrigger value="mood">😊 Mood trend over sprints</TabsTrigger>
-                    <TabsTrigger value="summary">📋 Sprint Summary</TabsTrigger>
+                    <TabsTrigger value="huddle">Daily Huddle</TabsTrigger>
+                    <TabsTrigger value="charts">Sprint Charts</TabsTrigger>
+                    <TabsTrigger value="burndown">Daily Burndown</TabsTrigger>
+                    <TabsTrigger value="performance">Individual Metrics</TabsTrigger>
+                    <TabsTrigger value="mood">Team Mood Trend</TabsTrigger>
+                    <TabsTrigger value="summary">Sprint Summary</TabsTrigger>
                 </TabsList>
-                <TabsContent value="ai-report">
-                    <p>AI Report Content</p>
+                <TabsContent value="ai-insights">
+                    <p>AI Insights Content</p>
                 </TabsContent>
                 <TabsContent value="timeline">
                     <p>Project Timeline Content</p>
@@ -266,7 +266,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                 <TabsContent value="huddle">
                     <p>Daily Huddle Report Content</p>
                 </TabsContent>
-                <TabsContent value="chart-view">
+                <TabsContent value="charts">
                     <p>Sprint Summary Chart View Content</p>
                 </TabsContent>
                 <TabsContent value="burndown">
