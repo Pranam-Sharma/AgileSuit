@@ -66,14 +66,14 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
     <AlertDialog>
       <div className="p-0.5 rounded-2xl bg-gradient-to-br from-pink-400 via-blue-400 to-green-400 shadow-blue-400/40 shadow-xl hover:shadow-blue-400/60 hover:shadow-2xl transition-all duration-300">
         <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
-          <CardHeader className="relative">
+          <CardHeader className="relative p-4">
             <CardDescription className='text-xs'>{sprint.projectName}</CardDescription>
-            <CardTitle className="text-xl font-bold pr-10">{sprint.sprintName} ({sprint.sprintNumber})</CardTitle>
+            <CardTitle className="text-lg font-bold pr-10">{sprint.sprintName} ({sprint.sprintNumber})</CardTitle>
             <AlertDialogTrigger asChild>
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-4 right-4 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     disabled={isDeleting}
                     aria-label="Delete sprint"
                 >
@@ -81,7 +81,7 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
                 </Button>
             </AlertDialogTrigger>
           </CardHeader>
-          <CardContent className="flex-grow space-y-4">
+          <CardContent className="flex-grow space-y-3 p-4 pt-0">
             <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{sprint.department}</Badge>
                 <Badge variant="secondary">{sprint.team}</Badge>
@@ -91,10 +91,10 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
                 <span>Facilitator: {sprint.facilitatorName}</span>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className='p-4 pt-0'>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button className="w-full rounded-full font-bold">
+                    <Button className="w-full rounded-full font-bold" size="sm">
                         <span>View Details</span>
                         <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -147,11 +147,11 @@ SprintCard.Skeleton = function SprintCardSkeleton() {
     return (
         <div className="p-0.5 rounded-2xl bg-gray-200">
             <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
-                <CardHeader>
+                <CardHeader className='p-4'>
                     <Skeleton className="h-4 w-1/3" />
                     <Skeleton className="h-6 w-2/3 mt-1" />
                 </CardHeader>
-                <CardContent className="flex-grow space-y-4">
+                <CardContent className="flex-grow space-y-3 p-4 pt-0">
                     <div className="flex flex-wrap gap-2">
                         <Skeleton className="h-6 w-20" />
                         <Skeleton className="h-6 w-20" />
@@ -161,8 +161,8 @@ SprintCard.Skeleton = function SprintCardSkeleton() {
                         <Skeleton className="h-4 w-1/2" />
                     </div>
                 </CardContent>
-                <CardFooter>
-                    <Skeleton className="h-10 w-full rounded-full" />
+                <CardFooter className='p-4 pt-0'>
+                    <Skeleton className="h-9 w-full rounded-full" />
                 </CardFooter>
             </Card>
         </div>
