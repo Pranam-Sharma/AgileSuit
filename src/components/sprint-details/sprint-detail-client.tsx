@@ -7,6 +7,13 @@ import {
   Loader2,
   LogOut,
   ChevronLeft,
+  Bot,
+  Calendar,
+  Users,
+  BarChart2,
+  TrendingDown,
+  Smile,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
@@ -25,6 +32,7 @@ import type { Sprint } from '../dashboard/create-sprint-dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -151,14 +159,52 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
             ) : sprint ? (
-                <Card className="w-full shadow-lg shadow-blue-200/50">
+              <Tabs defaultValue="summary" className="w-full">
+                <Card className="w-full shadow-lg shadow-blue-200/50 mb-6">
                     <CardHeader>
                         <CardDescription>{sprint.projectName} / Sprint {sprint.sprintNumber}</CardDescription>
                         <CardTitle className='text-3xl font-bold text-fuchsia-700'>{sprint.sprintName}</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                        <div className="space-y-4">
-                            <h3 className="font-semibold">Details</h3>
+                    <CardContent>
+                      <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
+                          <TabsTrigger value="ai-report"><Bot className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>AI Report</span></TabsTrigger>
+                          <TabsTrigger value="timeline"><Calendar className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Timeline</span></TabsTrigger>
+                          <TabsTrigger value="huddle"><Users className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Huddle</span></TabsTrigger>
+                          <TabsTrigger value="sprint-charts"><BarChart2 className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Charts</span></TabsTrigger>
+                          <TabsTrigger value="burndown"><TrendingDown className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Burndown</span></TabsTrigger>
+                          <TabsTrigger value="performance"><span className='mr-2'>🏆</span><span className='hidden md:inline'>Performance</span></TabsTrigger>
+                          <TabsTrigger value="mood"><Smile className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Mood</span></TabsTrigger>
+                          <TabsTrigger value="summary"><ClipboardList className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Summary</span></TabsTrigger>
+                      </TabsList>
+                    </CardContent>
+                </Card>
+                <TabsContent value="ai-report">
+                  <Card><CardContent className='p-6'>AI Report Content</CardContent></Card>
+                </TabsContent>
+                <TabsContent value="timeline">
+                  <Card><CardContent className='p-6'>Project Timeline Content</CardContent></Card>
+                </TabsContent>
+                <TabsContent value="huddle">
+                  <Card><CardContent className='p-6'>Daily Huddle Report Content</CardContent></Card>
+                </TabsContent>
+                <TabsContent value="sprint-charts">
+                   <Card><CardContent className='p-6'>Sprint Summary Chart Content</CardContent></Card>
+                </TabsContent>
+                 <TabsContent value="burndown">
+                   <Card><CardContent className='p-6'>Daily Burndown Chart Content</CardContent></Card>
+                </TabsContent>
+                 <TabsContent value="performance">
+                   <Card><CardContent className='p-6'>Individual Performance Content</CardContent></Card>
+                </TabsContent>
+                 <TabsContent value="mood">
+                   <Card><CardContent className='p-6'>Mood trend over sprints Content</CardContent></Card>
+                </TabsContent>
+                <TabsContent value="summary">
+                    <Card>
+                        <CardHeader>
+                          <CardTitle>Details</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-6 md:grid-cols-2">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="font-medium text-muted-foreground">Department</div>
                                 <div>{sprint.department}</div>
@@ -167,9 +213,10 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                                 <div className="font-medium text-muted-foreground">Facilitator</div>
                                 <div>{sprint.facilitatorName}</div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+              </Tabs>
             ) : (
                 <div className="flex flex-col items-center justify-center pt-20 text-center">
                     <h2 className="text-2xl font-bold">Sprint Not Found</h2>
