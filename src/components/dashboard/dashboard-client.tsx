@@ -46,10 +46,10 @@ function UserNav({ user }: { user: User }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
-            <AvatarFallback>{userInitial}</AvatarFallback>
+            <AvatarFallback className='bg-white/20 text-white'>{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -173,18 +173,18 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-blue-50 via-fuchsia-50 to-orange-50">
-      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 px-4 backdrop-blur-sm sm:px-8">
-        <Logo />
+    <div className="flex min-h-screen w-full flex-col bg-gray-50">
+      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
+        <Logo className="text-white" />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
           
           <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="search"
               placeholder="Search sprints..."
-              className="w-full rounded-full bg-fuchsia-100/50 pl-10 h-10 border-fuchsia-200/50 focus-visible:shadow-lg focus-visible:shadow-fuchsia-500/10 focus-visible:ring-fuchsia-400"
+              className="w-full rounded-full bg-violet-500/80 pl-10 h-10 border-violet-500 text-white placeholder:text-violet-200 focus-visible:bg-violet-500 focus-visible:shadow-lg focus-visible:shadow-violet-400/10 focus-visible:ring-white"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -192,7 +192,7 @@ export function DashboardClient() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 rounded-full">
+                <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
                     <ListFilter className="h-4 w-4" />
                     <span>Filter</span>
                 </Button>
