@@ -29,8 +29,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Checkbox } from '../ui/checkbox';
-import { Label } from '../ui/label';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -91,7 +89,7 @@ type ChecklistState = Record<string, boolean>;
 
 function ChecklistItem({ id, label, checked, onCheckedChange }: { id: string; label: string; checked: boolean; onCheckedChange: (id: string, checked: boolean) => void; }) {
     const Icon = checked ? CheckCircle2 : Circle;
-    const color = checked ? 'text-green-600' : 'text-muted-foreground';
+    const color = checked ? 'text-primary' : 'text-muted-foreground';
 
     return (
         <div
@@ -99,7 +97,7 @@ function ChecklistItem({ id, label, checked, onCheckedChange }: { id: string; la
             onClick={() => onCheckedChange(id, !checked)}
         >
             <Icon className={`h-5 w-5 flex-shrink-0 ${color}`} />
-            <span className={`flex-grow ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+            <span className={`flex-grow ${checked ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{label}</span>
         </div>
     );
 }
@@ -172,7 +170,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
-            {/* Simplified header for loading state */}
             <div className='flex items-center gap-4'>
                 <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
                     <ChevronLeft className="h-5 w-5" />
@@ -238,16 +235,16 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                 </div>
                 <div className="lg:col-span-2">
                      <Tabs defaultValue="general" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9">
-                            <TabsTrigger value="general">General Information</TabsTrigger>
-                            <TabsTrigger value="team">Team Composition</TabsTrigger>
-                            <TabsTrigger value="priority">Project Priority</TabsTrigger>
-                            <TabsTrigger value="metrics">Platform Metrics</TabsTrigger>
-                            <TabsTrigger value="goals">Sprint Goals</TabsTrigger>
-                            <TabsTrigger value="milestones">Project Milestones</TabsTrigger>
-                            <TabsTrigger value="demo">Sprint Demo</TabsTrigger>
-                            <TabsTrigger value="security">Security Audit</TabsTrigger>
-                            <TabsTrigger value="save">Save Summary</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 bg-muted/50 p-1 h-auto flex-wrap">
+                            <TabsTrigger value="general" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">General Information</TabsTrigger>
+                            <TabsTrigger value="team" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Team Composition</TabsTrigger>
+                            <TabsTrigger value="priority" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Priority</TabsTrigger>
+                            <TabsTrigger value="metrics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Platform Metrics</TabsTrigger>
+                            <TabsTrigger value="goals" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Goals</TabsTrigger>
+                            <TabsTrigger value="milestones" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Milestones</TabsTrigger>
+                            <TabsTrigger value="demo" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Demo</TabsTrigger>
+                            <TabsTrigger value="security" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Security Audit</TabsTrigger>
+                            <TabsTrigger value="save" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Save Summary</TabsTrigger>
                         </TabsList>
                         <Card className="mt-4">
                             <CardContent className="pt-6">
@@ -275,4 +272,3 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     </div>
   );
 }
-
