@@ -159,25 +159,21 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
                     <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 </div>
             ) : sprint ? (
-              <Tabs defaultValue="ai-report" className="w-full">
-                <Card className="w-full shadow-lg shadow-blue-200/50 mb-6">
-                    <CardHeader>
-                        <CardDescription>{sprint.projectName} / Sprint {sprint.sprintNumber}</CardDescription>
-                        <CardTitle className='text-3xl font-bold text-fuchsia-700'>{sprint.sprintName}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto">
-                          <TabsTrigger value="ai-report"><Bot className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>AI Report</span></TabsTrigger>
-                          <TabsTrigger value="timeline"><Calendar className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Timeline</span></TabsTrigger>
-                          <TabsTrigger value="huddle"><Users className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Huddle</span></TabsTrigger>
-                          <TabsTrigger value="sprint-charts"><BarChart2 className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Charts</span></TabsTrigger>
-                          <TabsTrigger value="burndown"><TrendingDown className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Burndown</span></TabsTrigger>
-                          <TabsTrigger value="performance"><span className='mr-2'>🏆</span><span className='hidden md:inline'>Performance</span></TabsTrigger>
-                          <TabsTrigger value="mood"><Smile className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Mood</span></TabsTrigger>
-                          <TabsTrigger value="summary"><ClipboardList className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Summary</span></TabsTrigger>
-                      </TabsList>
-                    </CardContent>
-                </Card>
+              <Tabs defaultValue="summary" className="w-full">
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground">{sprint.projectName} / Sprint {sprint.sprintNumber}</p>
+                  <h1 className='text-3xl font-bold text-fuchsia-700'>{sprint.sprintName}</h1>
+                </div>
+                <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto mb-6">
+                    <TabsTrigger value="ai-report"><Bot className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>AI Report</span></TabsTrigger>
+                    <TabsTrigger value="timeline"><Calendar className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Timeline</span></TabsTrigger>
+                    <TabsTrigger value="huddle"><Users className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Huddle</span></TabsTrigger>
+                    <TabsTrigger value="sprint-charts"><BarChart2 className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Charts</span></TabsTrigger>
+                    <TabsTrigger value="burndown"><TrendingDown className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Burndown</span></TabsTrigger>
+                    <TabsTrigger value="performance"><span className='mr-2'>🏆</span><span className='hidden md:inline'>Performance</span></TabsTrigger>
+                    <TabsTrigger value="mood"><Smile className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Mood</span></TabsTrigger>
+                    <TabsTrigger value="summary"><ClipboardList className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Summary</span></TabsTrigger>
+                </TabsList>
                 <TabsContent value="ai-report">
                   <Card><CardContent className='p-6'>AI Report Content</CardContent></Card>
                 </TabsContent>
