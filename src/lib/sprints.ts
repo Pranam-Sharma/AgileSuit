@@ -1,5 +1,5 @@
-
 'use server';
+
 import { initializeFirebase } from '@/firebase/index';
 import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
