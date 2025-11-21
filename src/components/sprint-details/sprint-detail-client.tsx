@@ -201,7 +201,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-white">
+            <div className="border-b bg-violet-50/50">
               <div className="mx-auto max-w-7xl p-6 lg:p-8">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                     <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
@@ -406,4 +406,5 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
       </main>
     </div>
   );
-}
+
+    
