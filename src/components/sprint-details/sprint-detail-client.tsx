@@ -57,10 +57,10 @@ function UserNav({ user }: { user: User }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
-            <AvatarFallback>{userInitial}</AvatarFallback>
+            <AvatarFallback className='bg-white/20 text-white'>{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -174,13 +174,13 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
         <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push('/dashboard')}>
+            <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
                 <ChevronLeft className="h-5 w-5" />
                 <span className="sr-only">Back to Dashboard</span>
             </Button>
-            <Logo />
+            <Logo className="text-white" />
         </div>
         <div className="flex items-center gap-4">
           <UserNav user={user} />
@@ -193,8 +193,8 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 lg:p-8">
-              <div className="mx-auto max-w-7xl">
+            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50">
+              <div className="mx-auto max-w-7xl p-6 lg:p-8">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                     <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
                         <div className='text-center'>
