@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
 import { UserCircle2 } from 'lucide-react';
+import { Skeleton } from '../ui/skeleton';
 
 type SprintCardProps = {
   sprint: Sprint;
@@ -35,4 +36,30 @@ export function SprintCard({ sprint }: SprintCardProps) {
       </Card>
     </div>
   );
+}
+
+SprintCard.Skeleton = function SprintCardSkeleton() {
+    return (
+        <div className="p-0.5 rounded-2xl bg-gray-200">
+            <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
+                <CardHeader>
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-6 w-2/3 mt-1" />
+                </CardHeader>
+                <CardContent className="flex-grow space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-6 w-20" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full rounded-full" />
+                </CardFooter>
+            </Card>
+        </div>
+    )
 }

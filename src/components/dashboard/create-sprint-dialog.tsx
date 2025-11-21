@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
+import { createSprint } from '@/lib/sprints';
 
 const sprintSchema = z
   .object({
@@ -78,6 +79,15 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   const isFacilitator = form.watch('isFacilitator');
 
   async function onSubmit(values: Sprint) {
+    if (!user) {
+        toast({
+            title: 'Authentication Error',
+            description: 'You must be logged in to create a sprint.',
+            variant: 'destructive'
+        });
+        return;
+    }
+
     setIsLoading(true);
     
     let finalValues = { ...values };
@@ -85,20 +95,24 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
       finalValues.facilitatorName = user?.displayName ?? user?.email ?? 'Me';
     }
 
-    // Here you would typically handle form submission, e.g., send to an API
-    // For now, we'll just simulate a delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    
-    onCreateSprint(finalValues);
-
-    toast({
-      title: 'Sprint Created!',
-      description: `Sprint "${values.sprintName}" has been successfully created.`,
-    });
-    
-    setIsLoading(false);
-    setOpen(false);
-    form.reset();
+    try {
+        const newSprint = await createSprint({ ...finalValues, userId: user.uid });
+        onCreateSprint(newSprint);
+        toast({
+            title: 'Sprint Created!',
+            description: `Sprint "${values.sprintName}" has been successfully created.`,
+        });
+        setOpen(false);
+        form.reset();
+    } catch (error) {
+        toast({
+            title: 'Error Creating Sprint',
+            description: 'There was an issue saving the sprint to the database.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (

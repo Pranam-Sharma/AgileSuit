@@ -26,6 +26,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CreateSprintDialog, type Sprint } from './create-sprint-dialog';
 import { SprintCard } from './sprint-card';
 import { Input } from '../ui/input';
+import { getSprints } from '@/lib/sprints';
+import { useToast } from '@/hooks/use-toast';
+
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -75,17 +78,45 @@ type Filters = {
 };
 
 export function DashboardClient() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
   const [sprints, setSprints] = React.useState<Sprint[]>([]);
+  const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<Filters>({
     department: [],
     team: [],
   });
+  
+  React.useEffect(() => {
+    if (isUserLoading) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    async function fetchSprints() {
+      setIsSprintsLoading(true);
+      try {
+        const userSprints = await getSprints(user.uid);
+        setSprints(userSprints);
+      } catch (error) {
+        toast({
+          title: 'Error fetching sprints',
+          description: 'Could not load your sprints. Please try again later.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsSprintsLoading(false);
+      }
+    }
+
+    fetchSprints();
+  }, [user, isUserLoading, router, toast]);
 
   const handleCreateSprint = (sprintData: Sprint) => {
-    setSprints((prevSprints) => [...prevSprints, sprintData]);
+    setSprints((prevSprints) => [sprintData, ...prevSprints]);
   };
   
   const allDepartments = React.useMemo(() => Array.from(new Set(sprints.map(s => s.department))), [sprints]);
@@ -125,14 +156,7 @@ export function DashboardClient() {
     });
   }, [sprints, filters, searchQuery]);
 
-
-  React.useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [isLoading, user, router]);
-
-  if (isLoading || !user) {
+  if (isUserLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -216,11 +240,24 @@ export function DashboardClient() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-             {filteredSprints.map((sprint, index) => (
-                <SprintCard key={index} sprint={sprint} />
-             ))}
-          </div>
+          {isSprintsLoading ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <SprintCard.Skeleton />
+                <SprintCard.Skeleton />
+                <SprintCard.Skeleton />
+            </div>
+          ) : filteredSprints.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredSprints.map((sprint, index) => (
+                  <SprintCard key={index} sprint={sprint} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 rounded-2xl bg-white/50 shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
+                <h2 className="text-2xl font-bold text-gray-700">No Sprints Yet!</h2>
+                <p className="mt-2 text-gray-500">Click "Create Sprint" to get started.</p>
+            </div>
+          )}
         </div>
       </main>
     </div>
