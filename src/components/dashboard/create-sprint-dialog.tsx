@@ -40,7 +40,16 @@ const sprintSchema = z.object({
     team: z.string().min(1, 'Team is required.'),
     isFacilitator: z.boolean().default(false),
     facilitatorName: z.string().optional(),
-  });
+  }).refine(
+    (data) => {
+      if (data.isFacilitator) return true;
+      return !!data.facilitatorName;
+    },
+    {
+      message: 'Facilitator name is required if you are not the facilitator.',
+      path: ['facilitatorName'],
+    }
+  );
 
 export type Sprint = z.infer<typeof sprintSchema>;
 
@@ -78,14 +87,6 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
             variant: 'destructive'
         });
         return;
-    }
-
-    if (!values.isFacilitator && !values.facilitatorName) {
-      form.setError('facilitatorName', {
-        type: 'manual',
-        message: 'Facilitator name is required if you are not the facilitator.',
-      });
-      return;
     }
 
     setIsLoading(true);
@@ -156,7 +157,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
                       <Input placeholder="e.g., Q1 Planning" {...field} />
                     </FormControl>
                     <FormMessage />
-                  </Item>
+                  </FormItem>
                 )}
               />
             </div>
