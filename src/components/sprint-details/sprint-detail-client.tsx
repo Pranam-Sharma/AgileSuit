@@ -256,14 +256,14 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
             <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
               <Tabs defaultValue="summary" className="w-full">
                 <TabsList className="mb-6 grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted text-muted-foreground p-1 rounded-lg">
-                    <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-                    <TabsTrigger value="timeline">Project Timeline</TabsTrigger>
-                    <TabsTrigger value="huddle">Daily Huddle</TabsTrigger>
-                    <TabsTrigger value="charts">Sprint Charts</TabsTrigger>
-                    <TabsTrigger value="burndown">Daily Burndown</TabsTrigger>
-                    <TabsTrigger value="performance">Individual Metrics</TabsTrigger>
-                    <TabsTrigger value="mood">Team Mood Trend</TabsTrigger>
-                    <TabsTrigger value="summary">Sprint Summary</TabsTrigger>
+                    <TabsTrigger value="ai-insights" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Insights</TabsTrigger>
+                    <TabsTrigger value="timeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Timeline</TabsTrigger>
+                    <TabsTrigger value="huddle" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Huddle</TabsTrigger>
+                    <TabsTrigger value="charts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Charts</TabsTrigger>
+                    <TabsTrigger value="burndown" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Burndown</TabsTrigger>
+                    <TabsTrigger value="performance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Individual Metrics</TabsTrigger>
+                    <TabsTrigger value="mood" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Team Mood Trend</TabsTrigger>
+                    <TabsTrigger value="summary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Summary</TabsTrigger>
                 </TabsList>
                 <TabsContent value="ai-insights">
                     <p>AI Insights Content</p>
@@ -407,3 +407,5 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
     </div>
   );
 }
+
+    
