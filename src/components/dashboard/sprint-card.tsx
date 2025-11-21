@@ -11,6 +11,17 @@ import { Skeleton } from '../ui/skeleton';
 import { deleteSprint } from '@/lib/sprints';
 import { useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 
 type SprintCardProps = {
   sprint: Sprint & { id: string };
@@ -22,11 +33,7 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
     const { toast } = useToast();
     const [isDeleting, setIsDeleting] = React.useState(false);
 
-    const handleDelete = async (e: React.MouseEvent) => {
-        e.stopPropagation(); // prevent card click event
-        if (!window.confirm('Are you sure you want to delete this sprint?')) {
-            return;
-        }
+    const handleDeleteConfirm = async () => {
         setIsDeleting(true);
         try {
             await deleteSprint(firestore, sprint.id);
@@ -41,42 +48,62 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
                 description: error.message || 'An unknown error occurred.',
                 variant: 'destructive',
             });
+        } finally {
             setIsDeleting(false);
         }
     };
 
   return (
-    <div className="p-0.5 rounded-2xl bg-gradient-to-br from-pink-400 via-blue-400 to-green-400 shadow-blue-400/40 shadow-xl hover:shadow-blue-400/60 hover:shadow-2xl transition-all duration-300">
-      <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
-        <CardHeader className="relative">
-          <CardDescription className='text-xs'>{sprint.projectName}</CardDescription>
-          <CardTitle className="text-xl font-bold pr-10">{sprint.sprintName} ({sprint.sprintNumber})</CardTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            onClick={handleDelete}
-            disabled={isDeleting}
-            aria-label="Delete sprint"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="flex-grow space-y-4">
-          <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{sprint.department}</Badge>
-              <Badge variant="secondary">{sprint.team}</Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <UserCircle2 className="h-4 w-4" />
-              <span>Facilitator: {sprint.facilitatorName}</span>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full rounded-full font-bold">View Details</Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <AlertDialog>
+      <div className="p-0.5 rounded-2xl bg-gradient-to-br from-pink-400 via-blue-400 to-green-400 shadow-blue-400/40 shadow-xl hover:shadow-blue-400/60 hover:shadow-2xl transition-all duration-300">
+        <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
+          <CardHeader className="relative">
+            <CardDescription className='text-xs'>{sprint.projectName}</CardDescription>
+            <CardTitle className="text-xl font-bold pr-10">{sprint.sprintName} ({sprint.sprintNumber})</CardTitle>
+            <AlertDialogTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-4 right-4 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    disabled={isDeleting}
+                    aria-label="Delete sprint"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </AlertDialogTrigger>
+          </CardHeader>
+          <CardContent className="flex-grow space-y-4">
+            <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary">{sprint.department}</Badge>
+                <Badge variant="secondary">{sprint.team}</Badge>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <UserCircle2 className="h-4 w-4" />
+                <span>Facilitator: {sprint.facilitatorName}</span>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full rounded-full font-bold">View Details</Button>
+          </CardFooter>
+        </Card>
+      </div>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete this sprint
+            and remove its data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting}>
+            {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
