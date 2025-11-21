@@ -44,6 +44,9 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      if (!auth) {
+        throw new Error("Auth service is not available.");
+      }
       await signInWithEmailAndPassword(auth, values.email, values.password);
       router.push('/dashboard');
       router.refresh();
@@ -62,6 +65,9 @@ export function LoginForm() {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+      if (!auth) {
+        throw new Error("Auth service is not available.");
+      }
       await signInWithPopup(auth, provider);
       router.push('/dashboard');
       router.refresh();

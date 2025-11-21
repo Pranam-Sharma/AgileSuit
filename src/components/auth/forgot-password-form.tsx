@@ -39,6 +39,9 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      if (!auth) {
+        throw new Error("Auth service is not available.");
+      }
       await sendPasswordResetEmail(auth, values.email);
       toast({
         title: 'Password Reset Email Sent',

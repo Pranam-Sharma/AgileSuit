@@ -1,19 +1,52 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
-import type { FirebaseApp } from 'firebase/app';
-import type { Auth } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
-import { initializeFirebase } from './init';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { getApps, initializeApp, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { firebaseConfig } from './config';
 
-type FirebaseContextValue = {
+type FirebaseInstances = {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
-} | null;
+};
+
+type FirebaseContextValue = FirebaseInstances | null;
 
 const FirebaseContext = createContext<FirebaseContextValue>(null);
 
-export function FirebaseProvider({ children }: { children: React.ReactNode }) {
+let firebaseInstances: FirebaseInstances | null = null;
+
+function initializeFirebase(): FirebaseInstances {
+  if (typeof window === 'undefined') {
+    throw new Error("Firebase should only be initialized on the client side.");
+  }
+  if (firebaseInstances) {
+    return firebaseInstances;
+  }
+  
+  const isFullyConfigured =
+    firebaseConfig.apiKey &&
+    firebaseConfig.authDomain &&
+    firebaseConfig.projectId &&
+    firebaseConfig.storageBucket &&
+    firebaseConfig.messagingSenderId &&
+    firebaseConfig.appId;
+
+  if (!isFullyConfigured) {
+    throw new Error('Firebase configuration is incomplete.');
+  }
+
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+
+  firebaseInstances = { app, auth, firestore };
+  return firebaseInstances;
+}
+
+
+export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [value, setValue] = useState<FirebaseContextValue>(null);
 
   useEffect(() => {
@@ -24,8 +57,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Return a loading state or null until Firebase is initialized.
   if (!value) {
-    // You can return a loading spinner here if you want
     return null;
   }
 
@@ -34,7 +67,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useFirebase = () => {
+export const useFirebase = (): FirebaseInstances => {
   const context = useContext(FirebaseContext);
   if (!context) {
     throw new Error('useFirebase must be used within a FirebaseProvider');
@@ -42,10 +75,10 @@ export const useFirebase = () => {
   return context;
 };
 
-export const useAuth = () => {
+export const useAuth = (): Auth => {
   return useFirebase().auth;
 };
 
-export const useFirestore = () => {
+export const useFirestore = (): Firestore => {
     return useFirebase().firestore;
 };

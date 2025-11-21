@@ -10,6 +10,11 @@ export function useUser() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
+    if (!auth) {
+      // Auth service might not be available on initial render.
+      // The provider will re-render when it is.
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsLoading(false);
