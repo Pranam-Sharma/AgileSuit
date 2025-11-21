@@ -54,7 +54,7 @@ const sprintSchema = z
 export type Sprint = z.infer<typeof sprintSchema>;
 
 type CreateSprintDialogProps = {
-  onCreateSprint: (sprint: Sprint) => void;
+  onCreateSprint: (sprint: Sprint & { id: string }) => void;
 };
 
 export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) {

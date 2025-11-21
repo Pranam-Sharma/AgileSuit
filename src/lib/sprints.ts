@@ -1,8 +1,11 @@
 
 'use server';
-import { firestore } from '@/firebase';
+import { initializeFirebase } from '@/firebase';
 import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
+
+// Initialize firebase on the server
+const { firestore } = initializeFirebase();
 
 export async function createSprint(sprintData: Sprint & { userId: string }) {
     try {
@@ -25,7 +28,7 @@ export async function getSprints(userId: string): Promise<Sprint[]> {
         const querySnapshot = await getDocs(q);
         const sprints: Sprint[] = [];
         querySnapshot.forEach((doc) => {
-            sprints.push(doc.data() as Sprint);
+            sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id: string });
         });
         return sprints;
     } catch (error) {

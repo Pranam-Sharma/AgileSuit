@@ -249,7 +249,7 @@ export function DashboardClient() {
           ) : filteredSprints.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredSprints.map((sprint, index) => (
-                  <SprintCard key={index} sprint={sprint} />
+                  <SprintCard key={(sprint as any).id || index} sprint={sprint} />
               ))}
             </div>
           ) : (
