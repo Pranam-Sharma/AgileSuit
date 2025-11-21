@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -10,6 +9,7 @@ import {
   ChevronLeft,
   CheckCircle2,
   Circle,
+  Calendar as CalendarIcon,
 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
@@ -29,6 +29,12 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { DateRange } from 'react-day-picker';
+import { addDays, format, isWeekend, differenceInDays } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -117,10 +123,42 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   const [checklist, setChecklist] = React.useState<ChecklistState>(() =>
     planningChecklist.reduce((acc, item) => ({ ...acc, [item.id]: false }), {})
   );
+  
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: new Date(),
+    to: addDays(new Date(), 13), // Default to a 2-week sprint
+  });
 
   const handleChecklistChange = (id: string, checked: boolean) => {
     setChecklist(prev => ({ ...prev, [id]: checked }));
   };
+  
+  const calculateSprintDays = React.useCallback(() => {
+    if (!date || !date.from || !date.to) {
+        return 0;
+    }
+
+    let count = 0;
+    let currentDate = new Date(date.from);
+    const endDate = new Date(date.to);
+
+    // Don't count the last day (retrospective)
+    const dayBeforeEnd = new Date(endDate);
+    dayBeforeEnd.setDate(endDate.getDate() - 1);
+
+    if (currentDate > dayBeforeEnd) return 0;
+    
+    // Loop through each day in the range
+    while (currentDate <= dayBeforeEnd) {
+        // Check if the day is not a weekend (Saturday or Sunday)
+        if (!isWeekend(currentDate)) {
+            count++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return count;
+  }, [date]);
 
   React.useEffect(() => {
     if (!firestore || !user) return;
@@ -179,6 +217,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
             <div className="flex items-center justify-center flex-1">
                 <Loader2 className="h-8 w-8 animate-spin text-white" />
             </div>
+             <div className="flex items-center gap-4">
+               {user && <UserNav user={user} />}
+            </div>
         </header>
         <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -189,11 +230,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
+       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
         <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
+            <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.back()}>
                 <ChevronLeft className="h-5 w-5" />
-                <span className="sr-only">Back to Dashboard</span>
+                <span className="sr-only">Back</span>
             </Button>
             <Logo className="text-white" />
         </div>
@@ -248,7 +289,58 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                         </TabsList>
                         <Card className="mt-4">
                             <CardContent className="pt-6">
-                                <TabsContent value="general"><p>General Information form fields will go here.</p></TabsContent>
+                                <TabsContent value="general">
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <h3 className="text-lg font-medium">Sprint Dates</h3>
+                                            <p className="text-sm text-muted-foreground">Select the start and end date for the sprint.</p>
+                                        </div>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                             <Popover>
+                                                <PopoverTrigger asChild>
+                                                <Button
+                                                    id="date"
+                                                    variant={"outline"}
+                                                    className={cn(
+                                                    "w-full justify-start text-left font-normal h-12",
+                                                    !date && "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                                    {date?.from ? (
+                                                    date.to ? (
+                                                        <>
+                                                        {format(date.from, "LLL dd, y")} -{" "}
+                                                        {format(date.to, "LLL dd, y")}
+                                                        </>
+                                                    ) : (
+                                                        format(date.from, "LLL dd, y")
+                                                    )
+                                                    ) : (
+                                                    <span>Pick a date</span>
+                                                    )}
+                                                </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                    initialFocus
+                                                    mode="range"
+                                                    defaultMonth={date?.from}
+                                                    selected={date}
+                                                    onSelect={setDate}
+                                                    numberOfMonths={2}
+                                                />
+                                                </PopoverContent>
+                                            </Popover>
+                                            <div className="flex items-center justify-center rounded-lg border bg-muted p-4">
+                                                <div className="text-center">
+                                                    <div className="text-4xl font-bold text-primary">{calculateSprintDays()}</div>
+                                                    <div className="text-sm text-muted-foreground">Days in Sprint</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TabsContent>
                                 <TabsContent value="team"><p>Team Composition form fields will go here.</p></TabsContent>
                                 <TabsContent value="priority"><p>Project Priority form fields will go here.</p></TabsContent>
                                 <TabsContent value="metrics"><p>Platform Metrics form fields will go here.</p></TabsContent>
