@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAJUh6SVlsC8vuSND8LXtbwvPccvwVfBQw",
+  authDomain: "agilesuit.firebaseapp.com",
+  projectId: "agilesuit",
+  storageBucket: "agilesuit.firebasestorage.app",
+  messagingSenderId: "487337167258",
+  appId: "1:487337167258:web:4c0214bfc2344d05d4d223",
 };
