@@ -104,10 +104,10 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
         });
         setOpen(false);
         form.reset();
-    } catch (error) {
+    } catch (error: any) {
         toast({
             title: 'Error Creating Sprint',
-            description: 'There was an issue saving the sprint to the database.',
+            description: error.message || 'An unknown error occurred.',
             variant: 'destructive',
         });
     } finally {
