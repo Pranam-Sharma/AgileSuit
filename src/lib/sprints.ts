@@ -1,5 +1,7 @@
 import { collection, addDoc, getDocs, query, where, orderBy, Firestore, deleteDoc, doc, getDoc } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
+import { getAdminFirestore } from "@/firebase/server";
+
 
 export async function createSprint(db: Firestore, sprintData: Sprint & { userId: string }) {
     try {
@@ -41,19 +43,13 @@ export async function deleteSprint(db: Firestore, sprintId: string): Promise<voi
 }
 
 // This function needs to be called from a server component or API route
-// For simplicity in this context, we are not creating a separate server file for db access,
-// but in a larger app you would initialize firebase-admin separately.
 export async function getSprintById(sprintId: string): Promise<(Sprint & { id: string }) | null> {
-    // This is a temporary solution for server-side rendering in Next.js app router.
-    // In a real application, you'd have a separate firebase-admin initialization.
-    const { initializeFirebase } = await import('@/firebase');
-    const { firestore } = initializeFirebase();
-
+    const firestore = getAdminFirestore();
     try {
-        const docRef = doc(firestore, "sprints", sprintId);
-        const docSnap = await getDoc(docRef);
+        const docRef = firestore.collection('sprints').doc(sprintId);
+        const docSnap = await docRef.get();
 
-        if (docSnap.exists()) {
+        if (docSnap.exists) {
             return { id: docSnap.id, ...docSnap.data() } as Sprint & { id: string };
         } else {
             console.log("No such document!");
@@ -61,8 +57,6 @@ export async function getSprintById(sprintId: string): Promise<(Sprint & { id: s
         }
     } catch (error) {
         console.error("Error getting document:", error);
-        // This function will be run on the server, so we can't use browser-based toasts.
-        // We re-throw the error to be handled by the page component.
         throw new Error("Failed to fetch sprint details.");
     }
 }
