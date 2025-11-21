@@ -206,24 +206,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
   if (isUserLoading || isLoading || !user) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
-            <div className='flex items-center gap-4'>
-                <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
-                    <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Logo className="text-white" />
-            </div>
-            <div className="flex items-center justify-center flex-1">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-            </div>
-             <div className="flex items-center gap-4">
-               {user && <UserNav user={user} />}
-            </div>
-        </header>
-        <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
