@@ -174,7 +174,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
 
   if (isUserLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
@@ -201,7 +201,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50">
+            <div className="border-b bg-white">
               <div className="mx-auto max-w-7xl p-6 lg:p-8">
                 <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
                     <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
