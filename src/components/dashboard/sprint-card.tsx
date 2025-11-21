@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
 type SprintCardProps = {
   sprint: Sprint & { id: string };
@@ -84,7 +85,9 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full rounded-full font-bold">View Details</Button>
+            <Link href={`/sprint/${sprint.id}`} className="w-full">
+              <Button className="w-full rounded-full font-bold">View Details</Button>
+            </Link>
           </CardFooter>
         </Card>
       </div>
