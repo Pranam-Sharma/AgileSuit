@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -29,6 +30,7 @@ import { Loader2, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 import { createSprint } from '@/lib/sprints';
+import { useFirestore } from '@/firebase/provider';
 
 const sprintSchema = z
   .object({
@@ -62,6 +64,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   const { user } = useUser();
+  const firestore = useFirestore();
 
   const form = useForm<Sprint>({
     resolver: zodResolver(sprintSchema),
@@ -96,7 +99,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
     }
 
     try {
-        const newSprint = await createSprint({ ...finalValues, userId: user.uid });
+        const newSprint = await createSprint(firestore, { ...finalValues, userId: user.uid });
         onCreateSprint(newSprint);
         toast({
             title: 'Sprint Created!',
@@ -156,7 +159,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
                       <Input placeholder="e.g., Q1 Planning" {...field} />
                     </FormControl>
                     <FormMessage />
-                  </FormItem>
+                  </Item>
                 )}
               />
             </div>

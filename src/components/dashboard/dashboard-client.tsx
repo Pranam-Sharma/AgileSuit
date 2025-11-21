@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +10,7 @@ import {
   ListFilter,
   Search,
 } from 'lucide-react';
-import { useAuth } from '@/firebase/provider';
+import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
@@ -81,7 +82,8 @@ export function DashboardClient() {
   const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [sprints, setSprints] = React.useState<Sprint[]>([]);
+  const firestore = useFirestore();
+  const [sprints, setSprints] = React.useState<(Sprint & {id: string})[]>([]);
   const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<Filters>({
@@ -99,7 +101,7 @@ export function DashboardClient() {
     async function fetchSprints() {
       setIsSprintsLoading(true);
       try {
-        const userSprints = await getSprints(user.uid);
+        const userSprints = await getSprints(firestore, user.uid);
         setSprints(userSprints);
       } catch (error) {
         toast({
@@ -113,9 +115,9 @@ export function DashboardClient() {
     }
 
     fetchSprints();
-  }, [user, isUserLoading, router, toast]);
+  }, [user, isUserLoading, router, toast, firestore]);
 
-  const handleCreateSprint = (sprintData: Sprint) => {
+  const handleCreateSprint = (sprintData: Sprint & { id: string }) => {
     setSprints((prevSprints) => [sprintData, ...prevSprints]);
   };
   
