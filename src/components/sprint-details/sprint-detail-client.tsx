@@ -15,6 +15,11 @@ import {
   Smile,
   ClipboardList,
   Briefcase,
+  AlertTriangle,
+  Lightbulb,
+  CheckCircle2,
+  Circle,
+  Clock,
 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
@@ -33,6 +38,9 @@ import type { Sprint } from '../dashboard/create-sprint-dialog';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Badge } from '../ui/badge';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -77,6 +85,33 @@ function UserNav({ user }: { user: User }) {
   );
 }
 
+const chartData = [
+    { name: 'Sep 10', value: 200 },
+    { name: 'Sep 19', value: 300 },
+    { name: 'Sep 24', value: 450 },
+  ];
+
+const velocityData = [
+    { name: 'Spr 1', value: 35 },
+    { name: 'Sprt', value: 42 },
+    { name: 'Sp 3', value: 38 },
+];
+
+
+function StatCard({ title, value, children }: { title: string; value: string; children?: React.ReactNode }) {
+    return (
+        <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="text-4xl font-bold">{value}</div>
+                {children && <div className="h-16 -mx-6 -mb-6 mt-2">{children}</div>}
+            </CardContent>
+        </Card>
+    );
+}
+
 type SprintDetailClientProps = {
     sprintId: string;
 };
@@ -101,11 +136,9 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
 
         if (sprintDoc.exists()) {
           const sprintData = sprintDoc.data() as Sprint;
-          // Security check: ensure the user owns this sprint
           if (sprintData.userId === user.uid) {
             setSprint({ id: sprintDoc.id, ...sprintData });
           } else {
-            // If not the owner, treat as not found.
             setSprint(null);
             toast({
                 title: 'Access Denied',
@@ -133,15 +166,15 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
   
   if (isUserLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-blue-50 via-fuchsia-50 to-orange-50">
-      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-gray-50">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-8">
         <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => router.push('/dashboard')}>
                 <ChevronLeft className="h-5 w-5" />
@@ -160,55 +193,187 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
           </div>
         ) : sprint ? (
           <>
-            <div className="border-b bg-background/50 p-4 sm:px-8 sm:py-6">
-                <div className="flex items-center gap-6">
-                    <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-fuchsia-500 text-white shadow-lg">
-                        <Briefcase className="h-10 w-10" />
+            <div className="border-b bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 lg:px-8">
+              <div className="mx-auto max-w-7xl">
+                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+                    <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
+                        <div className='text-center'>
+                            <p className='text-sm font-bold -mb-1'>Sht</p>
+                            <p className='text-4xl font-extrabold tracking-tighter'>46</p>
+                        </div>
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-primary">{sprint.projectName} / Sprint {sprint.sprintNumber}</p>
                         <h1 className="text-3xl font-bold text-foreground">
-                            {sprint.sprintName}
+                            {sprint.sprintName} – {sprint.projectName}
                         </h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Facilitator: {sprint.facilitatorName}</p>
                     </div>
                 </div>
+
+                <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                    <StatCard title="Planned Points" value="40" />
+                    <StatCard title="Completed" value="25" />
+                    <StatCard title="Velocity" value="12,5 SP" />
+                    <StatCard title="Goals Achieved" value="75%">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorUv)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </StatCard>
+                     <StatCard title="Burndown Chart" value="">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData.slice().reverse()} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                                <defs>
+                                     <linearGradient id="colorBurndown" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="name" hide />
+                                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorBurndown)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                     </StatCard>
+                </div>
+              </div>
             </div>
 
-            <div className="mx-auto max-w-5xl p-4 sm:p-8">
-              <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 h-auto mb-6">
-                    <TabsTrigger value="ai-report"><Bot className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>AI Report</span></TabsTrigger>
-                    <TabsTrigger value="timeline"><Calendar className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Timeline</span></TabsTrigger>
-                    <TabsTrigger value="huddle"><Users className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Huddle</span></TabsTrigger>
-                    <TabsTrigger value="sprint-charts"><BarChart2 className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Charts</span></TabsTrigger>
-                    <TabsTrigger value="burndown"><TrendingDown className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Burndown</span></TabsTrigger>
-                    <TabsTrigger value="performance"><span className='mr-2'>🏆</span><span className='hidden md:inline'>Performance</span></TabsTrigger>
-                    <TabsTrigger value="mood"><Smile className='h-4 w-4 md:mr-2'/><span className='hidden md:inline'>Mood</span></TabsTrigger>
-                    <TabsTrigger value="summary"><ClipboardList className='h-4 w-4 md:mr-2' /><span className='hidden md:inline'>Summary</span></TabsTrigger>
+            <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+              <Tabs defaultValue="overview" className="w-full">
+                <TabsList className="mb-6 bg-transparent p-0 border-b-2 border-gray-200 rounded-none justify-start">
+                    <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Overview</TabsTrigger>
+                    <TabsTrigger value="planning" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Planning</TabsTrigger>
+                    <TabsTrigger value="retrospective" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Retrospective</TabsTrigger>
+                    <TabsTrigger value="tracking" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Tracking</TabsTrigger>
+                    <TabsTrigger value="reports" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Reports</TabsTrigger>
+                    <TabsTrigger value="insights" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent -mb-0.5 pb-2">Insights</TabsTrigger>
                 </TabsList>
-                <TabsContent value="ai-report">
-                  AI Report Content
+                <TabsContent value="overview">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-1 space-y-6">
+                        <Card>
+                            <CardHeader><CardTitle>Sprint Goals</CardTitle></CardHeader>
+                            <CardContent>
+                                <ul className="space-y-2">
+                                    <li className="flex items-start gap-2">
+                                        <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                                        <span>Complete migration of APIC platform to DSDK 3.0.0</span>
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex justify-between items-center">
+                                    <CardTitle>Open Stories</CardTitle>
+                                    <span className="text-sm font-medium text-muted-foreground">Status</span>
+                                </div>
+                            </CardHeader>
+                            <CardContent className='space-y-4'>
+                                <div className="flex justify-between items-center">
+                                    <div className='flex items-center gap-2'>
+                                        <Circle className="h-4 w-4 text-orange-500 fill-current" />
+                                        <span>Sprint 46-1</span>
+                                    </div>
+                                    <Badge variant="outline" className='text-orange-600 border-orange-200'>To Do</Badge>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <div className='flex items-center gap-2'>
+                                        <Clock className="h-4 w-4 text-blue-500" />
+                                        <span>Sprint 46-2</span>
+                                    </div>
+                                    <Badge variant="outline" className='text-blue-600 border-blue-200'>In Progress</Badge>
+                                </div>
+                            </CardContent>
+                        </Card>
+                         <Card className='bg-primary/5 border-primary/20'>
+                            <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
+                            <CardContent>
+                                <p className="text-sm">The sprint is on track: 15 points remaining. API deprecation requires additional attention.</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="lg:col-span-1 space-y-6">
+                        <Card>
+                             <CardHeader><CardTitle>Burndown Chart</CardTitle></CardHeader>
+                             <CardContent className="h-64">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
+                                         <defs>
+                                            <linearGradient id="burndownContent" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#burndownContent)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                             </CardContent>
+                        </Card>
+                         <Card className='bg-primary/5 border-primary/20'>
+                            <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
+                            <CardContent>
+                                <p className="text-sm">The sprint is on track: 15.75 points remaining. API deprecation.</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                     <div className="lg:col-span-1 space-y-6">
+                        <Card>
+                             <CardHeader><CardTitle>Velocity Chart</CardTitle></CardHeader>
+                             <CardContent className="h-[180px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={velocityData}>
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                             </CardContent>
+                        </Card>
+                         <Card>
+                            <CardHeader><CardTitle>Mood</CardTitle></CardHeader>
+                            <CardContent>
+                                <div className='flex items-center justify-center gap-4 p-4 rounded-lg bg-green-50 border border-green-200'>
+                                    <Smile className='h-10 w-10 text-green-600' />
+                                    <span className='text-xl font-semibold text-green-700'>Positive</span>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><CardTitle>Risks / Blockers</CardTitle></CardHeader>
+                            <CardContent>
+                               <div className='flex items-center gap-2 text-amber-700'>
+                                 <AlertTriangle className='h-5 w-5' />
+                                 <p>Legacy support could cause delays</p>
+                               </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                  </div>
                 </TabsContent>
-                <TabsContent value="timeline">
-                  Project Timeline Content
+                <TabsContent value="planning">
+                  Planning Content
                 </TabsContent>
-                <TabsContent value="huddle">
-                  Daily Huddle Report Content
+                <TabsContent value="retrospective">
+                  Retrospective Content
                 </TabsContent>
-                <TabsContent value="sprint-charts">
-                   Sprint Summary Chart Content
+                <TabsContent value="tracking">
+                  Tracking Content
                 </TabsContent>
-                 <TabsContent value="burndown">
-                   Daily Burndown Chart Content
+                 <TabsContent value="reports">
+                   Reports Content
                 </TabsContent>
-                 <TabsContent value="performance">
-                   Individual Performance Content
-                </TabsContent>
-                 <TabsContent value="mood">
-                   Mood trend over sprints Content
-                </TabsContent>
-                <TabsContent value="summary">
-                  {/* The content for the summary tab can go here if needed in the future */}
+                 <TabsContent value="insights">
+                    Insights Content
                 </TabsContent>
               </Tabs>
             </div>
