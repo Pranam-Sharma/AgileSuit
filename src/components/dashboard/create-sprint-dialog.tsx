@@ -32,8 +32,7 @@ import { useUser } from '@/hooks/use-user';
 import { createSprint } from '@/lib/sprints';
 import { useFirestore } from '@/firebase/provider';
 
-const sprintSchema = z
-  .object({
+const sprintSchema = z.object({
     sprintNumber: z.string().min(1, 'Sprint number is required.'),
     sprintName: z.string().min(1, 'Sprint name is required.'),
     projectName: z.string().min(1, 'Project name is required.'),
@@ -41,17 +40,7 @@ const sprintSchema = z
     team: z.string().min(1, 'Team is required.'),
     isFacilitator: z.boolean().default(false),
     facilitatorName: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.isFacilitator) return true;
-      return !!data.facilitatorName;
-    },
-    {
-      message: 'Facilitator name is required if you are not the facilitator.',
-      path: ['facilitatorName'],
-    }
-  );
+  });
 
 export type Sprint = z.infer<typeof sprintSchema>;
 
@@ -89,6 +78,14 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
             variant: 'destructive'
         });
         return;
+    }
+
+    if (!values.isFacilitator && !values.facilitatorName) {
+      form.setError('facilitatorName', {
+        type: 'manual',
+        message: 'Facilitator name is required if you are not the facilitator.',
+      });
+      return;
     }
 
     setIsLoading(true);
