@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, addDoc, getDocs, query, where, orderBy, Firestore } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, orderBy, Firestore, deleteDoc, doc } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 export async function createSprint(db: Firestore, sprintData: Sprint & { userId: string }) {
@@ -31,5 +31,14 @@ export async function getSprints(db: Firestore, userId: string): Promise<(Sprint
     } catch (error) {
         console.error("Error getting documents: ", error);
         throw new Error('Failed to fetch sprints.');
+    }
+}
+
+export async function deleteSprint(db: Firestore, sprintId: string): Promise<void> {
+    try {
+        await deleteDoc(doc(db, "sprints", sprintId));
+    } catch (error: any) {
+        console.error("Error deleting document: ", error);
+        throw new Error('Failed to delete sprint.');
     }
 }

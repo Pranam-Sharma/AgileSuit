@@ -120,6 +120,10 @@ export function DashboardClient() {
   const handleCreateSprint = (sprintData: Sprint & { id: string }) => {
     setSprints((prevSprints) => [sprintData, ...prevSprints]);
   };
+
+  const handleDeleteSprint = (sprintId: string) => {
+    setSprints((prevSprints) => prevSprints.filter(sprint => sprint.id !== sprintId));
+  };
   
   const allDepartments = React.useMemo(() => Array.from(new Set(sprints.map(s => s.department))), [sprints]);
   const allTeams = React.useMemo(() => Array.from(new Set(sprints.map(s => s.team))), [sprints]);
@@ -251,7 +255,7 @@ export function DashboardClient() {
           ) : filteredSprints.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredSprints.map((sprint, index) => (
-                  <SprintCard key={(sprint as any).id || index} sprint={sprint} />
+                  <SprintCard key={sprint.id} sprint={sprint} onDelete={handleDeleteSprint} />
               ))}
             </div>
           ) : (
