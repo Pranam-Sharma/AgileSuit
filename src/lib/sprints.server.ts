@@ -5,15 +5,10 @@ import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 // This function will handle initialization internally to avoid top-level execution errors.
 export async function getSprintById(sprintId: string): Promise<(Sprint & { id: string }) | null> {
+    // In this environment, Firebase Admin SDK can auto-discover credentials.
+    // We ensure the app is initialized only once.
     if (admin.apps.length === 0) {
-        try {
-            admin.initializeApp();
-        } catch (error: any) {
-            console.error("Firebase admin initialization error", error);
-            // In a production app, you might want to throw a more user-friendly error
-            // or handle this case more gracefully.
-            throw new Error("Failed to initialize Firebase Admin SDK. Server-side data fetching is unavailable.");
-        }
+        admin.initializeApp();
     }
 
     const firestore = admin.firestore();
