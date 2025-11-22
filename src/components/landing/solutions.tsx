@@ -46,7 +46,7 @@ export function SolutionsSection() {
         <div className="mx-auto mt-16 max-w-5xl">
             <div className={cn('rounded-3xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
                 <Image
-                    src="/images/dashboard-showcase.jpg"
+                    src="/images/dashboard-showcase-v2.jpg"
                     alt="AgileSuit dashboard showcase"
                     width={2070}
                     height={1164}
