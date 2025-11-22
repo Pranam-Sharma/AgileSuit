@@ -10,8 +10,8 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 
 const navLinks = [
-  { href: '#features', label: 'Features' },
   { href: '#solutions', label: 'Solutions' },
+  { href: '#features', label: 'Features' },
   { href: '#resources', label: 'Resources' },
   { href: '#pricing', label: 'Pricing' },
 ];
