@@ -30,20 +30,20 @@ const resources = [
 
 export function ResourcesSection() {
   return (
-    <section id="resources" className="py-24 sm:py-32 bg-violet-50">
+    <section id="resources" className="py-24 sm:py-32 bg-black">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Resources</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Learn and grow with AgileSuit
           </p>
-          <p className="mt-6 text-lg leading-8 text-muted-foreground">
+          <p className="mt-6 text-lg leading-8 text-gray-400">
             Explore our guides, best practices, and case studies to get the most out of AgileSuit.
           </p>
         </div>
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
           {resources.map((resource) => (
-            <Card key={resource.title} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow bg-white">
+            <Card key={resource.title} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow bg-gray-900 border-gray-700">
                <div className="aspect-video relative">
                 <Image
                     src={resource.image}
@@ -54,10 +54,10 @@ export function ResourcesSection() {
                 />
               </div>
               <CardHeader>
-                <CardTitle>{resource.title}</CardTitle>
+                <CardTitle className="text-white">{resource.title}</CardTitle>
               </CardHeader>
               <CardContent className="flex-grow">
-                <p className="text-muted-foreground">{resource.description}</p>
+                <p className="text-gray-400">{resource.description}</p>
               </CardContent>
               <CardFooter>
                 <Link href={resource.link} className="flex items-center text-primary font-semibold">
