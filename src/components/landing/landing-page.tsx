@@ -1,13 +1,14 @@
 import { LandingHeader } from "./header";
 import { HeroSection } from "./hero";
 
-export function LandingPage() {
+export function LandingPage({ children }: { children?: React.ReactNode }) {
     return (
         <div className="min-h-screen w-full dotted-bg">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <LandingHeader />
+            <LandingHeader />
+            <main>
                 <HeroSection />
-            </div>
+                {children}
+            </main>
         </div>
     )
 }

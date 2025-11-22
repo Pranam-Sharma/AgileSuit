@@ -18,12 +18,24 @@ const navLinks = [
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
+
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const targetId = href.replace(/.*#/, '');
+    const elem = document.getElementById(targetId);
+    if (elem) {
+      elem.scrollIntoView({
+        behavior: 'smooth',
+      });
+    }
+  };
+
   return (
     <Link
       href={href}
+      onClick={handleScroll}
       className={cn(
-        'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-        pathname === href && 'bg-muted text-foreground'
+        'rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
       )}
     >
       {label}
