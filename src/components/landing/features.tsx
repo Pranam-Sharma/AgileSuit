@@ -1,26 +1,28 @@
-
-import { BarChart2, ClipboardList, Lightbulb, Users } from 'lucide-react';
+import { TaskManagementIcon } from '../icons/task-management-icon';
+import { ReportingAnalyticsIcon } from '../icons/reporting-analytics-icon';
+import { TeamCollaborationIcon } from '../icons/team-collaboration-icon';
+import { CustomWorkflowsIcon } from '../icons/custom-workflows-icon';
 
 const features = [
   {
-    icon: ClipboardList,
-    title: 'Plan Sprints',
-    description: 'Organize your with structured sprint plans',
+    icon: TaskManagementIcon,
+    title: 'Task Management',
+    description: 'Organize, assign, and track tasks to keep your team aligned and productive.',
   },
   {
-    icon: Users,
-    title: 'Collaborate Easily',
-    description: 'Enhance teamwork with retrospective tools',
+    icon: ReportingAnalyticsIcon,
+    title: 'Reporting & Analytics',
+    description: 'Gain insights into your team\'s performance with comprehensive reports.',
   },
   {
-    icon: BarChart2,
-    title: 'Track Progress',
-    description: 'Monitor sprint status and task completion',
+    icon: TeamCollaborationIcon,
+    title: 'Team Collaboration',
+    description: 'Facilitate communication and collaboration with a centralized platform.',
   },
   {
-    icon: Lightbulb,
-    title: 'Gain Insights',
-    description: 'Generate reports to improve your performance',
+    icon: CustomWorkflowsIcon,
+    title: 'Custom Workflows',
+    description: 'Adapt the tool to your team\'s unique processes with customizable workflows.',
   },
 ];
 
@@ -41,8 +43,8 @@ export function FeaturesSection() {
           <div className="grid grid-cols-1 gap-y-16 gap-x-8 text-center sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => (
               <div key={index} className="flex flex-col items-center">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
-                  <feature.icon className="h-12 w-12 text-primary" />
+                <div className="flex h-24 w-24 items-center justify-center">
+                  <feature.icon className="h-24 w-24" />
                 </div>
                 <h3 className="mt-6 text-2xl font-semibold leading-7 text-foreground">{feature.title}</h3>
                 <p className="mt-4 text-base leading-7 text-muted-foreground">{feature.description}</p>
