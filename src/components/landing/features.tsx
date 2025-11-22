@@ -43,11 +43,11 @@ export function FeaturesSection() {
           <div className="grid grid-cols-1 gap-y-16 gap-x-8 text-center sm:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => (
               <div key={index} className="flex flex-col items-center">
-                <div className="flex h-24 w-24 items-center justify-center">
-                  <feature.icon className="h-24 w-24" />
+                <div className="flex h-32 w-32 items-center justify-center">
+                  <feature.icon className="h-32 w-32" />
                 </div>
                 <h3 className="mt-6 text-2xl font-semibold leading-7 text-foreground">{feature.title}</h3>
-                <p className="mt-4 text-base leading-7 text-muted-foreground">{feature.description}</p>
+                <p className="mt-4 text-lg leading-7 text-muted-foreground">{feature.description}</p>
               </div>
             ))}
           </div>
