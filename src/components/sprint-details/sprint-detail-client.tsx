@@ -406,7 +406,4 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
       </main>
     </div>
   );
-
-    
-
-    
+}
