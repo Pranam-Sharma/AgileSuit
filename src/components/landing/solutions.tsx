@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Logo } from '../logo';
 
 export function SolutionsSection() {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -34,17 +35,19 @@ export function SolutionsSection() {
   return (
     <section id="solutions" className="py-24 sm:py-32 bg-white" ref={sectionRef}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary">Your Command Center</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            All-in-One Project Dashboard
-          </p>
-           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            Get a bird's-eye view of your sprint's progress. Track points, monitor burndown, and gain AI-powered insights to keep your team aligned and on schedule.
-          </p>
-        </div>
-        <div className="mx-auto mt-16 max-w-5xl">
-            <div className={cn('rounded-3xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
+        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
+            <div className={cn('transition-all duration-1000 ease-out', isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10')}>
+                 <div className="mb-4">
+                    <Logo />
+                 </div>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+                    Solutions for Every Agile Need
+                </h2>
+                <p className="mt-6 text-lg leading-8 text-muted-foreground">
+                    Whether it's planning, tracking, retrospective, or reporting, AgileSuit has you covered.
+                </p>
+            </div>
+            <div className={cn('rounded-xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
                 <Image
                     src="/images/dashboard-showcase-v2.jpg"
                     alt="AgileSuit dashboard showcase"
