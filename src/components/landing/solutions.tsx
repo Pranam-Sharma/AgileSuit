@@ -1,3 +1,4 @@
+
 import { Users, ListChecks, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 
@@ -21,7 +22,7 @@ const solutions = [
 
 export function SolutionsSection() {
   return (
-    <section id="solutions" className="py-24 sm:py-32 bg-background">
+    <section id="solutions" className="py-24 sm:py-32 bg-gray-50">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Solutions</h2>
