@@ -1,5 +1,6 @@
 import { LandingHeader } from "./header";
 import { HeroSection } from "./hero";
+import { Footer } from "./footer";
 
 export function LandingPage({ children }: { children?: React.ReactNode }) {
     return (
@@ -9,6 +10,7 @@ export function LandingPage({ children }: { children?: React.ReactNode }) {
                 <HeroSection />
                 {children}
             </main>
+            <Footer />
         </div>
     )
 }
