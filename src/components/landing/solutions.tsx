@@ -44,7 +44,7 @@ export function SolutionsSection() {
 
     return () => {
       if (sectionRef.current) {
-        observer.unobserve(sectionref.current);
+        observer.unobserve(sectionRef.current);
       }
     };
   }, []);
