@@ -165,6 +165,6 @@
   }
 
   .animate-fade-in-up {
-    animation: fade-in-up 1.2s ease-out forwards;
+    animation: fade-in-up 2s ease-out forwards;
   }
 }
