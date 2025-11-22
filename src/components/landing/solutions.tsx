@@ -51,7 +51,6 @@ export function SolutionsSection() {
                     width={2070}
                     height={1164}
                     className="object-cover"
-                    data-ai-hint="dashboard analytics"
                 />
             </div>
         </div>
