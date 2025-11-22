@@ -206,6 +206,6 @@
   }
 
   .animate-spin {
-      animation: spin 5s linear infinite;
+      animation: spin 4s steps(4, end) infinite;
   }
 }
