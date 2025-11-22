@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
@@ -29,7 +30,7 @@ const resources = [
 
 export function ResourcesSection() {
   return (
-    <section id="resources" className="py-24 sm:py-32 bg-muted/20">
+    <section id="resources" className="py-24 sm:py-32 bg-background">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Resources</h2>

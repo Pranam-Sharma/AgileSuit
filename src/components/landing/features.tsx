@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, BarChart, Users, Settings } from 'lucide-react';
 
@@ -26,7 +27,7 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="py-24 sm:py-32">
+    <section id="features" className="py-24 sm:py-32 bg-muted/20">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Core Features</h2>
