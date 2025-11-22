@@ -43,19 +43,12 @@ export function AnimatedSection({
     <div
       ref={ref}
       className={cn(
-        'transition-opacity duration-1000',
-        isVisible ? 'opacity-100' : 'opacity-0',
+        'opacity-0', // Start as invisible
+        isVisible && 'animate-fade-in-up', // Apply animation when visible
         className
       )}
     >
-      <div
-        className={cn(
-          'transition-transform duration-1000',
-          isVisible ? 'translate-y-0' : 'translate-y-5'
-        )}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
