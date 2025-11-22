@@ -32,14 +32,14 @@ export function SolutionsSection() {
   }, []);
 
   return (
-    <section id="solutions" className="py-24 sm:py-32 bg-black" ref={sectionRef}>
+    <section id="solutions" className="py-24 sm:py-32 bg-white" ref={sectionRef}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Your Command Center</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             All-in-One Project Dashboard
           </p>
-           <p className="mt-6 text-lg leading-8 text-gray-400">
+           <p className="mt-6 text-lg leading-8 text-muted-foreground">
             Get a bird's-eye view of your sprint's progress. Track points, monitor burndown, and gain AI-powered insights to keep your team aligned and on schedule.
           </p>
         </div>
