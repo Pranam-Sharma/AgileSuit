@@ -83,15 +83,6 @@ export function SolutionsSection() {
               </div>
             ))}
           </div>
-          <div className="mt-16 aspect-[4/2] lg:aspect-[5/2] xl:aspect-[16/6] relative rounded-2xl shadow-2xl overflow-hidden border">
-             <Image 
-                src="https://picsum.photos/seed/dashboard/1200/600"
-                alt="AgileSuit Dashboard"
-                fill
-                className="object-cover"
-                data-ai-hint="dashboard analytics"
-             />
-          </div>
         </div>
       </div>
     </section>

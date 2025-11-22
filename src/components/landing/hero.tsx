@@ -104,7 +104,7 @@ function IntegrationsCard() {
 
 export function HeroSection() {
     return (
-        <section className="relative py-24 md:py-32 lg:py-40">
+        <section className="relative py-24 md:py-32 lg:py-40 overflow-hidden">
             <div className="relative z-10 mx-auto max-w-2xl text-center">
                 <div className='flex justify-center'>
                     <div className='p-3 border-4 border-foreground/10 rounded-2xl bg-background/50 backdrop-blur-sm shadow-lg mb-8'>
