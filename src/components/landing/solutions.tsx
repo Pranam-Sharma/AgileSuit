@@ -1,6 +1,9 @@
+'use client';
 
+import * as React from 'react';
 import { Users, ListChecks, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 const solutions = [
   {
@@ -21,8 +24,33 @@ const solutions = [
 ];
 
 export function SolutionsSection() {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const sectionRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionref.current);
+      }
+    };
+  }, []);
+
   return (
-    <section id="solutions" className="py-24 sm:py-32 bg-black">
+    <section id="solutions" className="py-24 sm:py-32 bg-black" ref={sectionRef}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Solutions</h2>
@@ -32,8 +60,15 @@ export function SolutionsSection() {
         </div>
         <div className="mx-auto mt-16 max-w-2xl lg:max-w-none">
           <div className="grid grid-cols-1 gap-y-10 gap-x-8 lg:grid-cols-3">
-            {solutions.map((solution) => (
-              <div key={solution.title} className="text-center sm:flex sm:text-left lg:block lg:text-center">
+            {solutions.map((solution, index) => (
+              <div
+                key={solution.title}
+                className={cn(
+                  'text-center sm:flex sm:text-left lg:block lg:text-center opacity-0',
+                  isVisible && 'animate-slide-in-right'
+                )}
+                style={{ animationDelay: `${index * 200}ms` }}
+              >
                 <div className="sm:flex-shrink-0">
                   <div className="flow-root">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
