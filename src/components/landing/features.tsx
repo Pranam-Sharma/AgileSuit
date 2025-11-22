@@ -1,5 +1,28 @@
 
-import Image from 'next/image';
+import { BarChart2, ClipboardList, Lightbulb, Users } from 'lucide-react';
+
+const features = [
+  {
+    icon: ClipboardList,
+    title: 'Plan Sprints',
+    description: 'Organize your with structured sprint plans',
+  },
+  {
+    icon: Users,
+    title: 'Collaborate Easily',
+    description: 'Enhance teamwork with retrospective tools',
+  },
+  {
+    icon: BarChart2,
+    title: 'Track Progress',
+    description: 'Monitor sprint status and task completion',
+  },
+  {
+    icon: Lightbulb,
+    title: 'Gain Insights',
+    description: 'Generate reports to improve your performance',
+  },
+];
 
 export function FeaturesSection() {
   return (
@@ -14,16 +37,18 @@ export function FeaturesSection() {
             AgileSuit provides a comprehensive suite of tools to help your team succeed.
           </p>
         </div>
-        <div className="mx-auto mt-16 max-w-5xl">
-            <div className={'rounded-3xl overflow-hidden'}>
-                <Image
-                    src="/images/features-showcase.jpg"
-                    alt="AgileSuit features showcase"
-                    width={2070}
-                    height={1164}
-                    className="object-cover"
-                />
-            </div>
+        <div className="mx-auto mt-16 max-w-none">
+          <div className="grid grid-cols-1 gap-y-16 gap-x-8 text-center sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+                  <feature.icon className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="mt-6 text-2xl font-semibold leading-7 text-foreground">{feature.title}</h3>
+                <p className="mt-4 text-base leading-7 text-muted-foreground">{feature.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
