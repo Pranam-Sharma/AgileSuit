@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "dashboard-showcase",
+      "description": "A screenshot of the AgileSuit sprint dashboard showcasing various metrics and charts.",
+      "imageUrl": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "dashboard analytics"
+    }
+  ]
 }

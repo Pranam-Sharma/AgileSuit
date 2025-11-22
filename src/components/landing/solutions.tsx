@@ -1,31 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { Users, ListChecks, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-
-const solutions = [
-  {
-    icon: <Users className="h-6 w-6 text-primary" />,
-    title: 'Team Alignment',
-    description: 'Ensure your team is always on the same page with task-sharing and transparent updates.',
-  },
-  {
-    icon: <ListChecks className="h-6 w-6 text-primary" />,
-    title: 'Effective Prioritization',
-    description: 'Prioritize and manage tasks effectively so your team can focus on what matters most.',
-  },
-  {
-    icon: <ShieldCheck className="h-6 w-6 text-primary" />,
-    title: 'Accountability',
-    description: 'Hold everyone accountable without the need for constant check-ins.',
-  },
-];
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export function SolutionsSection() {
   const [isVisible, setIsVisible] = React.useState(false);
   const sectionRef = React.useRef<HTMLDivElement>(null);
+  
+  const dashboardImage = PlaceHolderImages.find(img => img.id === 'dashboard-showcase');
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -50,39 +34,30 @@ export function SolutionsSection() {
   }, []);
 
   return (
-    <section id="solutions" className="py-24 sm:py-32 bg-black" ref={sectionRef}>
+    <section id="solutions" className="py-24 sm:py-32 bg-gray-50" ref={sectionRef}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-base font-semibold leading-7 text-primary">Solutions</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Solve your team's biggest challenges
+          <h2 className="text-base font-semibold leading-7 text-primary">Your Command Center</h2>
+          <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            All-in-One Project Dashboard
+          </p>
+           <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            Get a bird's-eye view of your sprint's progress. Track points, monitor burndown, and gain AI-powered insights to keep your team aligned and on schedule.
           </p>
         </div>
-        <div className="mx-auto mt-16 max-w-2xl lg:max-w-none">
-          <div className="grid grid-cols-1 gap-y-10 gap-x-8 lg:grid-cols-3">
-            {solutions.map((solution, index) => (
-              <div
-                key={solution.title}
-                className={cn(
-                  'text-center sm:flex sm:text-left lg:block lg:text-center opacity-0',
-                  isVisible && 'animate-slide-in-right'
-                )}
-                style={{ animationDelay: `${index * 200}ms` }}
-              >
-                <div className="sm:flex-shrink-0">
-                  <div className="flow-root">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                      {solution.icon}
-                    </div>
-                  </div>
+        <div className="mx-auto mt-16 max-w-5xl">
+            {dashboardImage && (
+                <div className={cn('rounded-3xl shadow-2xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
+                    <Image
+                        src={dashboardImage.imageUrl}
+                        alt={dashboardImage.description}
+                        width={2070}
+                        height={1164} // Assuming a ~16:9 aspect ratio based on width
+                        className="object-cover"
+                        data-ai-hint={dashboardImage.imageHint}
+                    />
                 </div>
-                <div className="mt-3 sm:mt-0 sm:ml-6 lg:mt-6 lg:ml-0">
-                  <h3 className="text-lg font-medium text-white">{solution.title}</h3>
-                  <p className="mt-2 text-gray-400">{solution.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+            )}
         </div>
       </div>
     </section>
