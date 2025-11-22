@@ -108,7 +108,7 @@ export function HeroSection() {
             <div className="relative z-10 mx-auto max-w-2xl text-center">
                 <div className='flex justify-center'>
                     <div className='p-3 border-4 border-foreground/10 rounded-2xl bg-background/50 backdrop-blur-sm shadow-lg mb-8'>
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-fuchsia-500">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-fuchsia-500 animate-spin">
                              <div className="grid grid-cols-2 grid-rows-2 gap-1">
                                 <span className="h-2 w-2 rounded-full bg-blue-300" />
                                 <span className="h-2 w-2 rounded-full bg-background" />
