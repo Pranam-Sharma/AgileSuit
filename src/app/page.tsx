@@ -1,3 +1,4 @@
+import { AnimatedSection } from '@/components/landing/animated-section';
 import { FeaturesSection } from '@/components/landing/features';
 import { LandingPage } from '@/components/landing/landing-page';
 import { ResourcesSection } from '@/components/landing/resources';
@@ -6,9 +7,15 @@ import { SolutionsSection } from '@/components/landing/solutions';
 export default function Home() {
   return (
     <LandingPage>
-      <SolutionsSection />
-      <FeaturesSection />
-      <ResourcesSection />
+      <AnimatedSection>
+        <SolutionsSection />
+      </AnimatedSection>
+      <AnimatedSection>
+        <FeaturesSection />
+      </AnimatedSection>
+      <AnimatedSection>
+        <ResourcesSection />
+      </AnimatedSection>
     </LandingPage>
   );
 }
