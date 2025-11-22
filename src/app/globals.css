@@ -126,4 +126,30 @@
       transform: translate3d(0, -5px, 0);
     }
   }
+  .dotted-bg {
+    background-image: radial-gradient(circle at 1px 1px, hsl(var(--foreground) / 0.1) 1px, transparent 0);
+    background-size: 1.5rem 1.5rem;
+  }
+
+  @keyframes float-1 {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes float-2 {
+    0%, 100% { transform: translateY(0) rotate(3deg); }
+    50% { transform: translateY(-12px) rotate(3.5deg); }
+  }
+  @keyframes float-3 {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-8px) rotate(-3.5deg); }
+  }
+  @keyframes float-4 {
+    0%, 100% { transform: translateY(0) rotate(1deg); }
+    50% { transform: translateY(-15px) rotate(1.5deg); }
+  }
+
+  .float-1 { animation: float-1 6s ease-in-out infinite; }
+  .float-2 { animation: float-2 7s ease-in-out infinite; }
+  .float-3 { animation: float-3 8s ease-in-out infinite; }
+  .float-4 { animation: float-4 9s ease-in-out infinite; }
 }
