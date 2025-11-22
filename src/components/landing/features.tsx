@@ -32,7 +32,7 @@ export function FeaturesSection() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
           <h2 className="text-base font-semibold leading-7 text-primary">Core Features</h2>
-          <p className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <p className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Everything you need for agile excellence
           </p>
           <p className="mt-6 text-xl leading-8 text-muted-foreground">
