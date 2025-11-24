@@ -1,34 +1,13 @@
-
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import resources from '@/app/lib/placeholder-images.json';
 
-const resources = [
-  {
-    title: 'Getting Started with Agile',
-    description: 'A beginner\'s guide to agile methodologies and how to implement them.',
-    image: 'https://picsum.photos/seed/resource1/600/400',
-    imageHint: 'team meeting',
-    link: '#',
-  },
-  {
-    title: 'Best Practices for Sprint Planning',
-    description: 'Learn how to plan effective sprints that deliver results.',
-    image: 'https://picsum.photos/seed/resource2/600/400',
-    imageHint: 'whiteboard planning',
-    link: '#',
-  },
-  {
-    title: 'Case Study: How Acme Inc. Increased Productivity',
-    description: 'Discover how AgileSuit helped a leading company improve their workflow.',
-    image: 'https://picsum.photos/seed/resource3/600/400',
-    imageHint: 'office analytics',
-    link: '#',
-  },
-];
 
 export function ResourcesSection() {
+  const featuredResources = resources.resources.slice(0, 3);
   return (
     <section id="resources" className="py-24 sm:py-32 bg-white">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -42,7 +21,7 @@ export function ResourcesSection() {
           </p>
         </div>
         <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-          {resources.map((resource) => (
+          {featuredResources.map((resource) => (
             <Card key={resource.title} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow bg-card border">
                <div className="aspect-video relative">
                 <Image
@@ -60,12 +39,17 @@ export function ResourcesSection() {
                 <p className="text-muted-foreground">{resource.description}</p>
               </CardContent>
               <CardFooter>
-                <Link href={resource.link} className="flex items-center text-primary font-semibold">
+                <Link href={`/resources/${resource.slug}`} className="flex items-center text-primary font-semibold">
                   Read more <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </CardFooter>
             </Card>
           ))}
+        </div>
+        <div className="mt-16 text-center">
+          <Button asChild size="lg">
+            <Link href="/resources">View All Resources</Link>
+          </Button>
         </div>
       </div>
     </section>

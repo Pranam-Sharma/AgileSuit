@@ -1,0 +1,52 @@
+{
+  "resources": [
+    {
+      "slug": "getting-started-with-agile",
+      "title": "Getting Started with Agile",
+      "description": "A beginner's guide to agile methodologies and how to implement them.",
+      "content": "Agile is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches. Instead of betting everything on a 'big bang' launch, an agile team delivers work in small, but consumable, increments. Requirements, plans, and results are evaluated continuously so teams have a natural mechanism for responding to change quickly.",
+      "image": "https://picsum.photos/seed/resource1/600/400",
+      "imageHint": "team meeting"
+    },
+    {
+      "slug": "best-practices-for-sprint-planning",
+      "title": "Best Practices for Sprint Planning",
+      "description": "Learn how to plan effective sprints that deliver results.",
+      "content": "Sprint planning is an event in Scrum that kicks off the Sprint. The purpose of sprint planning is to define what can be delivered in the Sprint and how that work will be achieved. A successful sprint planning meeting fosters a collaborative environment, sets the stage for a successful sprint, and gets the whole team on the same page. This article will cover best practices for effective sprint planning.",
+      "image": "https://picsum.photos/seed/resource2/600/400",
+      "imageHint": "whiteboard planning"
+    },
+    {
+      "slug": "case-study-acme-inc",
+      "title": "Case Study: How Acme Inc. Increased Productivity",
+      "description": "Discover how AgileSuit helped a leading company improve their workflow.",
+      "content": "Acme Inc. was struggling with missed deadlines and a lack of transparency in their development process. By implementing AgileSuit, they were able to streamline their workflow, improve communication, and increase their overall productivity by 40% within the first three months. This case study explores the challenges they faced and how AgileSuit provided the solutions.",
+      "image": "https://picsum.photos/seed/resource3/600/400",
+      "imageHint": "office analytics"
+    },
+    {
+      "slug": "understanding-scrum",
+      "title": "Understanding Scrum",
+      "description": "A deep dive into the most popular Agile framework.",
+      "content": "Scrum is a framework that helps teams work together. Much like a rugby team (where it gets its name) training for the big game, Scrum encourages teams to learn through experiences, self-organize while working on a problem, and reflect on their wins and losses to continuously improve. This article breaks down the roles, events, and artifacts of Scrum.",
+      "image": "https://picsum.photos/seed/resource4/600/400",
+      "imageHint": "team huddle"
+    },
+    {
+      "slug": "kanban-vs-scrum",
+      "title": "Kanban vs. Scrum",
+      "description": "Choosing the right Agile framework for your team.",
+      "content": "Kanban and Scrum are two of the most popular Agile frameworks. While they share some similarities, they have distinct differences. Scrum is more structured with fixed-length sprints and defined roles, while Kanban is more flexible and focuses on continuous flow. This guide will help you decide which framework is the best fit for your team's needs.",
+      "image": "https://picsum.photos/seed/resource5/600/400",
+      "imageHint": "workflow board"
+    },
+    {
+      "slug": "writing-effective-user-stories",
+      "title": "Writing Effective User Stories",
+      "description": "Master the art of creating user stories that drive development.",
+      "content": "User stories are short, simple descriptions of a feature told from the perspective of the person who desires the new capability, usually a user or customer of the system. They typically follow a simple template: 'As a [type of user], I want [some goal] so that [some reason]'. Learn how to write compelling user stories that are clear, concise, and actionable for your development team.",
+      "image": "https://picsum.photos/seed/resource6/600/400",
+      "imageHint": "user persona"
+    }
+  ]
+}
