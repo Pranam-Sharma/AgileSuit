@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import curriculumData from '../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -11,12 +11,19 @@ import { ArrowRight, BookOpen, Scaling, BarChart, Users, Star, Cpu, GraduationCa
 
 // Helper to generate a URL-friendly slug from a title
 const toSlug = (title: string) => {
-  return title
+  const simpleTitle = getSimpleTitle(title);
+  return simpleTitle
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-    .replace(/\s+/g, '-') // collapse whitespace and replace by -
-    .replace(/-+/g, '-'); // collapse dashes
+    .replace(/[^a-z0-9 -]/g, '') 
+    .replace(/\s+/g, '-') 
+    .replace(/-+/g, '-');
 };
+
+const getSimpleTitle = (levelString: string) => {
+    const match = levelString.match(/:\s(.*?)\s\(/);
+    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
+}
+
 
 const levelIcons: Record<string, { icon: React.ElementType; color: string }> = {
     'LEVEL 1': { icon: BookOpen, color: 'bg-teal-100 text-teal-600' },
@@ -33,12 +40,6 @@ export default function ResourcesPage() {
   React.useEffect(() => {
     document.title = 'Agile Methodology Learning Hub | AgileSuit';
   }, []);
-
-  // Function to extract the simple title from the level string
-  const getSimpleTitle = (levelString: string) => {
-    const match = levelString.match(/:\s(.*?)\s\(/);
-    return match ? match[1] : levelString;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -64,7 +65,7 @@ export default function ResourcesPage() {
                   const simpleTitle = getSimpleTitle(level.level);
 
                   return (
-                    <Link key={level.level} href={`/resources/${toSlug(level.topics[0].title)}`} className="block group">
+                    <Link key={level.level} href={`/resources/${toSlug(level.level)}`} className="block group">
                         <Card className="h-full border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
                             <CardContent className="p-6 flex gap-6 items-start">
                                 <div className={cn("flex-shrink-0 rounded-lg h-16 w-16 flex items-center justify-center", iconColor)}>

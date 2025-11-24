@@ -15,27 +15,44 @@ const toSlug = (title: string) => {
     .replace(/-+/g, '-');
 };
 
-const findTopicBySlug = (slug: string) => {
-    for (const level of curriculumData.learningHubContent) {
-        const foundTopic = level.topics.find(topic => toSlug(topic.title) === slug);
-        if (foundTopic) return foundTopic;
+const findTopicBySlugs = (levelSlug: string, topicSlug: string) => {
+    const getSimpleTitle = (levelString: string) => {
+        const match = levelString.match(/:\s(.*?)\s\(/);
+        return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
     }
-    return null;
+    const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
+    if (!level) return null;
+
+    const topic = level.topics.find(t => toSlug(t.title) === topicSlug);
+    if (!topic) return null;
+
+    return topic;
 }
 
-export default function ResourceTopicLayout({
+export default function ResourceSubTopicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const topicSlug = params.slug as string;
+  const levelSlug = params.slug as string;
+  const topicSlug = params.topicSlug as string; // This will now be the main topic slug
   const subTopicSlug = params.subTopicSlug as string;
 
-  const topic = findTopicBySlug(topicSlug);
+  const topic = findTopicBySlugs(levelSlug, topicSlug);
 
   if (!topic) {
-    notFound();
+    // This case might be hit if the URL is manually entered wrong.
+    // The individual pages should handle their own notFound.
+    return (
+        <div className="min-h-screen flex flex-col bg-slate-50">
+            <LandingHeader />
+            <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                {children}
+            </main>
+            <Footer />
+        </div>
+    );
   }
 
   return (
@@ -46,14 +63,14 @@ export default function ResourceTopicLayout({
                 <aside className="md:col-span-3 lg:col-span-3 border-r border-gray-200/80 pr-4">
                     <h2 className="text-lg font-semibold text-foreground px-3 mb-2">{topic.title}</h2>
                     <nav className="flex flex-col gap-1">
-                        {topic.points.map((point, index) => {
+                        {topic.points.map((point) => {
                             const currentSubTopicSlug = toSlug(point);
                             const isActive = currentSubTopicSlug === subTopicSlug;
 
                             return (
                                 <Link
-                                    key={index}
-                                    href={`/resources/${topicSlug}/${currentSubTopicSlug}`}
+                                    key={point}
+                                    href={`/resources/${levelSlug}/${topicSlug}/${currentSubTopicSlug}`}
                                     className={cn(
                                         'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                                         isActive
