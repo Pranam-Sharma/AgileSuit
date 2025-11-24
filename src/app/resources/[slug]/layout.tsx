@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { notFound, useParams, usePathname } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import curriculumData from '../../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -55,16 +55,16 @@ export default function ResourceTopicLayout({
                                     key={index}
                                     href={`/resources/${topicSlug}/${currentSubTopicSlug}`}
                                     className={cn(
-                                        'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                                         isActive
                                             ? 'bg-primary/10 text-primary'
                                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                     )}
                                 >
-                                    <span className={cn(
-                                        'h-2 w-2 rounded-full',
-                                        isActive ? 'bg-primary' : 'bg-transparent'
-                                    )}></span>
+                                    <div className={cn(
+                                        'h-1.5 w-1.5 rounded-full ring-2 ring-offset-2 transition-all',
+                                        isActive ? 'ring-primary bg-primary' : 'ring-transparent bg-muted-foreground/50'
+                                    )}></div>
                                     {point}
                                 </Link>
                             )
