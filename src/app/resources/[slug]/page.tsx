@@ -515,10 +515,11 @@ function WhatIsAgileMethodologyArticle() {
 // Dummy table components to avoid breaking the file
 // In a real scenario, you'd import these from your UI library
 const Table = ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => <table {...props} className="w-full text-left border-collapse">{children}</table>;
-const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props} className="border-b"><tr className='border-b'>{children}</tr></thead>;
-const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props} className="border-b">{children}</tr>;
+const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props} className="border-b">{children}</thead>;
+const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props}>{children}</tr>;
 const TableHead = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <th {...props} className="p-4 font-medium text-muted-foreground text-base">{children}</th>;
 const TableBody = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props}>{children}</tbody>;
 const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <td {...props} className="p-4 text-base">{children}</td>;
 
     
+
