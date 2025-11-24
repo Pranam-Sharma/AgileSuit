@@ -48,7 +48,9 @@ export default function ResourceSubTopicLayout({
                 <div className="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 md:gap-8">
                     <aside className="md:col-span-3 lg:col-span-3 border-r border-gray-200/80 pr-4">
                         <div className='px-3 mb-4'>
-                            <Logo />
+                            <Link href="/resources">
+                                <Logo />
+                            </Link>
                         </div>
                         <h2 className="text-lg font-semibold text-foreground px-3 mb-2">{topic.title}</h2>
                         <nav className="flex flex-col gap-1">
