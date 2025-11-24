@@ -230,7 +230,7 @@ function AgileFlowDiagram() {
     return (
         <div className="not-prose my-16 flex flex-col items-center justify-center bg-blue-50 py-12 rounded-2xl relative overflow-hidden">
             <div className="relative w-[700px] h-[500px]">
-                <svg viewBox="-250 -250 500 500" className="w-full h-full">
+                <svg viewBox="-350 -250 700 500" className="w-full h-full overflow-visible">
                     {segments.map((segment, index) => {
                         const startAngle = index * anglePerSegment - (Math.PI / 2);
                         const endAngle = (index + 1) * anglePerSegment - (Math.PI / 2) - gap;
@@ -262,38 +262,35 @@ function AgileFlowDiagram() {
                             <p className="text-sm text-gray-600 mt-2">User stories drive everything.</p>
                         </div>
                     </foreignObject>
-                </svg>
-
-                {segments.map((segment) => {
-                    const angle = (segment.step - 0.5) * anglePerSegment - (Math.PI / 2);
-                    const isLeft = segment.descriptionPosition === 'left';
-                    const startRadius = isLeft ? 300 : 230;
-                    const endRadius = isLeft ? 230 : 300;
-
-                    const lineStartX = startRadius * Math.cos(angle);
-                    const lineStartY = startRadius * Math.sin(angle);
-                    const lineEndX = endRadius * Math.cos(angle);
-                    const lineEndY = endRadius * Math.sin(angle);
-
-                    const textAnchor = isLeft ? 'end' : 'start';
-                    const textX = isLeft ? -320 : 320;
-                    const textY = lineStartY;
                     
-                    return (
-                        <div key={`desc-${segment.step}`} 
-                            className="absolute top-1/2 left-1/2"
-                            style={{ transform: `translate(${textX}px, ${textY}px)`}}
-                        >
-                           <div className={`w-64 ${isLeft ? 'text-right' : 'text-left'}`}>
-                                <p className="text-sm text-gray-600">{segment.description}</p>
-                           </div>
-                           <svg className="absolute top-1/2 left-1/2 overflow-visible" style={{transform: `translate(${-textX}px, ${-textY}px)`}}>
-                               <line x1={lineStartX} y1={lineStartY} x2={lineEndX} y2={lineEndY} stroke="#d1d5db" strokeWidth="1" />
-                               <circle cx={lineEndX} cy={lineEndY} r="3" fill="#d1d5db" />
-                           </svg>
-                        </div>
-                    )
-                })}
+                    {segments.map((segment) => {
+                        const angle = (segment.step - 0.5) * anglePerSegment - (Math.PI / 2);
+                        const isLeft = segment.descriptionPosition === 'left';
+                        const startRadius = isLeft ? 300 : 230;
+                        const endRadius = isLeft ? 230 : 300;
+
+                        const lineStartX = startRadius * Math.cos(angle);
+                        const lineStartY = startRadius * Math.sin(angle);
+                        const lineEndX = endRadius * Math.cos(angle);
+                        const lineEndY = endRadius * Math.sin(angle);
+                        
+                        const textX = isLeft ? lineStartX - 10 : lineStartX + 10;
+                        const textY = lineStartY;
+                        const textAnchor = isLeft ? 'end' : 'start';
+                        
+                        return (
+                            <g key={`desc-${segment.step}`}>
+                                <line x1={lineStartX} y1={lineStartY} x2={lineEndX} y2={lineEndY} stroke="#d1d5db" strokeWidth="1" />
+                                <circle cx={lineEndX} cy={lineEndY} r="3" fill="#d1d5db" />
+                                <foreignObject x={textX - (isLeft ? 256 : 0)} y={textY-25} width="256" height="100">
+                                   <div className={`w-64 ${isLeft ? 'text-right' : 'text-left'}`}>
+                                        <p className="text-sm text-gray-600">{segment.description}</p>
+                                   </div>
+                                </foreignObject>
+                            </g>
+                        )
+                    })}
+                </svg>
             </div>
         </div>
     );
@@ -629,5 +626,7 @@ const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellEle
 
 
 
+
+    
 
     
