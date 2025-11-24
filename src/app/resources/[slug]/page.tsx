@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import curriculumData from '@/docs/curriculum.json';
+import curriculumData from '../../../docs/curriculum.json';
 
 // Helper to generate a URL-friendly slug from a title
 const toSlug = (title: string) => {
@@ -27,6 +27,7 @@ export default function ResourceTopicPage() {
     const slug = params.slug as string;
 
     useEffect(() => {
+        if (!slug) return;
         const topic = findTopicBySlug(slug);
         if (topic && topic.points.length > 0) {
             const firstSubTopicSlug = toSlug(topic.points[0]);
@@ -36,12 +37,4 @@ export default function ResourceTopicPage() {
 
     // Render nothing, or a loading spinner, while redirecting
     return null;
-}
-
-export async function generateStaticParams() {
-    return curriculumData.learningHubContent.flatMap(level =>
-        level.topics.map(topic => ({
-            slug: toSlug(topic.title),
-        }))
-    );
 }
