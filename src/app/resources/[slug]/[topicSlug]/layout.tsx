@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useParams } from 'next/navigation';
-import curriculumData from '../../../docs/curriculum.json';
+import curriculumData from '../../../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { LandingHeader } from '@/components/landing/header';
@@ -85,7 +85,6 @@ export default function ResourceSubTopicLayout({
                     </div>
                 </div>
             ) : (
-                // Fallback for when topic is not found (e.g., during loading or invalid slug)
                 <div>{children}</div>
             )}
         </main>

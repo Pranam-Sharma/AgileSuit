@@ -1,8 +1,10 @@
-import { notFound } from 'next/navigation';
+'use client';
+import { notFound, useParams } from 'next/navigation';
 import curriculumData from '../../../../docs/curriculum.json';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 const toSlug = (title: string) => {
   return title
@@ -17,14 +19,6 @@ const getSimpleTitle = (levelString: string) => {
     return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
 }
 
-type SubTopicPageProps = {
-    params: {
-        slug: string;
-        topicSlug: string;
-        subTopicSlug: string;
-    };
-};
-
 const findTopicAndSubTopicBySlugs = (levelSlug: string, topicSlug: string, subTopicSlug: string) => {
     const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
     if (!level) return null;
@@ -38,23 +32,13 @@ const findTopicAndSubTopicBySlugs = (levelSlug: string, topicSlug: string, subTo
     return { level, topic, point };
 }
 
-export async function generateMetadata({ params }: SubTopicPageProps): Promise<Metadata> {
-    const result = findTopicAndSubTopicBySlugs(params.slug, params.topicSlug, params.subTopicSlug);
-
-    if (!result) {
-        return {
-            title: 'Sub-Topic Not Found',
-        };
-    }
-    return {
-        title: `${result.point} | ${result.topic.title}`,
-        description: `Learn about ${result.point} in the context of ${result.topic.title}.`,
-    };
-}
-
-
-export default function SubTopicPage({ params }: SubTopicPageProps) {
-    const result = findTopicAndSubTopicBySlugs(params.slug, params.topicSlug, params.subTopicSlug);
+export default function SubTopicPage() {
+    const params = useParams();
+    const levelSlug = params.slug as string;
+    const topicSlug = params.topicSlug as string;
+    const subTopicSlug = params.subTopicSlug as string;
+    
+    const result = findTopicAndSubTopicBySlugs(levelSlug, topicSlug, subTopicSlug);
 
     if (!result) {
         notFound();
@@ -106,6 +90,7 @@ export default function SubTopicPage({ params }: SubTopicPageProps) {
     );
 }
 
+// Keeping generateStaticParams here to ensure all sub-topic pages are generated.
 export async function generateStaticParams() {
     const params = [];
     for (const level of curriculumData.learningHubContent) {
