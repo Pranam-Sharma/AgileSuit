@@ -1,13 +1,16 @@
 'use client';
 import * as React from 'react';
-import { LandingHeader } from '@/components/landing/header';
-import { Footer } from '@/components/landing/footer';
 import { Card, CardContent } from '@/components/ui/card';
 import curriculumData from '../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 import { ArrowRight, BookOpen, Scaling, BarChart, Users, Star, Cpu, GraduationCap } from 'lucide-react';
+
+const getSimpleTitle = (levelString: string) => {
+    const match = levelString.match(/:\s(.*?)\s\(/);
+    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
+}
 
 // Helper to generate a URL-friendly slug from a title
 const toSlug = (title: string) => {
@@ -18,12 +21,6 @@ const toSlug = (title: string) => {
     .replace(/\s+/g, '-') 
     .replace(/-+/g, '-');
 };
-
-const getSimpleTitle = (levelString: string) => {
-    const match = levelString.match(/:\s(.*?)\s\(/);
-    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
-}
-
 
 const levelIcons: Record<string, { icon: React.ElementType; color: string }> = {
     'LEVEL 1': { icon: BookOpen, color: 'bg-teal-100 text-teal-600' },
@@ -42,8 +39,7 @@ export default function ResourcesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <LandingHeader />
+    <>
       <main className="flex-grow">
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -94,7 +90,6 @@ export default function ResourcesPage() {
           </div>
         </section>
       </main>
-      <Footer />
-    </div>
+    </>
   );
 }

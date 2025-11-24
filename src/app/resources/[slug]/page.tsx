@@ -9,7 +9,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react';
 const getSimpleTitle = (levelString: string) => {
     const match = levelString.match(/:\s(.*?)\s\(/);
     return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
-}
+};
 
 const toSlug = (title: string) => {
   return title
@@ -44,7 +44,7 @@ export default function ResourceLevelPage() {
     const levelNumber = levelNumberMatch ? levelNumberMatch[1] : '';
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-slate-50">
             <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <p className="text-base font-semibold text-primary uppercase tracking-wider">Level {levelNumber}</p>
