@@ -381,7 +381,7 @@ function AgileVsWaterfallTable() {
 function WhatIsAgileMethodologyArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
-            <h1 className='font-bold'>What is Agile Methodology?</h1>
+            <h1>What is Agile Methodology?</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
             <hr className="my-8" />
@@ -392,7 +392,7 @@ function WhatIsAgileMethodologyArticle() {
             
             <hr className="my-8" />
 
-            <h2 className='font-bold'>What is Agile? The Core Idea</h2>
+            <h2>What is Agile? The Core Idea</h2>
             <blockquote>
                 <em>Agile Methodology</em> is an <strong>iterative approach</strong> to project management and software development that helps teams deliver value to their customers <strong>faster and with fewer headaches</strong>.
             </blockquote>
@@ -409,14 +409,14 @@ function WhatIsAgileMethodologyArticle() {
             
             <hr className="my-8" />
 
-            <h2 className='font-bold'>Agile vs. Traditional Waterfall</h2>
+            <h2>Agile vs. Traditional Waterfall</h2>
             <p>The core difference between Agile and traditional models like <strong>Waterfall</strong> is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
             
             <AgileVsWaterfallTable />
             
             <hr className="my-8" />
 
-            <h2 className='font-bold'>Common Agile Frameworks & Key Roles</h2>
+            <h2>Common Agile Frameworks & Key Roles</h2>
             <p>Agile is an umbrella term for several frameworks. The most popular are:</p>
             <ul>
                 <li><strong>Scrum:</strong> A framework based on sprints, specific roles, and regular meetings (events) to get work done.</li>
@@ -429,7 +429,7 @@ function WhatIsAgileMethodologyArticle() {
 
             <hr className="my-8" />
 
-            <h2 className='font-bold'>How AgileSuit Powers the Agile Cycle</h2>
+            <h2>How AgileSuit Powers the Agile Cycle</h2>
             <p>AgileSuit is designed to simplify and enhance every stage of the Agile lifecycle. It provides the tools needed to turn Agile theory into measurable, day-to-day execution.</p>
             
             <AgileSuitCycleDiagram />
@@ -445,7 +445,7 @@ function WhatIsAgileMethodologyArticle() {
 
             <hr className="my-8" />
 
-            <h2 className='font-bold'>Conclusion: The Agile Advantage</h2>
+            <h2>Conclusion: The Agile Advantage</h2>
             <p>Agile is more than a methodology—it's a mindset that empowers teams to thrive in an environment of change. By prioritizing flexibility, collaboration, and continuous improvement, organizations can reduce risk, increase customer satisfaction, and deliver better products faster.</p>
             <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
                 Agile is the heartbeat of modern innovation.
