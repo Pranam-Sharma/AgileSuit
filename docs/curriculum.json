@@ -1,0 +1,262 @@
+{
+    "learningHubContent": [
+        {
+            "level": "LEVEL 1: Absolute Basics (Foundation)",
+            "emoji": "🟢",
+            "topics": [
+                {
+                    "title": "What is Agile?",
+                    "points": [
+                        "What is Agile Methodology?",
+                        "Why Agile was created",
+                        "Traditional Waterfall vs Agile",
+                        "Problems Agile solves in modern development",
+                        "Agile mindset & philosophy"
+                    ]
+                },
+                {
+                    "title": "Agile Manifesto",
+                    "points": [
+                        "4 Core Values of Agile",
+                        "12 Agile Principles explained with real examples",
+                        "How Agile values apply in real teams (with AgileSuit scenarios)"
+                    ]
+                },
+                {
+                    "title": "Introduction to Agile Frameworks",
+                    "points": [
+                        "Scrum",
+                        "Kanban",
+                        "SAFe",
+                        "Lean Agile",
+                        "XP (Extreme Programming)",
+                        "How AgileSuit supports multiple frameworks"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 2: Scrum Fundamentals",
+            "emoji": "🟡",
+            "topics": [
+                {
+                    "title": "Scrum Basics",
+                    "points": [
+                        "What is Scrum?",
+                        "Scrum Pillars (Transparency, Inspection, Adaptation)",
+                        "Scrum Theory & Empiricism"
+                    ]
+                },
+                {
+                    "title": "Scrum Roles",
+                    "points": [
+                        "Product Owner – Responsibilities & mindset",
+                        "Scrum Master – Facilitation & leadership",
+                        "Development Team – Collaboration model",
+                        "Role mapping inside AgileSuit"
+                    ]
+                },
+                {
+                    "title": "Scrum Artifacts",
+                    "points": [
+                        "Product Backlog",
+                        "Sprint Backlog",
+                        "Increment",
+                        "Definition of Done",
+                        "Definition of Ready"
+                    ]
+                },
+                {
+                    "title": "Scrum Events",
+                    "points": [
+                        "Sprint Planning",
+                        "Daily Stand-up",
+                        "Sprint Review",
+                        "Sprint Retrospective",
+                        "How to manage all events using AgileSuit dashboards"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 3: Sprint Lifecycle Mastery",
+            "emoji": "🟠",
+            "topics": [
+                {
+                    "title": "Sprint Planning Deep Dive",
+                    "points": [
+                        "Creating a Sprint Goal",
+                        "Estimation techniques",
+                        "Story point allocation",
+                        "Task breakdown",
+                        "Capacity planning using AgileSuit"
+                    ]
+                },
+                {
+                    "title": "Sprint Execution",
+                    "points": [
+                        "Managing tasks during sprint",
+                        "Tracking work in progress (WIP)",
+                        "Handling blockers",
+                        "Daily sprint health analysis"
+                    ]
+                },
+                {
+                    "title": "Sprint Retrospective",
+                    "points": [
+                        "What went well / What didn’t",
+                        "Action items creation",
+                        "Retrospective formats",
+                        "Retrospective automation using AgileSuit"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 4: Agile Metrics & Performance",
+            "emoji": "🔵",
+            "topics": [
+                {
+                    "title": "Agile Metrics",
+                    "points": [
+                        "Story Points",
+                        "Velocity",
+                        "Lead Time",
+                        "Cycle Time",
+                        "Throughput"
+                    ]
+                },
+                {
+                    "title": "Sprint Metrics",
+                    "points": [
+                        "Planned vs Completed Stories",
+                        "Sprint Success Rate",
+                        "Spillover analysis",
+                        "Dependency tracking in AgileSuit"
+                    ]
+                },
+                {
+                    "title": "Advanced Reports",
+                    "points": [
+                        "Burndown Chart",
+                        "Burnup Chart",
+                        "Cumulative Flow Diagram",
+                        "Velocity Trends",
+                        "Predictive analytics using AgileSuit"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 5: Advanced Agile Practices",
+            "emoji": "🟣",
+            "topics": [
+                {
+                    "title": "Agile Estimation Techniques",
+                    "points": [
+                        "Planning Poker",
+                        "T-Shirt Sizing",
+                        "Fibonacci Estimation",
+                        "Relative Estimation"
+                    ]
+                },
+                {
+                    "title": "Backlog Management",
+                    "points": [
+                        "Grooming techniques",
+                        "Prioritization strategies (MoSCoW, WSJF)",
+                        "Roadmap planning",
+                        "Product vision management in AgileSuit"
+                    ]
+                },
+                {
+                    "title": "SAFe & Scaling Agile",
+                    "points": [
+                        "What is SAFe?",
+                        "Agile Release Train (ART)",
+                        "Program Increment Planning (PI Planning)",
+                        "Multi-team sprint management in AgileSuit"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 6: Team & Culture Excellence",
+            "emoji": "🔴",
+            "topics": [
+                {
+                    "title": "Agile Team Collaboration",
+                    "points": [
+                        "Cross-functional teams",
+                        "Psychological safety",
+                        "Team maturity model",
+                        "Collaboration workflows inside AgileSuit"
+                    ]
+                },
+                {
+                    "title": "Agile Leadership",
+                    "points": [
+                        "Servant leadership",
+                        "Coaching strategies",
+                        "Conflict resolution",
+                        "Metrics-driven leadership"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 7: Technical Agile",
+            "emoji": "🟤",
+            "topics": [
+                {
+                    "title": "DevOps & Agile Integration",
+                    "points": [
+                        "CI/CD principles",
+                        "Agile + DevOps lifecycle",
+                        "Continuous delivery model",
+                        "Integration possibilities with AgileSuit"
+                    ]
+                },
+                {
+                    "title": "Agile Automation",
+                    "points": [
+                        "Automated sprint reporting",
+                        "AI-driven retrospective insights",
+                        "Smart velocity prediction",
+                        "How AgileSuit automates iterative improvement"
+                    ]
+                }
+            ]
+        },
+        {
+            "level": "LEVEL 8: Expert Topics",
+            "emoji": "⚫",
+            "topics": [
+                {
+                    "title": "Agile Transformation",
+                    "points": [
+                        "Enterprise Agile adoption",
+                        "Change management strategies",
+                        "Transition from Waterfall to Agile"
+                    ]
+                },
+                {
+                    "title": "Agile Governance",
+                    "points": [
+                        "Policy creation",
+                        "Compliance tracking",
+                        "Risk management"
+                    ]
+                },
+                {
+                    "title": "AI + Agile Future",
+                    "points": [
+                        "AI in sprint planning",
+                        "AI-driven backlog prioritization",
+                        "Smart Agile reporting (AgileSuit vision)"
+                    ]
+                }
+            ]
+        }
+    ]
+}
