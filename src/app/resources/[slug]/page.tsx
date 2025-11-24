@@ -4,7 +4,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, CheckCircle, CircleDot, Code, Milestone, Repeat, Users, Zap, Search, Target, GitBranch, RefreshCw, Layers } from 'lucide-react';
+import { ArrowRight, Check, CheckCircle, Code, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -132,7 +132,6 @@ export default function ResourcePage() {
     }
     const { level, topic, point } = result;
     
-    // If a subtopic is selected, show the article. Otherwise, show the level intro.
     if (topic && point) {
         if (toSlug(point) === 'what-is-agile-methodology') {
             return <WhatIsAgileMethodologyArticle />;
@@ -148,50 +147,155 @@ export default function ResourcePage() {
 }
 
 function AgileFlowDiagram() {
-    const items = [
-      { icon: Users, label: 'Customer Needs' },
-      { icon: Milestone, label: 'Sprint Planning' },
-      { icon: Code, label: 'Development' },
-      { icon: Search, label: 'Testing' },
-      { icon: RefreshCw, label: 'Review & Feedback' },
-      { icon: Zap, label: 'Improvement' },
+    const segments = [
+      {
+        step: 1,
+        title: "Requirements & Concepts",
+        description: "Analysis of concepts and requirements definitions; Determine current state and your expectations.",
+        icon: Search,
+        color: "fill-orange-500",
+        textColor: "text-white",
+        descriptionPosition: "left"
+      },
+      {
+        step: 2,
+        title: "Planning of Sprints",
+        description: "Arrange teams and tools needed to optimize production.",
+        icon: Milestone,
+        color: "fill-orange-500",
+        textColor: "text-white",
+        descriptionPosition: "left"
+      },
+      {
+        step: 3,
+        title: "Collaborative Design & Development",
+        description: "From the beginning of the process, the end users' involvement and feedback is critical.",
+        icon: Users,
+        color: "fill-blue-800",
+        textColor: "text-white",
+        descriptionPosition: "right"
+      },
+      {
+        step: 4,
+        title: "Create & Implement",
+        description: "Frequent development delivery through sprints. Feedback on testing & appropriate changes are imperative.",
+        icon: Zap,
+        color: "fill-blue-800",
+        textColor: "text-white",
+        descriptionPosition: "right"
+      },
+      {
+        step: 5,
+        title: "Review & Monitor",
+        description: "Ensure that you are reviewing and monitoring key metrics for success.",
+        icon: BarChart,
+        color: "fill-gray-800",
+        textColor: "text-white",
+        descriptionPosition: "right"
+      },
     ];
-  
+
+    const getPath = (startAngle: number, endAngle: number, radius: number, innerRadius: number) => {
+        const start = {
+            x: radius * Math.cos(startAngle),
+            y: radius * Math.sin(startAngle)
+        };
+        const end = {
+            x: radius * Math.cos(endAngle),
+            y: radius * Math.sin(endAngle)
+        };
+        const innerStart = {
+            x: innerRadius * Math.cos(endAngle),
+            y: innerRadius * Math.sin(endAngle)
+        };
+        const innerEnd = {
+            x: innerRadius * Math.cos(startAngle),
+            y: innerRadius * Math.sin(startAngle)
+        };
+        const largeArcFlag = endAngle - startAngle <= Math.PI ? "0" : "1";
+        
+        return [
+            "M", start.x, start.y,
+            "A", radius, radius, 0, largeArcFlag, 1, end.x, end.y,
+            "L", innerStart.x, innerStart.y,
+            "A", innerRadius, innerRadius, 0, largeArcFlag, 0, innerEnd.x, innerEnd.y,
+            "Z"
+        ].join(" ");
+    };
+    
+    const totalSteps = segments.length;
+    const anglePerSegment = (2 * Math.PI) / totalSteps;
+    const gap = 0.05; // Gap between segments
+    
     return (
-      <div className="not-prose my-12 flex flex-col items-center justify-center">
-        <h3 className="text-xl font-semibold text-foreground mb-8">Agile Flow</h3>
-        <div className="relative h-80 w-80">
-          {items.map((item, index) => {
-            const angle = (index / items.length) * 360 - 90;
-            const x = 50 + 45 * Math.cos((angle * Math.PI) / 180);
-            const y = 50 + 45 * Math.sin((angle * Math.PI) / 180);
-            return (
-              <div
-                key={item.label}
-                className="absolute flex flex-col items-center text-center"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary shadow-md">
-                  <item.icon className="h-8 w-8" />
-                </div>
-                <p className="mt-2 text-sm font-medium text-foreground">{item.label}</p>
-              </div>
-            );
-          })}
-           <div className="absolute inset-0 flex items-center justify-center">
-                <Repeat className="h-10 w-10 text-muted-foreground/50 animate-spin [animation-duration:10s]" />
+        <div className="not-prose my-16 flex flex-col items-center justify-center bg-blue-50 py-12 rounded-2xl relative overflow-hidden">
+            <div className="relative w-[700px] h-[500px]">
+                <svg viewBox="-250 -250 500 500" className="w-full h-full">
+                    {segments.map((segment, index) => {
+                        const startAngle = index * anglePerSegment - (Math.PI / 2);
+                        const endAngle = (index + 1) * anglePerSegment - (Math.PI / 2) - gap;
+                        const midAngle = (startAngle + endAngle) / 2;
+                        const radius = 220;
+                        const innerRadius = 130;
+                        const iconRadius = 175;
+
+                        const iconX = iconRadius * Math.cos(midAngle);
+                        const iconY = iconRadius * Math.sin(midAngle);
+
+                        return (
+                            <g key={segment.step}>
+                                <path d={getPath(startAngle, endAngle, radius, innerRadius)} className={segment.color} />
+                                <foreignObject x={iconX - 25} y={iconY - 70} width="50" height="100" className="overflow-visible">
+                                    <div className={`flex flex-col items-center text-center ${segment.textColor}`}>
+                                        <div className="flex items-center justify-center h-10 w-10 rounded-full bg-white text-gray-800 font-bold text-xl shadow-md">{segment.step}</div>
+                                        <segment.icon className="mt-2 h-8 w-8" />
+                                        <p className="mt-1 text-xs font-semibold w-24">{segment.title}</p>
+                                    </div>
+                                </foreignObject>
+                            </g>
+                        );
+                    })}
+                    <circle cx="0" cy="0" r="120" fill="white" />
+                     <foreignObject x="-100" y="-50" width="200" height="100">
+                        <div className="text-center">
+                            <h3 className="text-3xl font-bold text-gray-800">Agile Methodology</h3>
+                            <p className="text-sm text-gray-600 mt-2">User stories drive everything.</p>
+                        </div>
+                    </foreignObject>
+                </svg>
+
+                {segments.map((segment) => {
+                    const angle = (segment.step - 0.5) * anglePerSegment - (Math.PI / 2);
+                    const isLeft = segment.descriptionPosition === 'left';
+                    const startRadius = isLeft ? 300 : 230;
+                    const endRadius = isLeft ? 230 : 300;
+
+                    const lineStartX = startRadius * Math.cos(angle);
+                    const lineStartY = startRadius * Math.sin(angle);
+                    const lineEndX = endRadius * Math.cos(angle);
+                    const lineEndY = endRadius * Math.sin(angle);
+
+                    const textAnchor = isLeft ? 'end' : 'start';
+                    const textX = isLeft ? -320 : 320;
+                    const textY = lineStartY;
+                    
+                    return (
+                        <div key={`desc-${segment.step}`} 
+                            className="absolute top-1/2 left-1/2"
+                            style={{ transform: `translate(${textX}px, ${textY}px)`}}
+                        >
+                           <div className={`w-64 ${isLeft ? 'text-right' : 'text-left'}`}>
+                                <p className="text-sm text-gray-600">{segment.description}</p>
+                           </div>
+                           <svg className="absolute top-1/2 left-1/2 overflow-visible" style={{transform: `translate(${-textX}px, ${-textY}px)`}}>
+                               <line x1={lineStartX} y1={lineStartY} x2={lineEndX} y2={lineEndY} stroke="#d1d5db" strokeWidth="1" />
+                               <circle cx={lineEndX} cy={lineEndY} r="3" fill="#d1d5db" />
+                           </svg>
+                        </div>
+                    )
+                })}
             </div>
         </div>
-        <div className='flex items-center gap-2 mt-8 text-lg font-semibold text-primary'>
-            <Repeat className='h-5 w-5'/>
-            <span>Repeat Cycle</span>
-        </div>
-        <p className="text-sm text-muted-foreground mt-2 max-w-md text-center">This continuous loop is the core of Agile thinking — delivering value, gathering feedback, and improving continuously.</p>
-      </div>
     );
   }
 
@@ -236,7 +340,7 @@ function WhatIsAgileMethodologyArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
             <h1>What is Agile Methodology?</h1>
-            <p className="lead !text-2xl !font-semibold text-primary">A Complete, In-Depth Guide for Modern Product Teams</p>
+            <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
             <hr />
 
@@ -515,11 +619,12 @@ function WhatIsAgileMethodologyArticle() {
 // Dummy table components to avoid breaking the file
 // In a real scenario, you'd import these from your UI library
 const Table = ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => <table {...props} className="w-full text-left border-collapse">{children}</table>;
-const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props} className="border-b">{children}</thead>;
-const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props}>{children}</tr>;
+const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props}>{children}</thead>;
+const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props} className="border-b">{children}</tr>;
 const TableHead = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <th {...props} className="p-4 font-medium text-muted-foreground text-base">{children}</th>;
 const TableBody = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props}>{children}</tbody>;
 const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <td {...props} className="p-4 text-base">{children}</td>;
 
     
+
 
