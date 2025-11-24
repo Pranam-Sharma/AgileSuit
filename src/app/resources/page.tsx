@@ -5,9 +5,9 @@ import { Footer } from '@/components/landing/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import curriculumData from '../../docs/curriculum.json';
 import Link from 'next/link';
-import { Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import { Logo } from '@/components/logo';
+import { ArrowRight, BookOpen, Scaling, BarChart, Users, Star, Cpu, GraduationCap } from 'lucide-react';
 
 // Helper to generate a URL-friendly slug from a title
 const toSlug = (title: string) => {
@@ -18,10 +18,27 @@ const toSlug = (title: string) => {
     .replace(/-+/g, '-'); // collapse dashes
 };
 
+const levelIcons: Record<string, { icon: React.ElementType; color: string }> = {
+    'LEVEL 1': { icon: BookOpen, color: 'bg-teal-100 text-teal-600' },
+    'LEVEL 2': { icon: Star, color: 'bg-yellow-100 text-yellow-600' },
+    'LEVEL 3': { icon: Cpu, color: 'bg-orange-100 text-orange-600' },
+    'LEVEL 4': { icon: BarChart, color: 'bg-blue-100 text-blue-600' },
+    'LEVEL 5': { icon: Scaling, color: 'bg-purple-100 text-purple-600' },
+    'LEVEL 6': { icon: Users, color: 'bg-red-100 text-red-600' },
+    'LEVEL 7': { icon: Cpu, color: 'bg-amber-100 text-amber-700' },
+    'LEVEL 8': { icon: GraduationCap, color: 'bg-slate-100 text-slate-600' },
+};
+
 export default function ResourcesPage() {
   React.useEffect(() => {
     document.title = 'Agile Methodology Learning Hub | AgileSuit';
   }, []);
+
+  // Function to extract the simple title from the level string
+  const getSimpleTitle = (levelString: string) => {
+    const match = levelString.match(/:\s(.*?)\s\(/);
+    return match ? match[1] : levelString;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -30,66 +47,48 @@ export default function ResourcesPage() {
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-4xl text-center">
-              <p className="text-base font-semibold leading-7 text-primary">Free for Everyone</p>
-              <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
-                Agile Methodology Learning Hub
-              </h1>
-              <p className="mt-6 text-xl leading-8 text-muted-foreground">
-                Your complete guide to mastering Agile, from fundamental principles to expert practices. Powered by AgileSuit.
-              </p>
+                <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                    Agile Methodology Learning Hub
+                </h1>
+                <div className="mt-6 flex items-center justify-center gap-2 text-lg leading-8 text-muted-foreground">
+                    Powered by <Logo /> <span>(Free for Everyone)</span>
+                </div>
             </div>
 
             <div className="mt-20 space-y-16">
-              {curriculumData.learningHubContent.map((level, levelIndex) => (
-                <div key={level.level}>
-                  <div className="relative text-center mb-12">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                          <div className="w-full border-t border-gray-200" />
-                      </div>
-                      <div className="relative flex justify-center">
-                          <h2 className="inline-flex items-center gap-3 bg-white px-4 text-2xl font-bold text-foreground">
-                            <span className="text-3xl">{level.emoji}</span>
-                            {level.level}
-                          </h2>
-                      </div>
-                  </div>
-                  
-                  <div className="mx-auto grid max-w-2xl grid-cols-1 gap-8 lg:mx-0 lg:max-w-none lg:grid-cols-2 xl:grid-cols-3">
-                    {level.topics.map((topic, topicIndex) => {
-                      const topicSlug = toSlug(topic.title);
-                      return (
-                        <Card key={topic.title} className="flex flex-col border-2 border-transparent hover:border-primary hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                          <CardHeader>
-                            <CardTitle className="text-xl">
-                              {`${levelIndex * 3 + topicIndex + 1}. ${topic.title}`}
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent className="flex-grow space-y-3">
-                              <p className='text-sm text-muted-foreground'>What you&apos;ll learn:</p>
-                              <ul className="space-y-2 text-sm">
-                                {topic.points.map(point => (
-                                    <li key={point} className="flex items-start gap-2">
-                                        <Check className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-500" />
-                                        <span className='text-muted-foreground'>{point}</span>
-                                    </li>
-                                ))}
-                              </ul>
-                          </CardContent>
-                          <CardContent>
-                            <Link 
-                              href={`/resources/${topicSlug}`} 
-                              className={cn(buttonVariants({ variant: 'outline' }), 'w-full')}
-                              title={`Learn more about ${topic.title}`}
-                            >
-                              Start Learning <ArrowRight className="ml-2 h-4 w-4" />
-                            </Link>
-                          </CardContent>
+              <div className="mx-auto grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
+                {curriculumData.learningHubContent.map((level, levelIndex) => {
+                  const levelNumber = level.level.split(':')[0];
+                  const Icon = levelIcons[levelNumber]?.icon || BookOpen;
+                  const iconColor = levelIcons[levelNumber]?.color || 'bg-gray-100 text-gray-600';
+                  const simpleTitle = getSimpleTitle(level.level);
+
+                  return (
+                    <Link key={level.level} href={`/resources/${toSlug(level.topics[0].title)}`} className="block group">
+                        <Card className="h-full border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
+                            <CardContent className="p-6 flex gap-6 items-start">
+                                <div className={cn("flex-shrink-0 rounded-lg h-16 w-16 flex items-center justify-center", iconColor)}>
+                                    <Icon className="h-8 w-8" />
+                                </div>
+                                <div className='flex-grow'>
+                                    <h2 className="text-xl font-bold text-foreground">
+                                       <span className='text-primary'>{levelIndex + 1}</span> {simpleTitle}
+                                    </h2>
+                                    <ul className="mt-4 space-y-2 text-md text-muted-foreground">
+                                        {level.topics.map(topic => (
+                                            <li key={topic.title} className='flex items-center gap-2 hover:text-foreground transition-colors'>
+                                                {topic.title}
+                                                <ArrowRight className='h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity' />
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </CardContent>
                         </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
