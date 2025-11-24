@@ -386,18 +386,18 @@ function AgileVsWaterfallTable() {
 function WhatIsAgileMethodologyArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
-            <h1>What is Agile Methodology?</h1>
+            <h1 className="font-bold">What is Agile Methodology?</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
             <hr className="my-8" />
 
-            <h2>Introduction: Understanding Agile in the Modern World</h2>
+            <h2 className="font-bold">Introduction: Understanding Agile in the Modern World</h2>
             <p>Agile is a modern approach to project management that helps teams deliver value faster and more efficiently. Unlike traditional methods that require rigid, long-term planning, Agile focuses on <strong>flexibility, customer collaboration, and delivering work in small, incremental steps</strong>.</p>
             <p>This iterative process allows teams to adapt to change, improve continuously, and respond to customer feedback in real-time. Platforms like <a href="#">AgileSuit</a> are designed to support this entire lifecycle, making Agile principles actionable and measurable.</p>
             
             <hr className="my-8" />
 
-            <h2>What is Agile? The Core Idea</h2>
+            <h2 className="font-bold">What is Agile? The Core Idea</h2>
             <blockquote>
                 <em>Agile Methodology</em> is an <strong>iterative approach</strong> to project management and software development that helps teams deliver value to their customers <strong>faster and with fewer headaches</strong>.
             </blockquote>
@@ -414,14 +414,14 @@ function WhatIsAgileMethodologyArticle() {
             
             <hr className="my-8" />
 
-            <h2>Agile vs. Traditional Waterfall</h2>
+            <h2 className="font-bold">Agile vs. Traditional Waterfall</h2>
             <p>The core difference between Agile and traditional models like <strong>Waterfall</strong> is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
             
             <AgileVsWaterfallTable />
             
             <hr className="my-8" />
 
-            <h2>Common Agile Frameworks & Key Roles</h2>
+            <h2 className="font-bold">Common Agile Frameworks & Key Roles</h2>
             <p>Agile is an umbrella term for several frameworks. The most popular are:</p>
             <ul>
                 <li><strong>Scrum:</strong> A framework based on sprints, specific roles, and regular meetings (events) to get work done.</li>
@@ -434,7 +434,7 @@ function WhatIsAgileMethodologyArticle() {
 
             <hr className="my-8" />
 
-            <h2>How AgileSuit Powers the Agile Cycle</h2>
+            <h2 className="font-bold">How AgileSuit Powers the Agile Cycle</h2>
             <p>AgileSuit is designed to simplify and enhance every stage of the Agile lifecycle. It provides the tools needed to turn Agile theory into measurable, day-to-day execution.</p>
             
             <AgileSuitCycleDiagram />
@@ -450,7 +450,7 @@ function WhatIsAgileMethodologyArticle() {
 
             <hr className="my-8" />
 
-            <h2>Conclusion: The Agile Advantage</h2>
+            <h2 className="font-bold">Conclusion: The Agile Advantage</h2>
             <p>Agile is more than a methodology—it's a mindset that empowers teams to thrive in an environment of change. By prioritizing flexibility, collaboration, and continuous improvement, organizations can reduce risk, increase customer satisfaction, and deliver better products faster.</p>
             <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
                 Agile is the heartbeat of modern innovation.
@@ -532,9 +532,10 @@ function WhyAgileWasCreatedArticle() {
             <h2 className="font-bold">The Core Flaws of the Waterfall Model</h2>
             <p>The Waterfall approach created several critical issues that made software projects incredibly risky:</p>
             <ul>
-                <li><strong>Late Feedback:</strong> Customers and users often didn't see the product until it was nearly finished. By then, it was often too late or too expensive to make significant changes.</li>
-                <li><strong>Resistance to Change:</strong> The model assumes all requirements can be known upfront. In reality, markets shift, and customer needs evolve. Waterfall treated change as an error, not a reality.</li>
-                <li><strong>High Risk of Failure:</strong> With a single "big bang" delivery at the end, all the project's risk was pushed to the final phase. If the product was wrong, the entire investment was wasted.</li>
+                <li><strong>Late Feedback:</strong> Customers and users often didn't see the product until it was nearly finished. By then, it was often too late or too expensive to make significant changes. Imagine spending a year building a car, only to find out the customer wanted a boat.</li>
+                <li><strong>Resistance to Change:</strong> The model assumes all requirements can be known upfront. In reality, markets shift, and customer needs evolve. Waterfall treated change as an error to be controlled, not a reality to be embraced. This rigidity meant teams were often building products for a world that no longer existed by the time they launched.</li>
+                <li><strong>Siloed Teams and Communication Gaps:</strong> In Waterfall, teams worked in isolated phases. Designers would "throw work over the wall" to developers, who would then throw it to testers. This led to misunderstandings, rework, and a lack of shared ownership.</li>
+                <li><strong>High Risk of Failure:</strong> With a single "big bang" delivery at the end, all the project's risk was pushed to the final phase. If the product was wrong, the entire investment of time and money was wasted. There was no opportunity to pivot or correct course along the way.</li>
             </ul>
 
             <WaterfallVsAgileDiagram />
@@ -542,7 +543,7 @@ function WhyAgileWasCreatedArticle() {
             <hr className="my-8" />
 
             <h2 className="font-bold">The Manifesto for a Better Way</h2>
-            <p>In 2001, a group of 17 software developers met in Utah, frustrated with the status quo. They recognized that the industry needed a new philosophy—one that embraced change, prioritized customer value, and enabled rapid delivery. The result of their meeting was the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Manifesto for Agile Software Development</a>.</p>
+            <p>In 2001, a group of 17 software developers met at a ski resort in Utah. They were frustrated with the status quo and recognized that the industry needed a new philosophy—one that embraced change, prioritized customer value, and enabled rapid delivery. The result of their meeting was the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Manifesto for Agile Software Development</a>.</p>
             <p>Agile wasn't created as a single, rigid framework. It was a call for a <strong>mindset shift</strong>. It proposed a new way of thinking that valued:</p>
             <ul>
                 <li><em>Flexibility</em> over rigid planning.</li>
@@ -559,7 +560,7 @@ function WhyAgileWasCreatedArticle() {
             </div>
 
             <h2 className="font-bold">Conclusion: A Necessary Evolution</h2>
-            <p>Ultimately, Agile was created because the old way of building software was broken. It offered a solution to deliver better products faster, with less risk and higher customer satisfaction. It was, and remains, a necessary evolution for an industry defined by constant change.</p>
+            <p>Ultimately, Agile was created because the old way of building software was broken. It wasn't just inefficient; it was actively hostile to the nature of creative work and changing markets. Agile offered a solution to deliver better products faster, with less risk and higher customer satisfaction. It was, and remains, a necessary evolution for an industry defined by constant change.</p>
         </article>
     );
 }
@@ -573,30 +574,32 @@ function WaterfallVsAgileArticle() {
       
       <hr className="my-8" />
       
-      <p>In project management, <strong>Waterfall and Agile</strong> represent two fundamentally different approaches to delivering work. Understanding their differences is key to choosing the right method for your team and project.</p>
+      <p>In the world of project management, <strong>Waterfall and Agile</strong> represent two fundamentally different approaches to delivering work. Understanding their core philosophies, structures, and outcomes is key to choosing the right method for your team and project.</p>
       
-      <h2 className="font-bold">The Waterfall Model: A Linear Path</h2>
-      <p>The <strong>Waterfall model</strong> is a traditional, sequential approach. Think of it as a series of cascading steps where each phase must be fully completed before the next one begins. The typical phases are:</p>
+      <h2 className="font-bold">The Waterfall Model: A Linear, Sequential Path</h2>
+      <p>The <strong>Waterfall model</strong> is the most traditional approach to software development. As the name suggests, it's a linear, sequential process where progress flows steadily downwards (like a waterfall) through a series of distinct phases. The typical phases are:</p>
       <ol>
-          <li>Requirements</li>
-          <li>Design</li>
-          <li>Implementation (Coding)</li>
-          <li>Testing</li>
-          <li>Deployment</li>
+          <li><strong>Requirements:</strong> All project requirements are gathered and documented upfront.</li>
+          <li><strong>Design:</strong> The system architecture and software design are created based on the requirements.</li>
+          <li><strong>Implementation (Coding):</strong> Developers write the code for the entire system.</li>
+          <li><strong>Testing:</strong> The quality assurance team tests the complete product to find and report bugs.</li>
+          <li><strong>Deployment:</strong> The finished product is released to the customer.</li>
+          <li><strong>Maintenance:</strong> The team provides ongoing support and maintenance.</li>
       </ol>
-      <p>This method is very structured and requires extensive documentation and planning upfront. Once a phase is complete, going back to make changes is difficult and costly. It works best for projects where requirements are well-understood and unlikely to change.</p>
+      <p>This method is highly structured and requires comprehensive documentation and planning before any development begins. Once a phase is complete, going back to make changes is exceptionally difficult and costly, as it requires a formal change control process and can disrupt the entire project timeline. Waterfall works best for projects where requirements are completely understood, fixed, and unlikely to change—such as in manufacturing or construction.</p>
       
       <hr className="my-8" />
       
-      <h2 className="font-bold">The Agile Model: An Iterative Loop</h2>
-      <p><strong>Agile</strong>, on the other hand, is an iterative and incremental approach. Instead of one long, linear path, Agile breaks the project into small, manageable cycles called <strong>sprints</strong> (typically 2-4 weeks long). At the end of each sprint, the team delivers a working piece of the product. This allows for continuous feedback, adaptation, and improvement throughout the project lifecycle.</p>
+      <h2 className="font-bold">The Agile Model: An Iterative, Cyclical Loop</h2>
+      <p><strong>Agile</strong>, on the other hand, is an iterative and incremental approach. Instead of one long, linear path, Agile breaks the project into small, manageable cycles called <strong>sprints</strong> (typically lasting 2-4 weeks). At the end of each sprint, the team delivers a small, functional, and potentially shippable piece of the product.</p>
+      <p>This cyclical process—<em>plan, build, test, release, get feedback</em>—allows for continuous improvement, adaptation, and collaboration throughout the project lifecycle. It embraces the idea that not everything can be known upfront and that change is a natural part of development.</p>
       
       <WaterfallVsAgileDiagram />
 
       <hr className="my-8" />
 
       <h2 className="font-bold">Key Differences: A Head-to-Head Comparison</h2>
-      <p>Let's break down the core differences in a simple table:</p>
+      <p>Let's break down the core differences in a simple table to highlight the contrasting philosophies:</p>
       
       <AgileVsWaterfallTable />
 
@@ -604,11 +607,11 @@ function WaterfallVsAgileArticle() {
       
       <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
           <p className="font-semibold m-0 text-lg">Which One Should You Use?</p>
-          <p>For most modern software projects where requirements are expected to evolve, <strong>Agile is the preferred method</strong>. It reduces risk, improves customer satisfaction, and allows teams to deliver value faster. Tools like <strong>AgileSuit</strong> are built from the ground up to support the Agile workflow, from sprint planning to tracking metrics.</p>
+          <p>For most modern software and product development projects, where market conditions are dynamic and requirements are expected to evolve, <strong>Agile is the overwhelmingly preferred method</strong>. It reduces risk by delivering value early, improves customer satisfaction through continuous feedback, and allows teams to build the right product. Tools like <strong>AgileSuit</strong> are built from the ground up to support the Agile workflow, providing the visibility and structure needed for sprint planning, progress tracking, and performance analysis.</p>
       </div>
 
       <h2 className="font-bold">Conclusion</h2>
-      <p>While Waterfall has its place for highly predictable projects, Agile's flexibility and focus on continuous feedback make it the superior choice for the dynamic and fast-paced world of modern development. It empowers teams to respond to change, collaborate effectively, and consistently deliver products that meet customer needs.</p>
+      <p>While Waterfall has its place for highly predictable, unchanging projects, its rigidity makes it ill-suited for the fast-paced world of modern development. Agile's flexibility, focus on collaboration, and continuous feedback loop make it the superior choice for teams that need to respond to change, innovate quickly, and consistently deliver products that delight customers.</p>
     </article>
   );
 }
@@ -622,33 +625,33 @@ function ProblemsAgileSolvesArticle() {
 
             <hr className="my-8" />
 
-            <p>Agile wasn't just a new idea; it was a direct solution to the persistent and costly problems that plagued traditional development models like Waterfall. Here are the key issues that Agile directly addresses.</p>
+            <p>Agile wasn't just a new idea; it was a direct response to the persistent and costly problems that plagued traditional, linear development models like Waterfall. These issues regularly led to project failure, budget overruns, and products that no one wanted. Here are the key problems that Agile directly solves.</p>
 
-            <h2 className="font-bold">1. The Problem: Changing Requirements</h2>
-            <p><strong>Traditional Failure:</strong> Waterfall projects require all requirements to be defined upfront. In the real world, this is nearly impossible. Market needs change, new competitors emerge, and customer feedback reveals better ideas. In a rigid model, any change is a crisis that causes delays and budget overruns.</p>
-            <p><strong>Agile Solution:</strong> Agile <em>embraces</em> change. By working in short sprints, teams can incorporate new feedback and adjust priorities at the start of every cycle. This ensures the final product is what the customer actually wants, not just what was planned months ago.</p>
-
-            <hr className="my-8" />
-
-            <h2 className="font-bold">2. The Problem: Late Feedback & High Risk</h2>
-            <p><strong>Traditional Failure:</strong> With Waterfall, the customer often doesn't see a working product until the very end. If the team misunderstood a requirement or built the wrong thing, the entire project's budget and time can be wasted. The risk is concentrated at the final delivery.</p>
-            <p><strong>Agile Solution:</strong> Agile delivers a small, working piece of the product every few weeks. This creates a continuous feedback loop. Customers can see progress, provide input early, and guide the development process. Risk is spread out and minimized with each successful sprint.</p>
+            <h2 className="font-bold">1. The Problem: The Myth of Fixed Requirements</h2>
+            <p><strong>Traditional Failure:</strong> Waterfall projects are built on the assumption that all requirements can be perfectly defined and frozen at the start. In the real world, this is nearly impossible. Market needs change, new competitors emerge, user feedback reveals better ideas, and business priorities shift. In a rigid model, any change is a crisis that triggers complex change request forms, budget renegotiations, and massive delays.</p>
+            <p><strong>Agile Solution:</strong> Agile <em>embraces</em> change as a source of value. By working in short sprints, teams have a built-in mechanism to incorporate new feedback and adjust priorities at the start of every cycle. The backlog is a living document, not a stone tablet. This ensures the team is always working on the most valuable features and that the final product is what the customer actually wants *now*, not what was planned months or years ago.</p>
 
             <hr className="my-8" />
 
-            <h2 className="font-bold">3. The Problem: Lack of Transparency</h2>
-            <p><strong>Traditional Failure:</strong> Stakeholders and even team members often have little visibility into the true progress of a project. Status is measured by phase completion ("Design is 100% done"), which doesn't reflect actual value delivered.</p>
-            <p><strong>Agile Solution:</strong> Agile provides radical transparency. Tools like <strong>AgileSuit</strong> offer real-time dashboards, burndown charts, and Kanban boards. Everyone can see what's being worked on, what's done, and what's blocked. Daily stand-ups ensure the entire team is aligned and aware of progress and impediments.</p>
+            <h2 className="font-bold">2. The Problem: Late Feedback & "Big Bang" Risk</h2>
+            <p><strong>Traditional Failure:</strong> With Waterfall, the customer often doesn't see a working product until the very end of a long cycle. This is the "Big Bang" delivery. If the team misunderstood a key requirement or built the wrong solution, the entire project's budget and time can be wasted. All the project's risk is concentrated at this single, final delivery point.</p>
+            <p><strong>Agile Solution:</strong> Agile delivers a small, working, and potentially shippable piece of the product every few weeks. This creates a continuous feedback loop. Customers and stakeholders can see tangible progress, provide input early and often, and guide the development process. Risk is spread out across many small iterations and is minimized with each successful sprint. You find out if you're on the wrong track after two weeks, not two years.</p>
+
+            <hr className="my-8" />
+
+            <h2 className="font-bold">3. The Problem: Lack of Transparency and Silos</h2>
+            <p><strong>Traditional Failure:</strong> Stakeholders, and often even team members in different departments, have little visibility into the true progress of a project. Status is often reported by phase completion ("Design is 100% done"), which says nothing about the actual value delivered or the problems lurking beneath the surface. This creates friction, blame, and surprises.</p>
+            <p><strong>Agile Solution:</strong> Agile provides radical transparency. Tools like <strong>AgileSuit</strong> offer real-time dashboards, burndown charts, and Kanban boards that are visible to everyone. Daily stand-up meetings ensure the entire team is aligned on progress and impediments. This transparency builds trust, fosters collective ownership, and allows problems to be surfaced and solved quickly.</p>
 
             <hr className="my-8" />
 
              <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
                 <p className="font-semibold m-0 text-lg">AgileSuit: Your Solution for Agile Problems</p>
-                <p>AgileSuit is designed to solve these exact problems by providing a central hub for sprint planning, task management, and real-time metric tracking, ensuring your team stays aligned and productive.</p>
+                <p><strong>AgileSuit</strong> is specifically designed to solve these exact problems. It provides a central hub for dynamic backlog management, sprint planning, task visualization, and real-time metric tracking, ensuring your team stays aligned, adaptable, and productive.</p>
             </div>
 
             <h2 className="font-bold">Conclusion</h2>
-            <p>Agile isn't just a different process; it's a better-suited operating system for the uncertainty of modern development. It directly tackles the core issues of changing requirements, high risk, and poor visibility, leading to more successful projects and happier teams.</p>
+            <p>Agile is not just a different process; it's a better-suited operating system for the uncertainty and complexity of modern development. It directly tackles the core issues of changing requirements, high risk, and poor visibility, leading to more successful projects, higher quality products, and happier, more engaged teams.</p>
         </article>
     );
 }
@@ -662,35 +665,35 @@ function AgileMindsetArticle() {
 
             <hr className="my-8" />
 
-            <p>Agile is more than a set of practices, ceremonies, and roles. At its core, it's a <strong>mindset</strong>—a fundamental shift in how teams approach work, collaboration, and value delivery. Adopting the processes without embracing the philosophy is like having a car without an engine. You have the frame, but you won't get far.</p>
-            <p>The Agile mindset is built on a foundation of trust, collaboration, and a relentless focus on the customer.</p>
+            <p>Many organizations try to "do Agile" by adopting its ceremonies—like daily stand-ups and sprints—without understanding the philosophy behind them. This often fails. Agile is more than a set of practices; it's a <strong>mindset</strong>. It's a fundamental shift in how teams approach work, collaboration, and value delivery. Adopting the processes without embracing the philosophy is like having a car without an engine. You have the frame, but you won't get very far.</p>
+            <p>The Agile mindset is built on a foundation of trust, respect, customer-centricity, and a relentless desire to improve.</p>
             
             <h2 className="font-bold">Core Pillars of the Agile Mindset</h2>
 
             <h3>1. Embrace and Welcome Change</h3>
-            <p>The traditional mindset sees change as a problem to be avoided. The Agile mindset sees change as an opportunity to create more value. Agile teams expect requirements to evolve and have a system designed to adapt to them. The goal is not to perfectly execute a static plan but to continuously steer toward the best possible outcome.</p>
+            <p>The traditional mindset sees change as a problem to be avoided, a deviation from the plan. The Agile mindset, however, sees change as an opportunity to create more value. Agile teams expect requirements to evolve and have a system designed to adapt to them. They understand that responding to change is more important than rigidly following a plan that may no longer be relevant. The goal is not to perfectly execute a static plan, but to continuously steer toward the best possible outcome for the customer.</p>
 
             <h3>2. Focus on Delivering Value Early and Often</h3>
-            <p>The primary measure of success in Agile is <em>working software</em>. Instead of waiting months for a "big bang" release, Agile teams focus on delivering small, incremental pieces of a functional product. This approach provides value to the customer sooner and generates crucial feedback that guides future development.</p>
+            <p>The primary measure of success in Agile is <em>working software that delivers value</em>. Instead of waiting months or years for a single "big bang" release, Agile teams focus on delivering small, incremental pieces of a functional product. This approach gets value into the hands of the customer sooner, which can generate revenue, provide learning, and create a competitive advantage. It also generates crucial feedback that guides future development, ensuring the team doesn't waste time building something nobody wants.</p>
 
-            <h3>3. Collaborate and Communicate Relentlessly</h3>
-            <p>Agile breaks down silos. Instead of separate departments handing off work, Agile teams are cross-functional and collaborate daily. Business stakeholders, developers, and designers work together throughout the project. This constant communication ensures everyone is aligned and that the team is building the right thing.</p>
+            <h3>3. Collaborate Relentlessly with Customers and Colleagues</h3>
+            <p>Agile breaks down the silos common in traditional organizations. Instead of separate departments handing off work to each other, Agile teams are cross-functional and collaborate daily. Business stakeholders, product managers, developers, and designers work together throughout the project. Most importantly, the customer is seen as a key collaborator, not a distant entity. This constant communication ensures everyone is aligned, misunderstandings are caught early, and the team is collectively focused on building the right thing.</p>
             
-            <h3>4. Trust and Empower the Team</h3>
-            <p>The Agile philosophy trusts that the best work comes from motivated, self-organizing teams. Instead of a top-down, command-and-control structure, leaders empower teams to make decisions about how to best accomplish their work. This fosters ownership, creativity, and a higher level of commitment.</p>
+            <h3>4. Trust and Empower the Team to Self-Organize</h3>
+            <p>The Agile philosophy trusts that the best solutions, architectures, and designs emerge from motivated, self-organizing teams. Instead of a top-down, command-and-control structure where managers assign tasks, leaders empower teams to make decisions about how to best accomplish their work. This fosters a powerful sense of ownership, creativity, accountability, and a higher level of commitment to the project's success.</p>
             
-            <h3>5. Reflect and Adapt Continuously</h3>
-            <p>Agile teams are never satisfied with the status quo. At regular intervals (e.g., at the end of each sprint), the team reflects on what went well, what could be improved, and creates a concrete plan to adapt their process. This commitment to continuous improvement (known as <em>Kaizen</em>) is a cornerstone of the Agile mindset.</p>
+            <h3>5. Reflect and Adapt Continuously (Kaizen)</h3>
+            <p>Agile teams are never satisfied with the status quo. They are learning teams. At regular intervals (e.g., at the end of each sprint during the Retrospective), the team reflects on what went well, what could be improved, and creates a concrete plan to adapt their process. This commitment to continuous improvement, often referred to by the Japanese term <em>Kaizen</em>, is a cornerstone of the Agile mindset. It ensures the team's process evolves and becomes more effective over time.</p>
             
              <hr className="my-8" />
              
             <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
                 <p className="font-semibold m-0 text-lg">Cultivating the Mindset with AgileSuit</p>
-                <p><strong>AgileSuit</strong> reinforces the Agile mindset by providing tools that foster transparency, facilitate collaboration, and make continuous improvement a natural part of the workflow. From retrospective boards to real-time progress charts, it helps turn philosophy into practice.</p>
+                <p><strong>AgileSuit</strong> is designed to reinforce the Agile mindset by providing tools that foster transparency, facilitate collaboration, and make continuous improvement a natural part of the workflow. From retrospective boards that capture action items to real-time progress charts that empower teams with data, it helps turn philosophy into daily practice.</p>
             </div>
             
             <h2 className="font-bold">Conclusion</h2>
-            <p>Adopting Agile is a cultural transformation. It's about shifting from rigid processes to flexible frameworks, from individual assignments to collective ownership, and from following a plan to delivering customer value. Mastering this mindset is the true key to unlocking the full potential of Agile.</p>
+            <p>Adopting Agile is a cultural transformation, not just a process change. It's about shifting from rigid processes to flexible frameworks, from individual assignments to collective ownership, and from following a plan to delivering customer value. Mastering this mindset is the true key to unlocking the full, transformative potential of Agile.</p>
         </article>
     );
 }
@@ -727,26 +730,26 @@ function FourCoreValuesArticle() {
             
             <hr className="my-8" />
             
-            <p>The <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a> is not a rulebook. It's a declaration of priorities. It consists of four core values that contrast the Agile approach with traditional, heavyweight methodologies. Each value highlights a preference, stating that while there is value in the items on the right, Agile practitioners value the items on the left <em>more</em>.</p>
+            <p>The <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Manifesto for Agile Software Development</a> is not a rulebook or a detailed process. It's a declaration of priorities. It consists of four core values that contrast the Agile approach with the traditional, heavyweight methodologies that were common at the time. Each value highlights a preference, stating that while there is value in the items on the right, Agile practitioners value the items on the left <em>more</em>.</p>
             
             <FourCoreValuesDiagram />
             
             <h2 className="font-bold">1. Individuals and Interactions Over Processes and Tools</h2>
-            <p>This value emphasizes that the best solutions come from people collaborating effectively. While processes and tools are helpful, they are secondary to the quality of interactions between team members. A great team with basic tools will always outperform a dysfunctional team with the best tools money can buy. Communication, trust, and collaboration are the real drivers of success.</p>
+            <p>This value emphasizes that, ultimately, people are the most important factor in development success. While processes and tools are helpful and often necessary, the best solutions come from people collaborating effectively. A brilliant team with basic tools will always outperform a dysfunctional team with the most advanced, expensive tools. Agile prioritizes creating an environment where communication, trust, and direct conversation can thrive, believing that this is the fastest way to solve problems and innovate.</p>
             
             <h2 className="font-bold">2. Working Software Over Comprehensive Documentation</h2>
-            <p>The primary goal of development is to deliver software that works and provides value to the customer. Traditional methods often produced mountains of documentation that were expensive to create and quickly became outdated. Agile prioritizes delivering functional increments of the product over creating exhaustive documentation. Documentation is still created, but only what is necessary and adds value.</p>
+            <p>The primary goal of software development is to deliver software that works and provides tangible value to the customer. Traditional methods often produced mountains of documentation (detailed specifications, design documents, manuals) that were expensive to create, difficult to maintain, and quickly became outdated. Agile doesn't eliminate documentation, but it prioritizes delivering functional increments of the product over creating documentation for its own sake. Documentation should be lean, purposeful, and only created when it truly adds value.</p>
             
             <h2 className="font-bold">3. Customer Collaboration Over Contract Negotiation</h2>
-            <p>Agile views the customer as a partner in the development process, not an adversary across a negotiation table. Instead of locking in every detail in a rigid contract upfront, Agile teams work in close collaboration with their customers throughout the project. This continuous feedback loop ensures that the final product truly meets the customer's needs and expectations.</p>
+            <p>Traditionally, the relationship with a customer was often adversarial, defined by a rigid contract negotiated at the beginning of a project. This contract would attempt to specify every detail, and any deviation would lead to difficult negotiations. Agile flips this model. It views the customer as a partner in the development process. Instead of relying on an initial contract, Agile teams work in close, continuous collaboration with their customers throughout the project. This ongoing feedback loop is crucial for ensuring that the final product truly meets the customer's evolving needs and expectations.</p>
             
             <h2 className="font-bold">4. Responding to Change Over Following a Plan</h2>
-            <p>The business world is dynamic. Market conditions change, user needs evolve, and new opportunities arise. Traditional models treat change as a deviation from the plan that must be controlled. Agile, however, anticipates and welcomes change. It recognizes that the ability to pivot and respond to new information is a competitive advantage. An Agile plan is a flexible guide, not a rigid script.</p>
+            <p>The business world is dynamic and unpredictable. Market conditions change, user needs evolve, and new opportunities emerge. Traditional models treat change as a deviation from the plan that must be controlled and resisted. Agile, however, anticipates and welcomes change. It recognizes that the ability to pivot and respond to new information is a powerful competitive advantage. An Agile plan is not a rigid script to be followed blindly; it is a flexible guide that helps the team navigate toward the most valuable outcome, even if that outcome is different from what was originally envisioned.</p>
 
             <hr className="my-8" />
             <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
                 <p className="font-semibold m-0 text-lg">Living the Values with AgileSuit</p>
-                <p><strong>AgileSuit</strong> is designed around these values, with features that promote real-time collaboration, track working software increments, and provide the flexibility needed to respond to change effectively.</p>
+                <p><strong>AgileSuit</strong> is built around these four values. It provides tools that promote real-time communication (<em>individuals and interactions</em>), track the delivery of functional user stories (<em>working software</em>), facilitate feedback loops (<em>customer collaboration</em>), and allow for easy backlog re-prioritization (<em>responding to change</em>).</p>
             </div>
         </article>
     );
@@ -772,10 +775,10 @@ function TwelvePrinciplesArticle() {
             <h1 className="font-bold">The 12 Principles of Agile Software</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Guiding Rules Behind the Agile Manifesto</p>
             <hr className="my-8" />
-            <p>While the four core values provide the philosophical foundation of Agile, the 12 supporting principles offer more specific, actionable guidance. They are the "how-to" behind the Agile mindset.</p>
+            <p>While the four core values provide the philosophical foundation of Agile, the 12 supporting principles offer more specific, actionable guidance. They are the "how-to" behind the Agile mindset, translating the values into concrete practices and behaviors for high-performing teams.</p>
             <div className="not-prose my-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {principles.map((p, i) => (
-                    <Card key={i} className="flex flex-col">
+                    <Card key={i} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
                         <CardHeader>
                             <CardTitle className="text-lg">
                                 <span className="text-primary mr-2 font-black">{i+1}.</span>
@@ -788,6 +791,18 @@ function TwelvePrinciplesArticle() {
                     </Card>
                 ))}
             </div>
+            <hr className="my-8" />
+            <h2 className="font-bold">Putting the Principles into Practice</h2>
+            <p>These 12 principles are not a checklist to be mechanically followed. They are a guide for decision-making. When a team faces a challenge, they can turn to these principles to find the "Agile" way forward. For example:</p>
+            <ul>
+                <li>If a new, important feature request comes in mid-project, a team remembers to <strong>"Welcome Change"</strong> (Principle 2) rather than resisting it.</li>
+                <li>If a team is consistently working overtime to meet deadlines, they are violating the principle of <strong>"Sustainable Pace"</strong> (Principle 8) and must address their process.</li>
+                <li>If progress is being measured by lines of code written or documents completed, the team should refocus on <strong>"Working Software"</strong> as the primary measure of progress (Principle 7).</li>
+            </ul>
+             <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="font-semibold m-0 text-lg">Principles Embodied in AgileSuit</p>
+                <p>AgileSuit is designed to help teams live these principles. The platform's structure encourages frequent delivery, daily collaboration, and continuous reflection, turning abstract ideas into a concrete, effective workflow.</p>
+            </div>
         </article>
     );
 }
@@ -796,31 +811,31 @@ function ScrumIntroArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
             <h1 className="font-bold">Introduction to Scrum</h1>
-            <p className="lead !text-xl !font-normal text-muted-foreground">The Most Popular Agile Framework</p>
+            <p className="lead !text-xl !font-normal text-muted-foreground">The Most Popular Agile Framework for Complex Projects</p>
 
             <hr className="my-8" />
 
-            <p><strong>Scrum</strong> is a lightweight yet powerful framework designed to help teams build complex products in an iterative and incremental way. It is not a methodology with rigid instructions, but a framework that provides a structure of roles, events, and artifacts. Within this structure, teams can develop their own specific processes.</p>
-            <p>The name "Scrum" is taken from rugby, where a team works together to move the ball down the field. Similarly, a Scrum team works together to deliver value in focused bursts called <strong>sprints</strong>.</p>
+            <p>While Agile is the overarching philosophy, <strong>Scrum</strong> is the most widely used framework for putting Agile into practice. It is a lightweight yet powerful framework designed to help small, cross-functional teams build complex products in an iterative and incremental way. It is not a rigid methodology with detailed instructions, but rather a simple framework that provides a structure of roles, events, and artifacts. Within this structure, teams can develop their own specific processes that work for them.</p>
+            <p>The name "Scrum" is taken from the sport of rugby, where a team works together in a tight, coordinated unit to move the ball down the field. Similarly, a Scrum team works together to deliver value in focused, time-boxed bursts called <strong>sprints</strong>.</p>
             
-            <h2 className="font-bold">The 3 Pillars of Scrum</h2>
-            <p>Scrum is founded on empiricism, which means learning from experience. This is supported by three pillars:</p>
+            <h2 className="font-bold">The 3 Pillars of Scrum: Empirical Process Control</h2>
+            <p>Scrum is founded on the theory of empiricism, which asserts that knowledge comes from experience and making decisions based on what is known. This is supported by three essential pillars:</p>
             <ul>
-                <li><strong>Transparency:</strong> All aspects of the work must be visible to everyone involved—the stakeholders, the team, and the customers. Tools like AgileSuit's shared dashboards are critical for this.</li>
-                <li><strong>Inspection:</strong> The team frequently inspects the product and their progress toward the sprint goal to detect any undesirable variances.</li>
-                <li><strong>Adaptation:</strong> If the inspection reveals that one or more aspects of the process are flawed, the team must adapt as quickly as possible to prevent further deviation.</li>
+                <li><strong>Transparency:</strong> All significant aspects of the work must be visible to everyone responsible for the outcome—the stakeholders, the team, and the customers. This requires shared standards and open communication, which tools like AgileSuit's shared dashboards and backlogs are critical for.</li>
+                <li><strong>Inspection:</strong> The team must frequently inspect the Scrum artifacts (like the Product Backlog and the sprint progress) and their progress toward the Sprint Goal to detect any undesirable variances or problems. Inspection should not be so frequent that it gets in the way of the work.</li>
+                <li><strong>Adaptation:</strong> If the inspection reveals that one or more aspects of the process are deviating outside acceptable limits and that the resulting product will be unacceptable, the team must adapt the process or the material being processed as quickly as possible to prevent further deviation.</li>
             </ul>
 
             <hr className="my-8" />
 
-            <h2 className="font-bold">The Core Components of Scrum</h2>
-            <p>Scrum is defined by three categories of components:</p>
+            <h2 className="font-bold">The Core Components of the Scrum Framework</h2>
+            <p>The Scrum framework is defined by a simple set of interlocking components. Mastering them is the first step to a successful Scrum implementation.</p>
             <div className="not-prose my-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card><CardHeader><CardTitle>3 Roles</CardTitle></CardHeader><CardContent><p>Product Owner, Scrum Master, Development Team.</p></CardContent></Card>
-                <Card><CardHeader><CardTitle>5 Events</CardTitle></CardHeader><CardContent><p>The Sprint, Sprint Planning, Daily Scrum, Sprint Review, Sprint Retrospective.</p></CardContent></Card>
-                <Card><CardHeader><CardTitle>3 Artifacts</CardTitle></CardHeader><CardContent><p>Product Backlog, Sprint Backlog, Increment.</p></CardContent></Card>
+                <Card className="shadow-md"><CardHeader><CardTitle>The 3 Roles</CardTitle></CardHeader><CardContent><p className="my-0">The <strong>Product Owner</strong> (owns the "what"), the <strong>Scrum Master</strong> (owns the process), and the <strong>Development Team</strong> (owns the "how").</p></CardContent></Card>
+                <Card className="shadow-md"><CardHeader><CardTitle>The 5 Events</CardTitle></CardHeader><CardContent><p className="my-0">The <strong>Sprint</strong> itself, <strong>Sprint Planning</strong>, the <strong>Daily Scrum</strong>, the <strong>Sprint Review</strong>, and the <strong>Sprint Retrospective</strong>.</p></CardContent></Card>
+                <Card className="shadow-md"><CardHeader><CardTitle>The 3 Artifacts</CardTitle></CardHeader><CardContent><p className="my-0">The <strong>Product Backlog</strong> (all work to be done), the <strong>Sprint Backlog</strong> (work for the current sprint), and the <strong>Increment</strong> (the usable piece of product created).</p></CardContent></Card>
             </div>
-            <p>We will explore each of these in detail in the upcoming sections of the Learning Hub.</p>
+            <p>Each of these components has a specific purpose and is essential to Scrum's success. We will explore each of them in detail in the upcoming sections of the Learning Hub, showing how to implement them effectively using platforms like AgileSuit.</p>
         </article>
     );
 }
@@ -830,25 +845,25 @@ function KanbanVsScrumDiagram() {
     return (
         <div className="not-prose my-12 grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Scrum Column */}
-            <div className="bg-card border rounded-lg p-6">
+            <div className="bg-card border rounded-lg p-6 shadow-md">
                 <h3 className="text-2xl font-bold text-center text-primary mb-4">Scrum</h3>
-                <ul className="space-y-3">
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Cadence:</strong> Regular, fixed-length sprints (e.g., 2 weeks).</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Roles:</strong> Prescribed roles: Product Owner, Scrum Master, Dev Team.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Change:</strong> Changes are typically not introduced during a sprint.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Metrics:</strong> Velocity is a key metric.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Best for:</strong> Projects that benefit from a regular rhythm and iterative feedback.</div></li>
+                <ul className="space-y-3 my-0">
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Cadence:</strong> Uses regular, fixed-length sprints (e.g., 2 weeks) to structure work.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Roles:</strong> Prescribes three specific roles: Product Owner, Scrum Master, and Development Team.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Change:</strong> Changes are generally not introduced during a sprint to protect the sprint goal.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Metrics:</strong> Velocity (how much work is completed per sprint) is a key metric for planning.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-primary flex-shrink-0 mt-1" /><div><strong>Best for:</strong> Projects that benefit from a regular rhythm, iterative feedback, and a structured approach to delivering complex products.</div></li>
                 </ul>
             </div>
             {/* Kanban Column */}
-            <div className="bg-card border rounded-lg p-6">
+            <div className="bg-card border rounded-lg p-6 shadow-md">
                 <h3 className="text-2xl font-bold text-center text-accent-foreground mb-4">Kanban</h3>
-                <ul className="space-y-3">
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Cadence:</strong> Continuous flow. No sprints.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Roles:</strong> No prescribed roles. The existing team structure is used.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Change:</strong> Changes can be made at any time as capacity allows.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Metrics:</strong> Cycle time and lead time are key metrics.</div></li>
-                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Best for:</strong> Teams with shifting priorities and a focus on continuous delivery.</div></li>
+                <ul className="space-y-3 my-0">
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Cadence:</strong> Based on a continuous flow of work. There are no sprints.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Roles:</strong> Does not prescribe any new roles. It is applied to the existing team structure.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Change:</strong> Changes can be made at any time as long as they don't disrupt the workflow or exceed WIP limits.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Metrics:</strong> Cycle Time and Lead Time (how long a task takes to move through the process) are key metrics.</div></li>
+                    <li className="flex gap-3"><CheckCircle2 className="h-6 w-6 text-accent-foreground flex-shrink-0 mt-1" /><div><strong>Best for:</strong> Teams with shifting priorities and a focus on continuous delivery, such as support or maintenance teams.</div></li>
                 </ul>
             </div>
         </div>
@@ -864,25 +879,28 @@ function KanbanIntroArticle() {
 
             <hr className="my-8" />
 
-            <p><strong>Kanban</strong> is an Agile framework that focuses on visualizing your workflow, limiting work in progress (WIP), and maximizing efficiency. The word "Kanban" is Japanese for "visual signal" or "card." The core of Kanban is the <strong>Kanban board</strong>, a visual representation of your team's process.</p>
+            <p><strong>Kanban</strong> is a popular Agile framework that helps teams visualize their workflow, limit work in progress (WIP), and maximize efficiency to achieve a smooth, continuous flow of value. The word "Kanban" is Japanese for "visual signal" or "card," which points to the framework's core component: the <strong>Kanban board</strong>. This board provides a visual representation of your team's entire process, from idea to completion.</p>
+            <p>Unlike Scrum, Kanban is not a prescriptive framework. It is a "start with what you do now" method that focuses on introducing gradual improvements to your existing process.</p>
             
             <h2 className="font-bold">The Four Core Principles of Kanban</h2>
+            <p>The Kanban method is guided by four foundational principles:</p>
             <ol>
-                <li><strong>Start with what you do now:</strong> Kanban does not prescribe a specific process. Instead, you start by visualizing your current workflow, and then gradually make improvements.</li>
-                <li><strong>Agree to pursue incremental, evolutionary change:</strong> Kanban is about making small, continuous improvements rather than large, disruptive ones.</li>
-                <li><strong>Respect the current process, roles, and responsibilities:</strong> Unlike Scrum, Kanban does not require new roles. It is designed to be implemented on top of your existing team structure.</li>
-                <li><strong>Encourage acts of leadership at all levels:</strong> Kanban empowers every team member to identify problems and suggest improvements to the workflow.</li>
+                <li><strong>Start with what you do now:</strong> Kanban does not require you to make drastic changes to your existing process overnight. You start by visualizing your current workflow, including all its steps and potential flaws. This makes it a less disruptive way to begin your Agile journey.</li>
+                <li><strong>Agree to pursue incremental, evolutionary change:</strong> The Kanban philosophy is about making small, continuous improvements (Kaizen) rather than large, disruptive ones. This approach reduces resistance to change and allows the team to evolve its process organically.</li>
+                <li><strong>Respect the current process, roles, and responsibilities:</strong> Unlike Scrum, Kanban does not require you to create new roles like "Scrum Master." It is designed to be implemented on top of your existing team structure, respecting the current roles and responsibilities while highlighting areas for improvement.</li>
+                <li><strong>Encourage acts of leadership at all levels:</strong> Kanban empowers every team member—from developers to managers—to identify problems, suggest improvements, and take ownership of the workflow. Leadership is seen as a shared responsibility, not the job of a single person.</li>
             </ol>
             
-            <h2 className="font-bold">Scrum vs. Kanban</h2>
-            <p>While both are Agile frameworks, they have key differences:</p>
+            <h2 className="font-bold">Scrum vs. Kanban: The Key Differences</h2>
+            <p>While both are popular Agile frameworks, they operate on different principles. Scrum is about a time-boxed, iterative rhythm, while Kanban is about a continuous, interrupt-driven flow. Here's a breakdown of the main distinctions:</p>
+            
             <KanbanVsScrumDiagram />
 
              <hr className="my-8" />
              
             <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
-                <p className="font-semibold m-0 text-lg">Kanban Boards in AgileSuit</p>
-                <p><strong>AgileSuit</strong> provides flexible board views that can be configured for either Scrum or Kanban, allowing your team to use the framework that best suits your needs while keeping all your work in one centralized platform.</p>
+                <p className="font-semibold m-0 text-lg">Flexible Boards for Any Framework in AgileSuit</p>
+                <p>Whether your team uses the structured sprints of Scrum or the continuous flow of Kanban, <strong>AgileSuit</strong> has you covered. Our platform provides flexible board views that can be easily configured for either framework. This allows your organization to use the methods that best suit different teams' needs, all while keeping your work, reporting, and collaboration in one centralized platform.</p>
             </div>
         </article>
     );
