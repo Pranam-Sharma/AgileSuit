@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { notFound, useParams, usePathname } from 'next/navigation';
-import curriculumData from '@/docs/curriculum.json';
+import curriculumData from '../../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { LandingHeader } from '@/components/landing/header';
