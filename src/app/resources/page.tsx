@@ -3,7 +3,7 @@ import * as React from 'react';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import curriculumData from '@/docs/curriculum.json';
+import curriculumData from '../../docs/curriculum.json';
 import Link from 'next/link';
 import { Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
