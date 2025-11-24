@@ -12,7 +12,8 @@ const getSimpleTitle = (levelString: string) => {
 }
 
 const toSlug = (title: string) => {
-  return title
+  const simpleTitle = getSimpleTitle(title);
+  return simpleTitle
     .toLowerCase()
     .replace(/[^a-z0-9 -]/g, '')
     .replace(/\s+/g, '-')
@@ -21,8 +22,7 @@ const toSlug = (title: string) => {
 
 const findLevelBySlug = (slug: string) => {
     return curriculumData.learningHubContent.find(level => {
-        const simpleTitle = getSimpleTitle(level.level);
-        return toSlug(simpleTitle) === slug;
+        return toSlug(level.level) === slug;
     });
 }
 

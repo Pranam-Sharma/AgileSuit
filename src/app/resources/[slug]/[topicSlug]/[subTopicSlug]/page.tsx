@@ -18,7 +18,7 @@ const toSlug = (title: string) => {
 };
 
 const findTopicAndSubTopicBySlugs = (levelSlug: string, topicSlug: string, subTopicSlug: string) => {
-    const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
+    const level = curriculumData.learningHubContent.find(l => toSlug(l.level) === levelSlug);
     if (!level) return null;
 
     const topic = level.topics.find(t => toSlug(t.title) === topicSlug);
