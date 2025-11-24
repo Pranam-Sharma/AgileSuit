@@ -4,8 +4,6 @@ import { notFound, useParams, usePathname } from 'next/navigation';
 import curriculumData from '@/docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 
@@ -31,7 +29,6 @@ export default function ResourceTopicLayout({
   children: React.ReactNode;
 }) {
   const params = useParams();
-  const pathname = usePathname();
   const topicSlug = params.slug as string;
   const subTopicSlug = params.subTopicSlug as string;
 
@@ -47,7 +44,7 @@ export default function ResourceTopicLayout({
         <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
             <div className="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 md:gap-8">
                 <aside className="md:col-span-3 lg:col-span-3 border-r border-gray-200/80 pr-4">
-                    <h2 className="text-lg font-semibold text-foreground px-3 mb-2">Topics</h2>
+                    <h2 className="text-lg font-semibold text-foreground px-3 mb-2">{topic.title}</h2>
                     <nav className="flex flex-col gap-1">
                         {topic.points.map((point, index) => {
                             const currentSubTopicSlug = toSlug(point);
@@ -76,27 +73,7 @@ export default function ResourceTopicLayout({
                 </aside>
 
                 <div className="md:col-span-9 lg:col-span-9 mt-6 md:mt-0">
-                    <p className="text-sm font-medium text-primary">Learning Hub</p>
-                    <h1 className="mt-1 text-5xl font-bold tracking-tight text-foreground">
-                        {topic.title}
-                    </h1>
-                     <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-                        Learn the fundamentals of Agile methodology—covering core concepts, frameworks, and the role of AgileSuit in supporting Agile teams.
-                    </p>
-                     <div className="mt-8 max-w-lg">
-                        <div className="flex justify-between items-center mb-2">
-                           <h3 className="text-sm font-medium text-foreground">Course Progress</h3>
-                           <p className="text-sm font-medium text-primary">10%</p>
-                        </div>
-                        <Progress value={10} className="h-2" />
-                    </div>
-                    <Button size="lg" className="mt-6">
-                        Start Learning
-                    </Button>
-
-                    <div className="mt-8 pt-8 border-t">
-                        {children}
-                    </div>
+                    {children}
                 </div>
             </div>
         </main>
