@@ -6,6 +6,11 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/logo';
 
+const getSimpleTitle = (levelString: string) => {
+    const match = levelString.match(/:\s(.*?)\s\(/);
+    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
+}
+
 const toSlug = (title: string) => {
   return title
     .toLowerCase()
@@ -13,11 +18,6 @@ const toSlug = (title: string) => {
     .replace(/\s+/g, '-') 
     .replace(/-+/g, '-');
 };
-
-const getSimpleTitle = (levelString: string) => {
-    const match = levelString.match(/:\s(.*?)\s\(/);
-    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
-}
 
 const findTopicBySlugs = (levelSlug: string, topicSlug: string) => {
     const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);

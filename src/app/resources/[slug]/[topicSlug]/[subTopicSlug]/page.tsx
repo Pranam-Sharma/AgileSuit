@@ -4,6 +4,11 @@ import curriculumData from '../../../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
+const getSimpleTitle = (levelString: string) => {
+    const match = levelString.match(/:\s(.*?)\s\(/);
+    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
+}
+
 const toSlug = (title: string) => {
   return title
     .toLowerCase()
@@ -11,11 +16,6 @@ const toSlug = (title: string) => {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
 };
-
-const getSimpleTitle = (levelString: string) => {
-    const match = levelString.match(/:\s(.*?)\s\(/);
-    return match ? match[1] : levelString.split(':')[1]?.trim() || levelString;
-}
 
 const findTopicAndSubTopicBySlugs = (levelSlug: string, topicSlug: string, subTopicSlug: string) => {
     const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
