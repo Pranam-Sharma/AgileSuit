@@ -4,7 +4,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, CheckCircle, Code, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
+import { ArrowRight, BarChart, Check, CheckCircle, Code, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -628,3 +628,6 @@ const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellEle
     
 
 
+
+
+    
