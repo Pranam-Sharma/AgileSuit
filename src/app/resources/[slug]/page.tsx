@@ -5,7 +5,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BarChart, Check, CheckCircle2, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap, AlertTriangle, Clock, Circle } from 'lucide-react';
+import { BarChart, Check, CheckCircle2, Circle, Clock, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap, AlertTriangle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -381,7 +381,7 @@ function AgileVsWaterfallTable() {
 function WhatIsAgileMethodologyArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
-            <h1>What is Agile Methodology?</h1>
+            <h1 className='font-bold'>What is Agile Methodology?</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
             <hr className="my-8" />
@@ -513,7 +513,7 @@ function WaterfallVsAgileDiagram() {
 function WhyAgileWasCreatedArticle() {
     return (
         <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
-            <h1>Why Agile Was Created</h1>
+            <h1 className='font-bold'>Why Agile Was Created</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Problems That Sparked a Revolution in Software Development</p>
 
             <hr className="my-8" />
