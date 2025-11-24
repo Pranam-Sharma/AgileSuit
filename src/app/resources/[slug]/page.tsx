@@ -12,18 +12,22 @@ const getSimpleTitle = (levelString: string) => {
 }
 
 const toSlug = (title: string) => {
-  const simpleTitle = getSimpleTitle(title);
-  return simpleTitle
+  return title
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '')
-    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9 -]/g, '') 
+    .replace(/\s+/g, '-') 
     .replace(/-+/g, '-');
 };
 
 const findLevelBySlug = (slug: string) => {
-    return curriculumData.learningHubContent.find(level => {
-        return toSlug(level.level) === slug;
-    });
+    console.log(`[LevelPage] Searching for level with slug: "${slug}"`);
+    const level = curriculumData.learningHubContent.find(level => toSlug(getSimpleTitle(level.level)) === slug);
+    if (!level) {
+        console.error(`[LevelPage] Level not found for slug: "${slug}"`);
+        const availableSlugs = curriculumData.learningHubContent.map(l => toSlug(getSimpleTitle(l.level)));
+        console.log(`[LevelPage] Available level slugs:`, availableSlugs);
+    }
+    return level;
 }
 
 export default function ResourceLevelPage() {
@@ -40,7 +44,7 @@ export default function ResourceLevelPage() {
     const levelNumber = levelNumberMatch ? levelNumberMatch[1] : '';
 
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
+        <div className="min-h-screen flex flex-col">
             <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <p className="text-base font-semibold text-primary uppercase tracking-wider">Level {levelNumber}</p>
@@ -55,7 +59,9 @@ export default function ResourceLevelPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {level.topics.map((topic) => {
                         const topicSlug = toSlug(topic.title);
-                        const firstSubTopicSlug = toSlug(topic.points[0]);
+                        const firstSubTopicSlug = topic.points.length > 0 ? toSlug(topic.points[0]) : '';
+                        const href = firstSubTopicSlug ? `/resources/${slug}/${topicSlug}/${firstSubTopicSlug}` : '#';
+                        
                         return (
                         <Card key={topic.title} className="flex flex-col border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
                             <CardHeader>
@@ -79,7 +85,7 @@ export default function ResourceLevelPage() {
                             </CardContent>
                             <CardContent>
                                 <Button asChild className="w-full">
-                                    <Link href={`/resources/${slug}/${topicSlug}/${firstSubTopicSlug}`}>
+                                    <Link href={href}>
                                         Start Learning <ArrowRight className="ml-2 h-4 w-4" />
                                     </Link>
                                 </Button>

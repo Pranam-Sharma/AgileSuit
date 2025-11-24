@@ -18,15 +18,31 @@ const toSlug = (title: string) => {
 };
 
 const findTopicAndSubTopicBySlugs = (levelSlug: string, topicSlug: string, subTopicSlug: string) => {
-    const level = curriculumData.learningHubContent.find(l => toSlug(l.level) === levelSlug);
-    if (!level) return null;
+    console.log(`[SubTopicPage] Searching for: levelSlug="${levelSlug}", topicSlug="${topicSlug}", subTopicSlug="${subTopicSlug}"`);
+
+    const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
+    if (!level) {
+        console.error(`[SubTopicPage] Level not found for slug: "${levelSlug}"`);
+        return null;
+    }
 
     const topic = level.topics.find(t => toSlug(t.title) === topicSlug);
-    if (!topic) return null;
+    if (!topic) {
+        console.error(`[SubTopicPage] Topic not found for slug: "${topicSlug}" in level "${level.level}"`);
+        const availableTopicSlugs = level.topics.map(t => toSlug(t.title));
+        console.log(`[SubTopicPage] Available topic slugs in this level:`, availableTopicSlugs);
+        return null;
+    }
     
     const point = topic.points.find(p => toSlug(p) === subTopicSlug);
-    if (!point) return null;
+    if (!point) {
+        console.error(`[SubTopicPage] Sub-topic (point) not found for slug: "${subTopicSlug}" in topic "${topic.title}"`);
+        const availablePointSlugs = topic.points.map(p => toSlug(p));
+        console.log(`[SubTopicPage] Available sub-topic slugs in this topic:`, availablePointSlugs);
+        return null;
+    }
 
+    console.log("[SubTopicPage] Found content:", { level, topic, point });
     return { level, topic, point };
 }
 

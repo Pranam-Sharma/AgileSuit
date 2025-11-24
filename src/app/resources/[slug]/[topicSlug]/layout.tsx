@@ -20,11 +20,19 @@ const toSlug = (title: string) => {
 };
 
 const findTopicBySlugs = (levelSlug: string, topicSlug: string) => {
-    const level = curriculumData.learningHubContent.find(l => toSlug(l.level) === levelSlug);
-    if (!level) return null;
+    console.log(`[TopicLayout] Searching for levelSlug: "${levelSlug}", topicSlug: "${topicSlug}"`);
+    const level = curriculumData.learningHubContent.find(l => toSlug(getSimpleTitle(l.level)) === levelSlug);
+    if (!level) {
+        console.error(`[TopicLayout] Level not found for slug: "${levelSlug}"`);
+        return null;
+    };
 
     const topic = level.topics.find(t => toSlug(t.title) === topicSlug);
-    if (!topic) return null;
+    if (!topic) {
+        console.error(`[TopicLayout] Topic not found for slug: "${topicSlug}" in level "${level.level}"`);
+        const availableTopicSlugs = level.topics.map(t => toSlug(t.title));
+        console.log(`[TopicLayout] Available topic slugs:`, availableTopicSlugs);
+    }
 
     return topic;
 }
@@ -84,7 +92,16 @@ export default function ResourceSubTopicLayout({
                     </div>
                 </div>
             ) : (
-                <div>{children}</div>
+                <div>
+                  <h1 className='text-2xl font-bold'>Topic Not Found</h1>
+                  <p>Could not find the topic you were looking for.</p>
+                  <pre className='mt-4 p-4 bg-muted rounded-md text-sm'>
+                    <code>
+                      Level Slug: {levelSlug}<br/>
+                      Topic Slug: {topicSlug}
+                    </code>
+                  </pre>
+                </div>
             )}
         </main>
     </div>
