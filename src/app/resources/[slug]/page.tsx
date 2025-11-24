@@ -5,8 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle } from 'lucide-react';
-import { LandingHeader } from '@/components/landing/header';
-import { Footer } from '@/components/landing/footer';
 
 const getSimpleTitle = (levelString: string) => {
     const match = levelString.match(/:\s(.*?)\s\(/);
@@ -43,7 +41,6 @@ export default function ResourceLevelPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
-            <LandingHeader />
             <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
                     <p className="text-base font-semibold text-primary uppercase tracking-wider">Level {levelNumber}</p>
@@ -91,7 +88,6 @@ export default function ResourceLevelPage() {
                     )})}
                 </div>
             </main>
-            <Footer />
         </div>
     );
 }

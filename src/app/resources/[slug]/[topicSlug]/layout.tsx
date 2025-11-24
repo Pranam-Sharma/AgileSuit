@@ -4,8 +4,6 @@ import { useParams } from 'next/navigation';
 import curriculumData from '../../../../docs/curriculum.json';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { LandingHeader } from '@/components/landing/header';
-import { Footer } from '@/components/landing/footer';
 import { Logo } from '@/components/logo';
 
 const toSlug = (title: string) => {
@@ -45,7 +43,6 @@ export default function ResourceSubTopicLayout({
   
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-        <LandingHeader />
         <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
              {topic ? (
                 <div className="bg-white border border-gray-200/80 rounded-2xl shadow-sm p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 md:gap-8">
@@ -88,7 +85,6 @@ export default function ResourceSubTopicLayout({
                 <div>{children}</div>
             )}
         </main>
-        <Footer />
     </div>
   );
 }
