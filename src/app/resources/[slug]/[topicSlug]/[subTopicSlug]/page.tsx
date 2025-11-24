@@ -1,6 +1,6 @@
 'use client';
 import { notFound, useParams } from 'next/navigation';
-import curriculumData from '../../../../docs/curriculum.json';
+import curriculumData from '../../../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
@@ -86,23 +86,4 @@ export default function SubTopicPage() {
             </Card>
         </article>
     );
-}
-
-// Keeping generateStaticParams here to ensure all sub-topic pages are generated.
-export async function generateStaticParams() {
-    const params = [];
-    for (const level of curriculumData.learningHubContent) {
-        const levelSlug = toSlug(getSimpleTitle(level.level));
-        for (const topic of level.topics) {
-            const topicSlug = toSlug(topic.title);
-            for (const point of topic.points) {
-                params.push({
-                    slug: levelSlug,
-                    topicSlug: topicSlug,
-                    subTopicSlug: toSlug(point),
-                });
-            }
-        }
-    }
-    return params;
 }
