@@ -1,4 +1,5 @@
 'use client';
+import * as React from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
 import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -628,3 +629,4 @@ const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellEle
     
 
     
+
