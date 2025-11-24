@@ -59,9 +59,10 @@ export default function ResourcesPage() {
                   const Icon = levelIcons[levelNumber]?.icon || BookOpen;
                   const iconColor = levelIcons[levelNumber]?.color || 'bg-gray-100 text-gray-600';
                   const simpleTitle = getSimpleTitle(level.level);
+                  const levelSlug = toSlug(level.level);
 
                   return (
-                    <Link key={level.level} href={`/resources/${toSlug(level.level)}`} className="block group">
+                    <Link key={level.level} href={`/resources/${levelSlug}`} className="block group">
                         <Card className="h-full border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
                             <CardContent className="p-6 flex gap-6 items-start">
                                 <div className={cn("flex-shrink-0 rounded-lg h-16 w-16 flex items-center justify-center", iconColor)}>
