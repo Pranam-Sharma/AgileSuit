@@ -5,7 +5,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BarChart, Check, CheckCircle, CheckCircle2, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
+import { BarChart, Check, CheckCircle2, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap, AlertTriangle, Clock, Circle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -136,6 +136,9 @@ export default function ResourcePage() {
     if (topic && point) {
         if (toSlug(point) === 'what-is-agile-methodology') {
             return <WhatIsAgileMethodologyArticle />;
+        }
+        if (toSlug(point) === 'why-agile-was-created') {
+            return <WhyAgileWasCreatedArticle />;
         }
         return <SubTopicArticle topic={topic} point={point} />;
     }
@@ -381,13 +384,13 @@ function WhatIsAgileMethodologyArticle() {
             <h1>What is Agile Methodology?</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
-            <hr />
+            <hr className="my-8" />
 
             <h2>Introduction: Understanding Agile in the Modern World</h2>
             <p>Agile is a modern approach to project management that helps teams deliver value faster and more efficiently. Unlike traditional methods that require rigid, long-term planning, Agile focuses on <strong>flexibility, customer collaboration, and delivering work in small, incremental steps</strong>.</p>
             <p>This iterative process allows teams to adapt to change, improve continuously, and respond to customer feedback in real-time. Platforms like <a href="#">AgileSuit</a> are designed to support this entire lifecycle, making Agile principles actionable and measurable.</p>
             
-            <hr/>
+            <hr className="my-8" />
 
             <h2>What is Agile? The Core Idea</h2>
             <blockquote>
@@ -396,10 +399,10 @@ function WhatIsAgileMethodologyArticle() {
             <p>Instead of a single "big bang" launch, Agile breaks projects into short cycles called <strong>sprints</strong>. Each sprint delivers a working piece of the product, which allows for regular reviews and quick adjustments based on feedback.</p>
             <p>The philosophy is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, which prioritizes:</p>
             <ul>
-                <li><strong>Individuals and interactions</strong> over processes and tools</li>
-                <li><strong>Working software</strong> over comprehensive documentation</li>
-                <li><strong>Customer collaboration</strong> over contract negotiation</li>
-                <li><strong>Responding to change</strong> over following a plan</li>
+                <li><em>Individuals and interactions</em> over processes and tools</li>
+                <li><em>Working software</em> over comprehensive documentation</li>
+                <li><em>Customer collaboration</em> over contract negotiation</li>
+                <li><em>Responding to change</em> over following a plan</li>
             </ul>
 
             <AgileFlowDiagram />
@@ -420,6 +423,8 @@ function WhatIsAgileMethodologyArticle() {
             <p>In a typical Agile (Scrum) team, there are three key roles:</p>
             <AgileTeamStructureDiagram />
 
+            <hr className="my-8" />
+
             <h2>How AgileSuit Powers the Agile Cycle</h2>
             <p>AgileSuit is designed to simplify and enhance every stage of the Agile lifecycle. It provides the tools needed to turn Agile theory into measurable, day-to-day execution.</p>
             
@@ -434,13 +439,111 @@ function WhatIsAgileMethodologyArticle() {
                 </ul>
             </div>
 
-            <hr />
+            <hr className="my-8" />
 
             <h2>Conclusion: The Agile Advantage</h2>
             <p>Agile is more than a methodology—it's a mindset that empowers teams to thrive in an environment of change. By prioritizing flexibility, collaboration, and continuous improvement, organizations can reduce risk, increase customer satisfaction, and deliver better products faster.</p>
             <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
                 Agile is the heartbeat of modern innovation.
             </blockquote>
+        </article>
+    );
+}
+
+function WaterfallVsAgileDiagram() {
+    return (
+      <div className="not-prose my-12 p-8 bg-card border rounded-2xl shadow-sm text-center">
+        <h3 className="text-2xl font-bold text-foreground mb-8">The Shift from Rigid to Flexible</h3>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Waterfall Column */}
+          <div>
+            <h4 className="text-xl font-semibold text-red-600 mb-4">The Old Way: Waterfall</h4>
+            <div className="relative flex flex-col items-center gap-2">
+              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Requirements</div>
+              <div className="h-8 w-1 bg-red-200"></div>
+              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Design</div>
+              <div className="h-8 w-1 bg-red-200"></div>
+              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Build</div>
+              <div className="h-8 w-1 bg-red-200"></div>
+              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Test</div>
+              <div className="h-8 w-1 bg-red-200"></div>
+              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Deploy</div>
+              <div className="absolute top-1/2 left-full ml-4 text-5xl text-red-400">❌</div>
+            </div>
+            <p className="text-muted-foreground mt-4 text-sm">A rigid, one-way process. Changes are costly and feedback comes too late.</p>
+          </div>
+  
+          {/* Agile Column */}
+          <div>
+            <h4 className="text-xl font-semibold text-green-600 mb-4">The New Way: Agile</h4>
+            <div className="relative flex flex-col items-center gap-2">
+              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                <RefreshCw className="h-5 w-5" /> Sprint 1
+              </div>
+              <div className="h-8 w-1 bg-green-200"></div>
+              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                <RefreshCw className="h-5 w-5" /> Sprint 2
+              </div>
+              <div className="h-8 w-1 bg-green-200"></div>
+              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                <RefreshCw className="h-5 w-5" /> Sprint 3
+              </div>
+              <div className="h-8 w-1 bg-green-200"></div>
+              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow">...etc</div>
+              <div className="absolute top-1/2 left-full ml-4 text-5xl text-green-400">✅</div>
+            </div>
+             <p className="text-muted-foreground mt-4 text-sm">An iterative, cyclical process. Feedback is continuous and value is delivered early.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+
+// Component for "Why Agile Was Created"
+function WhyAgileWasCreatedArticle() {
+    return (
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+            <h1>Why Agile Was Created</h1>
+            <p className="lead !text-xl !font-normal text-muted-foreground">The Problems That Sparked a Revolution in Software Development</p>
+
+            <hr className="my-8" />
+
+            <h2>The Age of Failing Projects</h2>
+            <p>To understand why <em>Agile</em> was created, we have to travel back to the 1990s. The software industry was booming, but it was also in a crisis. Projects were consistently running over budget, missing deadlines, and, worst of all, failing to meet the actual needs of customers. The traditional project management model, known as <strong>Waterfall</strong>, was a big part of the problem.</p>
+            <p>The Waterfall model is a rigid, sequential process. Every step—requirements gathering, design, development, testing—had to be fully completed before the next could begin. This worked well for predictable manufacturing lines, but it was a disaster for the creative and ever-changing world of software development.</p>
+
+            <hr className="my-8" />
+
+            <h2>The Core Flaws of the Waterfall Model</h2>
+            <p>The Waterfall approach created several critical issues that made software projects incredibly risky:</p>
+            <ul>
+                <li><strong>Late Feedback:</strong> Customers and users often didn't see the product until it was nearly finished. By then, it was often too late or too expensive to make significant changes.</li>
+                <li><strong>Resistance to Change:</strong> The model assumes all requirements can be known upfront. In reality, markets shift, and customer needs evolve. Waterfall treated change as an error, not a reality.</li>
+                <li><strong>High Risk of Failure:</strong> With a single "big bang" delivery at the end, all the project's risk was pushed to the final phase. If the product was wrong, the entire investment was wasted.</li>
+            </ul>
+
+            <WaterfallVsAgileDiagram />
+
+            <h2>The Manifesto for a Better Way</h2>
+            <p>In 2001, a group of 17 software developers met in Utah, frustrated with the status quo. They recognized that the industry needed a new philosophy—one that embraced change, prioritized customer value, and enabled rapid delivery. The result of their meeting was the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Manifesto for Agile Software Development</a>.</p>
+            <p>Agile wasn't created as a single, rigid framework. It was a call for a <strong>mindset shift</strong>. It proposed a new way of thinking that valued:</p>
+            <ul>
+                <li><em>Flexibility</em> over rigid planning.</li>
+                <li><em>Collaboration</em> over siloed teams.</li>
+                <li><em>Working Software</em> over exhaustive documentation.</li>
+                <li><em>Continuous Improvement</em> over a static, one-time delivery.</li>
+            </ul>
+
+            <hr className="my-8" />
+            
+            <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="font-semibold m-0 text-lg">How Agile Solved the Crisis</p>
+                <p>By breaking work into small, iterative cycles (sprints), Agile introduced a continuous feedback loop. This allowed teams to adapt to change, reduce risk, and ensure the final product was something customers actually wanted. Tools like <strong>AgileSuit</strong> are the modern evolution of this thinking, providing the structure to make these iterative cycles efficient and transparent.</p>
+            </div>
+
+            <h2>Conclusion: A Necessary Evolution</h2>
+            <p>Ultimately, Agile was created because the old way of building software was broken. It offered a solution to deliver better products faster, with less risk and higher customer satisfaction. It was, and remains, a necessary evolution for an industry defined by constant change.</p>
         </article>
     );
 }
