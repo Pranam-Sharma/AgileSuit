@@ -1,10 +1,8 @@
 'use client';
 import { notFound, useParams } from 'next/navigation';
 import curriculumData from '../../../../docs/curriculum.json';
-import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
-import { Logo } from '@/components/logo';
 
 const toSlug = (title: string) => {
   return title
