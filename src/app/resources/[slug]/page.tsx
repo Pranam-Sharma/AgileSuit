@@ -4,12 +4,9 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Logo } from '@/components/logo';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
-import { cn } from '@/lib/utils';
-import { ArrowRight } from 'lucide-react';
 
 const getSimpleTitle = (levelString: string) => {
     const match = levelString.match(/:\s(.*?)\s\(/);
@@ -31,7 +28,7 @@ const findLevelBySlug = (slug: string) => {
     });
 }
 
-export default function ResourceTopicPage() {
+export default function ResourceLevelPage() {
     const params = useParams();
     const slug = params.slug as string;
     const level = findLevelBySlug(slug);
@@ -41,75 +38,58 @@ export default function ResourceTopicPage() {
     }
     
     const simpleLevelTitle = getSimpleTitle(level.level);
-    const firstTopicSlug = toSlug(level.topics[0].title);
-    const firstSubTopicSlug = toSlug(level.topics[0].points[0]);
-
+    const levelNumberMatch = level.level.match(/LEVEL (\d+)/);
+    const levelNumber = levelNumberMatch ? levelNumberMatch[1] : '';
 
     return (
         <div className="min-h-screen flex flex-col bg-slate-50">
             <LandingHeader />
             <main className="flex-grow container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                <Card className="grid grid-cols-1 md:grid-cols-12 md:gap-8 bg-white p-4 md:p-6 rounded-2xl shadow-sm border-gray-200/80">
-                    <aside className="md:col-span-3 lg:col-span-3 border-r border-gray-200/80 pr-4">
-                        <div className='px-3 mb-4'>
-                            <Logo />
-                        </div>
-                        <h2 className="text-lg font-semibold text-foreground px-3 mb-2">Topics</h2>
-                        <nav className="flex flex-col gap-1">
-                            {level.topics.map((topic, index) => {
-                                const topicSlug = toSlug(topic.title);
-                                const firstSubTopicSlugForTopic = toSlug(topic.points[0]);
-                                // This is just for initial display, the actual active state will be on the next page.
-                                const isActive = index === 0;
+                <div className="text-center mb-12">
+                    <p className="text-base font-semibold text-primary uppercase tracking-wider">Level {levelNumber}</p>
+                    <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                        {simpleLevelTitle}
+                    </h1>
+                    <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                        Explore the core topics within {simpleLevelTitle.toLowerCase()}.
+                    </p>
+                </div>
 
-                                return (
-                                    <Link
-                                        key={topic.title}
-                                        href={`/resources/${slug}/${topicSlug}/${firstSubTopicSlugForTopic}`}
-                                        className={cn(
-                                            'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                                            isActive
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            'h-1.5 w-1.5 rounded-full ring-2 ring-offset-2 transition-all',
-                                            isActive ? 'ring-primary bg-primary' : 'ring-transparent bg-muted-foreground/50'
-                                        )}></div>
-                                        {topic.title}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {level.topics.map((topic) => {
+                        const topicSlug = toSlug(topic.title);
+                        const firstSubTopicSlug = toSlug(topic.points[0]);
+                        return (
+                        <Card key={topic.title} className="flex flex-col border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
+                            <CardHeader>
+                                <CardTitle>{topic.title}</CardTitle>
+                                <CardDescription>What you'll learn:</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    {topic.points.slice(0, 3).map(point => (
+                                        <li key={point} className="flex items-center gap-2">
+                                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                            <span>{point}</span>
+                                        </li>
+                                    ))}
+                                     {topic.points.length > 3 && (
+                                        <li className="flex items-center gap-2">
+                                            <span className='ml-6'>& more...</span>
+                                        </li>
+                                    )}
+                                </ul>
+                            </CardContent>
+                            <CardContent>
+                                <Button asChild className="w-full">
+                                    <Link href={`/resources/${slug}/${topicSlug}/${firstSubTopicSlug}`}>
+                                        Start Learning <ArrowRight className="ml-2 h-4 w-4" />
                                     </Link>
-                                )
-                            })}
-                        </nav>
-                    </aside>
-
-                    <div className="md:col-span-9 lg:col-span-9 mt-6 md:mt-0">
-                         <div className="flex flex-col h-full">
-                            <p className="text-sm font-semibold text-primary uppercase tracking-wider">Learning Hub</p>
-                            <h1 className="mt-1 text-5xl font-bold tracking-tight text-foreground">
-                                {simpleLevelTitle}
-                            </h1>
-                            <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-                                Learn the fundamentals of Agile methodology—covering core concepts, frameworks, and the role of AgileSuit in supporting Agile teams.
-                            </p>
-
-                            <div className="my-8">
-                                <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-sm font-medium text-muted-foreground">Course Progress</h3>
-                                    <p className="text-sm font-medium text-primary">0%</p>
-                                </div>
-                                <Progress value={0} />
-                            </div>
-
-                            <div className="mt-auto flex flex-col items-start gap-8">
-                                <Button asChild size="lg">
-                                    <Link href={`/resources/${slug}/${firstTopicSlug}/${firstSubTopicSlug}`}>Start Learning</Link>
                                 </Button>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
+                            </CardContent>
+                        </Card>
+                    )})}
+                </div>
             </main>
             <Footer />
         </div>
