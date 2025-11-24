@@ -1,10 +1,10 @@
 'use client';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
-import curriculumData from '../../../docs/curriculum.json';
+import curriculumData from '../../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Check, CheckCircle } from 'lucide-react';
+import { ArrowRight, Check, CheckCircle, CircleDot, Code, Milestone, Repeat, Users, Zap, Search, Target, GitBranch, RefreshCw, Layers } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -18,9 +18,8 @@ const toSlug = (title: string) => {
   if (!title) return '';
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9 -]/g, '') 
-    .replace(/\s+/g, '-') 
-    .replace(/-+/g, '-');
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '');
 };
 
 const findContent = (levelSlug: string, subTopicSlug: string | null) => {
@@ -135,11 +134,9 @@ export default function ResourcePage() {
     
     // If a subtopic is selected, show the article. Otherwise, show the level intro.
     if (topic && point) {
-        // Here we decide which article component to render based on the slug
         if (toSlug(point) === 'what-is-agile-methodology') {
             return <WhatIsAgileMethodologyArticle />;
         }
-        // Future articles can be added here with `else if`
         return <SubTopicArticle topic={topic} point={point} />;
     }
 
@@ -150,61 +147,126 @@ export default function ResourcePage() {
     return notFound();
 }
 
+function AgileFlowDiagram() {
+    const items = [
+      { icon: Users, label: 'Customer Needs' },
+      { icon: Milestone, label: 'Sprint Planning' },
+      { icon: Code, label: 'Development' },
+      { icon: Search, label: 'Testing' },
+      { icon: RefreshCw, label: 'Review & Feedback' },
+      { icon: Zap, label: 'Improvement' },
+    ];
+  
+    return (
+      <div className="not-prose my-12 flex flex-col items-center justify-center">
+        <h3 className="text-xl font-semibold text-foreground mb-8">Agile Flow</h3>
+        <div className="relative h-80 w-80">
+          {items.map((item, index) => {
+            const angle = (index / items.length) * 360 - 90;
+            const x = 50 + 45 * Math.cos((angle * Math.PI) / 180);
+            const y = 50 + 45 * Math.sin((angle * Math.PI) / 180);
+            return (
+              <div
+                key={item.label}
+                className="absolute flex flex-col items-center text-center"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary shadow-md">
+                  <item.icon className="h-8 w-8" />
+                </div>
+                <p className="mt-2 text-sm font-medium text-foreground">{item.label}</p>
+              </div>
+            );
+          })}
+           <div className="absolute inset-0 flex items-center justify-center">
+                <Repeat className="h-10 w-10 text-muted-foreground/50 animate-spin [animation-duration:10s]" />
+            </div>
+        </div>
+        <div className='flex items-center gap-2 mt-8 text-lg font-semibold text-primary'>
+            <Repeat className='h-5 w-5'/>
+            <span>Repeat Cycle</span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md text-center">This continuous loop is the core of Agile thinking — delivering value, gathering feedback, and improving continuously.</p>
+      </div>
+    );
+  }
+
+function AgileTeamStructureDiagram() {
+    return (
+      <div className="not-prose my-12 p-6 bg-card border rounded-2xl shadow-sm flex flex-col items-center gap-4 text-center">
+        <h3 className="text-xl font-semibold text-foreground">Agile Team Structure</h3>
+        <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Product Owner</div>
+        <div className="h-8 w-px bg-border" />
+        <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Scrum Master</div>
+        <div className="h-8 w-px bg-border" />
+        <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md w-64 shadow-inner">Development Team</div>
+        <div className="h-8 w-px bg-border" />
+        <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Testers | Designers | Developers</div>
+      </div>
+    );
+}
+
+function AgileSuitCycleDiagram() {
+    return (
+        <div className="not-prose my-12 p-6 bg-card border rounded-2xl shadow-sm flex flex-col items-center gap-4 text-center">
+            <h3 className="text-xl font-semibold text-foreground">Agile Cycle with AgileSuit</h3>
+            <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Idea</div>
+            <div className="h-8 w-px bg-border" />
+            <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md w-64 shadow-inner flex items-center justify-center gap-2">
+                <Logo className='h-5 text-primary' /> Plan in AgileSuit
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Execute Sprint</div>
+            <div className="h-8 w-px bg-border" />
+            <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Track Progress</div>
+            <div className="h-8 w-px bg-border" />
+            <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md w-64 shadow-inner">Review Analytics</div>
+            <div className="h-8 w-px bg-border" />
+            <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md w-64 shadow-inner">Optimize Next Sprint</div>
+      </div>
+    );
+}
 
 // Component for the "What is Agile Methodology?" article
 function WhatIsAgileMethodologyArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">What is Agile Methodology?</h1>
-            <p className="text-lg font-semibold text-primary">A Complete, In-Depth Guide for Modern Product Teams (AgileSuit Learning Series)</p>
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+            <h1>What is Agile Methodology?</h1>
+            <p className="lead !text-2xl !font-semibold text-primary">A Complete, In-Depth Guide for Modern Product Teams</p>
 
-            <hr className="my-8" />
+            <hr />
 
             <h2 id="introduction">Introduction: Understanding Agile in the Modern World</h2>
             <p>In today’s fast-paced digital environment, where customer expectations evolve rapidly and technology changes almost daily, traditional methods of project execution often struggle to keep up. This is where Agile Methodology emerges as a powerful alternative.</p>
             <p>Agile is not just a way to manage projects — it is a philosophy, a mindset, and a structured approach to delivering value continuously while adapting to change. It focuses on flexibility, collaboration, customer satisfaction, and incremental progress rather than rigid planning and long execution cycles.</p>
             <p>Agile methodology helps teams respond to uncertainty effectively, break complex work into manageable pieces, deliver faster, and improve continuously. Platforms like AgileSuit are built to support this entire lifecycle — from sprint planning and tracking to retrospectives and advanced reporting — making Agile more actionable and measurable.</p>
             
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="what-is-agile">What is Agile Methodology?</h2>
             <h3>Definition:</h3>
-            <blockquote className="border-l-4 border-primary bg-muted/50 p-4 italic">
+            <blockquote className="border-l-4 border-primary bg-muted/50 p-6 italic text-xl">
                 Agile Methodology is an iterative and incremental approach to project management and software development that emphasizes flexibility, customer collaboration, continuous delivery, and rapid response to change.
             </blockquote>
             <p>Rather than planning everything upfront, Agile divides a project into small cycles called iterations or sprints, enabling teams to review progress regularly and adapt based on feedback.</p>
-            <p>Agile encourages:</p>
+            <h4>Agile encourages:</h4>
             <ul>
                 <li>Working software over extensive documentation</li>
                 <li>Customer collaboration over contract negotiation</li>
                 <li>Responding to change over following a fixed plan</li>
                 <li>Individuals and interactions over processes and tools</li>
             </ul>
-            <p>Agile methodology is guided by the Agile Manifesto, a foundational document created in 2001 by 17 software professionals who wanted a better way to develop products.</p>
+            <p>Agile methodology is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, a foundational document created in 2001 by 17 software professionals who wanted a better way to develop products.</p>
 
-            <hr className="my-8" />
+            <hr/>
 
-            <h2 id="visual-flow">Visual Representation: Agile Flow Overview</h2>
-            <div className="not-prose my-8 p-6 bg-card border rounded-lg shadow-sm flex flex-col items-center gap-4 text-center">
-                <div className="font-semibold text-lg">Agile Flow</div>
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Customer Needs</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md">Sprint Planning</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Development</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Testing</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md">Review & Feedback</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Improvement</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-semibold text-lg text-primary">Repeat Cycle</div>
-                <p className="text-sm text-muted-foreground mt-4">This continuous loop is the core of Agile thinking — delivering value, gathering feedback, and improving continuously.</p>
-            </div>
-            
+            <AgileFlowDiagram />
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="core-principles">Core Principles of Agile Methodology</h2>
             <p>Agile is driven by 12 core principles, some of the most important include:</p>
@@ -216,17 +278,17 @@ function WhatIsAgileMethodologyArticle() {
                 <li>Continuous attention to technical excellence</li>
                 <li>Regular reflection and adjustment</li>
             </ul>
-            <div className="p-4 bg-primary/5 border-l-4 border-primary rounded">
-                <p className="font-semibold m-0">AgileSuit incorporates these principles by allowing teams to:</p>
-                <ul className="my-2">
-                    <li>Track sprint progress visually</li>
-                    <li>Conduct retrospectives</li>
-                    <li>Monitor performance analytics</li>
-                    <li>Improve sprint outcomes over time</li>
+            <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="font-semibold m-0 text-lg">How AgileSuit Helps:</p>
+                <ul className="my-2 space-y-2">
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Track sprint progress visually</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Conduct retrospectives</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Monitor performance analytics</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Improve sprint outcomes over time</li>
                 </ul>
             </div>
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="key-components">Key Components of Agile Methodology</h2>
             <ol>
@@ -237,7 +299,7 @@ function WhatIsAgileMethodologyArticle() {
                 <li><strong>Flexible Planning:</strong> Planning adapts as new information emerges.</li>
             </ol>
 
-            <hr className="my-8" />
+            <hr/>
             
             <h2 id="agile-vs-waterfall">Agile vs Traditional Project Management</h2>
             <p><strong>Traditional (Waterfall) Approach:</strong></p>
@@ -259,33 +321,33 @@ function WhatIsAgileMethodologyArticle() {
                         <TableRow>
                             <TableCell>Flexibility</TableCell>
                             <TableCell>Low</TableCell>
-                            <TableCell>High</TableCell>
+                            <TableCell className='font-semibold text-primary'>High</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Customer Feedback</TableCell>
                             <TableCell>Late Stage</TableCell>
-                            <TableCell>Continuous</TableCell>
+                            <TableCell className='font-semibold text-primary'>Continuous</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Delivery</TableCell>
                             <TableCell>End of Project</TableCell>
-                            <TableCell>Frequent</TableCell>
+                            <TableCell className='font-semibold text-primary'>Frequent</TableCell>
                         </TableRow>
                          <TableRow>
                             <TableCell>Risk</TableCell>
                             <TableCell>High</TableCell>
-                            <TableCell>Lower</TableCell>
+                            <TableCell className='font-semibold text-primary'>Lower</TableCell>
                         </TableRow>
                          <TableRow>
                             <TableCell>Adaptability</TableCell>
                             <TableCell>Poor</TableCell>
-                            <TableCell>Excellent</TableCell>
+                            <TableCell className='font-semibold text-primary'>Excellent</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
             </div>
 
-             <hr className="my-8" />
+             <hr/>
 
             <h2 id="why-created">Why Agile Methodology Was Created</h2>
             <p>Agile was created due to the failure of rigid project management models. Organizations faced challenges such as:</p>
@@ -303,11 +365,11 @@ function WhatIsAgileMethodologyArticle() {
                 <li>Enhance speed and quality</li>
                 <li>Focus on real customer value</li>
             </ul>
-             <div className="p-4 bg-primary/5 border-l-4 border-primary rounded">
-                <p className="m-0">AgileSuit enhances this philosophy by providing real-time visibility and structured workflows for teams adapting Agile principles.</p>
+             <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="m-0 text-lg">AgileSuit enhances this philosophy by providing real-time visibility and structured workflows for teams adapting Agile principles.</p>
             </div>
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="frameworks">Agile Methodology Frameworks</h2>
             <p>Agile is an umbrella concept supported by multiple frameworks:</p>
@@ -318,26 +380,16 @@ function WhatIsAgileMethodologyArticle() {
                 <li><strong>SAFe (Scaled Agile Framework):</strong> Used by large organizations to scale Agile across multiple teams.</li>
             </ol>
             
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="roles">Agile Roles Explained</h2>
             <p><strong>Product Owner:</strong> Defines requirements and prioritizes work.</p>
             <p><strong>Scrum Master:</strong> Facilitates Agile practices and removes obstacles.</p>
             <p><strong>Development Team:</strong> Delivers the product incrementally.</p>
 
-            <h3 id="team-structure">Visual Representation: Agile Team Structure</h3>
-             <div className="not-prose my-8 p-6 bg-card border rounded-lg shadow-sm flex flex-col items-center gap-4 text-center">
-                <div className="font-semibold text-lg">Agile Team Structure</div>
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Product Owner</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Scrum Master</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md">Development Team</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Testers | Designers | Developers</div>
-            </div>
+            <AgileTeamStructureDiagram />
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="lifecycle">Agile Lifecycle Stages</h2>
             <ol>
@@ -350,7 +402,7 @@ function WhatIsAgileMethodologyArticle() {
             </ol>
             <p>Each stage promotes flexibility, ensuring better adaptability to change.</p>
             
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="mindset">Agile Mindset & Philosophy</h2>
             <p>Agile is not only about tools; it’s about culture:</p>
@@ -361,11 +413,11 @@ function WhatIsAgileMethodologyArticle() {
                 <li>Continuous learning</li>
                 <li>Customer focus</li>
             </ul>
-            <div className="p-4 bg-primary/5 border-l-4 border-primary rounded">
-                <p className="m-0">AgileSuit aligns seamlessly by allowing transparency across teams and leadership in real-time.</p>
+            <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="m-0 text-lg">AgileSuit aligns seamlessly by allowing transparency across teams and leadership in real-time.</p>
             </div>
 
-            <hr className="my-8" />
+            <hr/>
             
             <h2 id="benefits">Benefits of Agile Methodology</h2>
              <ul>
@@ -377,7 +429,7 @@ function WhatIsAgileMethodologyArticle() {
                 <li>Continuous improvement</li>
             </ul>
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="myths">Common Myths About Agile</h2>
              <div className="not-prose my-8">
@@ -391,21 +443,21 @@ function WhatIsAgileMethodologyArticle() {
                     <TableBody>
                         <TableRow>
                             <TableCell>Agile has no planning</TableCell>
-                            <TableCell>Agile involves continuous planning</TableCell>
+                            <TableCell>Agile involves <span className='font-semibold text-primary'>continuous</span> planning</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Agile means no documentation</TableCell>
-                            <TableCell>Agile values essential documentation</TableCell>
+                            <TableCell>Agile values <span className='font-semibold text-primary'>essential</span> documentation</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell>Agile is only for IT</TableCell>
-                            <TableCell>Agile applies across industries</TableCell>
+                            <TableCell>Agile applies <span className='font-semibold text-primary'>across industries</span></TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
             </div>
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="real-life">How Agile Works in Real Life</h2>
             <p>Imagine building an e-commerce app: Instead of building it completely and launching after 1 year, Agile allows you to:</p>
@@ -417,7 +469,7 @@ function WhatIsAgileMethodologyArticle() {
             </ul>
             <p>Each step delivers value.</p>
             
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="agilesuit-integration">Agile + AgileSuit = Structured Excellence</h2>
             <p>AgileSuit simplifies Agile implementation by providing:</p>
@@ -431,23 +483,9 @@ function WhatIsAgileMethodologyArticle() {
             </ul>
             <p>This turns Agile from theory into measurable execution.</p>
 
-            <h3 id="agilesuit-cycle">Visual: Agile Cycle with AgileSuit Integration</h3>
-            <div className="not-prose my-8 p-6 bg-card border rounded-lg shadow-sm flex flex-col items-center gap-4 text-center">
-                <div className="font-semibold text-lg">AgileSuit Cycle</div>
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Idea</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md">Plan in AgileSuit</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Execute Sprint</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Track Progress</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-primary/10 text-primary-dark rounded-md">Review Analytics</div>
-                <div className="h-6 w-px bg-border" />
-                <div className="font-mono text-sm px-4 py-2 bg-muted rounded-md">Optimize Next Sprint</div>
-            </div>
+            <AgileSuitCycleDiagram />
 
-            <hr className="my-8" />
+            <hr/>
 
             <h2 id="non-it">Agile Methodology in Non-IT Fields</h2>
             <p>Agile is now used in:</p>
@@ -461,13 +499,13 @@ function WhatIsAgileMethodologyArticle() {
             </ul>
             <p>Its flexibility proves universal.</p>
             
-            <hr className="my-8" />
+            <hr/>
             
             <h2 id="conclusion">Conclusion</h2>
             <p>Agile Methodology represents a transformation in how modern teams think, collaborate, and deliver value. It prioritizes people over processes, collaboration over control, and adaptability over rigidity.</p>
             <p>By adopting Agile, organizations move from slow, rigid execution to smart, flexible, and responsive systems that drive innovation and efficiency.</p>
             <p>With platforms like AgileSuit, Agile becomes structured, scalable, and measurable—offering businesses a powerful way to deliver continuous improvement while maintaining clarity and control.</p>
-            <blockquote className="border-l-4 border-primary bg-muted/50 p-4 italic text-2xl text-center">
+            <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
                 Agile is not just a methodology — it is the heartbeat of modern innovation.
             </blockquote>
         </article>
@@ -477,8 +515,10 @@ function WhatIsAgileMethodologyArticle() {
 // Dummy table components to avoid breaking the file
 // In a real scenario, you'd import these from your UI library
 const Table = ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => <table {...props} className="w-full text-left border-collapse">{children}</table>;
-const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props}>{children}</thead>;
+const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props} className="border-b"><tr className='border-b'>{children}</tr></thead>;
 const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props} className="border-b">{children}</tr>;
-const TableHead = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <th {...props} className="p-4 font-medium text-muted-foreground">{children}</th>;
+const TableHead = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <th {...props} className="p-4 font-medium text-muted-foreground text-base">{children}</th>;
 const TableBody = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props}>{children}</tbody>;
-const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <td {...props} className="p-4">{children}</td>;
+const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <td {...props} className="p-4 text-base">{children}</td>;
+
+    
