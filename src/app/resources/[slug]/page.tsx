@@ -5,7 +5,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, Check, CheckCircle, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
+import { BarChart, Check, CheckCircle, CheckCircle2, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -383,33 +383,33 @@ function WhatIsAgileMethodologyArticle() {
 
             <hr />
 
-            <h2 id="introduction">Introduction: Understanding Agile in the Modern World</h2>
-            <p>Agile is a modern approach to project management that helps teams deliver value faster and more efficiently. Unlike traditional methods that require rigid, long-term planning, Agile focuses on flexibility, customer collaboration, and delivering work in small, incremental steps.</p>
+            <h2>Introduction: Understanding Agile in the Modern World</h2>
+            <p>Agile is a modern approach to project management that helps teams deliver value faster and more efficiently. Unlike traditional methods that require rigid, long-term planning, Agile focuses on <strong>flexibility, customer collaboration, and delivering work in small, incremental steps</strong>.</p>
             <p>This iterative process allows teams to adapt to change, improve continuously, and respond to customer feedback in real-time. Platforms like <a href="#">AgileSuit</a> are designed to support this entire lifecycle, making Agile principles actionable and measurable.</p>
             
             <hr/>
 
-            <h2 id="what-is-agile">What is Agile? The Core Idea</h2>
+            <h2>What is Agile? The Core Idea</h2>
             <blockquote>
-                Agile Methodology is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches.
+                Agile Methodology is an <strong>iterative approach</strong> to project management and software development that helps teams deliver value to their customers <strong>faster and with fewer headaches</strong>.
             </blockquote>
-            <p>Instead of a single "big bang" launch, Agile breaks projects into short cycles called **sprints**. Each sprint delivers a working piece of the product, which allows for regular reviews and quick adjustments based on feedback.</p>
+            <p>Instead of a single "big bang" launch, Agile breaks projects into short cycles called <strong>sprints</strong>. Each sprint delivers a working piece of the product, which allows for regular reviews and quick adjustments based on feedback.</p>
             <p>The philosophy is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, which prioritizes:</p>
             <ul>
-                <li>Individuals and interactions over processes and tools</li>
-                <li>Working software over comprehensive documentation</li>
-                <li>Customer collaboration over contract negotiation</li>
-                <li>Responding to change over following a plan</li>
+                <li><strong>Individuals and interactions</strong> over processes and tools</li>
+                <li><strong>Working software</strong> over comprehensive documentation</li>
+                <li><strong>Customer collaboration</strong> over contract negotiation</li>
+                <li><strong>Responding to change</strong> over following a plan</li>
             </ul>
 
             <AgileFlowDiagram />
 
-            <h2 id="agile-vs-waterfall">Agile vs. Traditional Waterfall</h2>
-            <p>The core difference between Agile and traditional models like Waterfall is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
+            <h2>Agile vs. Traditional Waterfall</h2>
+            <p>The core difference between Agile and traditional models like <strong>Waterfall</strong> is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
             
             <AgileVsWaterfallTable />
 
-            <h2 id="frameworks-and-roles">Common Agile Frameworks & Key Roles</h2>
+            <h2>Common Agile Frameworks & Key Roles</h2>
             <p>Agile is an umbrella term for several frameworks. The most popular are:</p>
             <ul>
                 <li><strong>Scrum:</strong> A framework based on sprints, specific roles, and regular meetings (events) to get work done.</li>
@@ -420,7 +420,7 @@ function WhatIsAgileMethodologyArticle() {
             <p>In a typical Agile (Scrum) team, there are three key roles:</p>
             <AgileTeamStructureDiagram />
 
-            <h2 id="agilesuit-integration">How AgileSuit Powers the Agile Cycle</h2>
+            <h2>How AgileSuit Powers the Agile Cycle</h2>
             <p>AgileSuit is designed to simplify and enhance every stage of the Agile lifecycle. It provides the tools needed to turn Agile theory into measurable, day-to-day execution.</p>
             
             <AgileSuitCycleDiagram />
@@ -428,13 +428,15 @@ function WhatIsAgileMethodologyArticle() {
             <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
                 <p className="font-semibold m-0 text-lg">AgileSuit streamlines your workflow with:</p>
                 <ul className="my-2 space-y-2">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Sprint planning and task tracking boards.</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Real-time analytics and burndown charts.</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Tools for running effective retrospectives.</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-primary"/>Sprint planning and task tracking boards.</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-primary"/>Real-time analytics and burndown charts.</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-primary"/>Tools for running effective retrospectives.</li>
                 </ul>
             </div>
 
-            <h2 id="conclusion">Conclusion: The Agile Advantage</h2>
+            <hr />
+
+            <h2>Conclusion: The Agile Advantage</h2>
             <p>Agile is more than a methodology—it's a mindset that empowers teams to thrive in an environment of change. By prioritizing flexibility, collaboration, and continuous improvement, organizations can reduce risk, increase customer satisfaction, and deliver better products faster.</p>
             <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
                 Agile is the heartbeat of modern innovation.
@@ -442,5 +444,3 @@ function WhatIsAgileMethodologyArticle() {
         </article>
     );
 }
-
-    
