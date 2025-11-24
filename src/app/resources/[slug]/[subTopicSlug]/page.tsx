@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import curriculumData from '@/docs/curriculum.json';
+import curriculumData from '../../../../docs/curriculum.json';
 import { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
@@ -64,7 +64,7 @@ export default function SubTopicPage({ params }: SubTopicPageProps) {
                 {topic.title}
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
-                Learn the fundamentals of Agile methodology—covering core concepts, frameworks, and the role of AgileSuit in supporting Agile teams.
+                Learn the fundamentals of {topic.title.toLowerCase()} and how AgileSuit can help your team.
             </p>
             <div className="mt-8 max-w-lg">
                 <div className="flex justify-between items-center mb-2">
