@@ -394,7 +394,7 @@ function WhatIsAgileMethodologyArticle() {
 
             <h2>What is Agile? The Core Idea</h2>
             <blockquote>
-                Agile Methodology is an <strong>iterative approach</strong> to project management and software development that helps teams deliver value to their customers <strong>faster and with fewer headaches</strong>.
+                <em>Agile Methodology</em> is an <strong>iterative approach</strong> to project management and software development that helps teams deliver value to their customers <strong>faster and with fewer headaches</strong>.
             </blockquote>
             <p>Instead of a single "big bang" launch, Agile breaks projects into short cycles called <strong>sprints</strong>. Each sprint delivers a working piece of the product, which allows for regular reviews and quick adjustments based on feedback.</p>
             <p>The philosophy is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, which prioritizes:</p>
@@ -406,11 +406,15 @@ function WhatIsAgileMethodologyArticle() {
             </ul>
 
             <AgileFlowDiagram />
+            
+            <hr className="my-8" />
 
             <h2>Agile vs. Traditional Waterfall</h2>
             <p>The core difference between Agile and traditional models like <strong>Waterfall</strong> is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
             
             <AgileVsWaterfallTable />
+            
+            <hr className="my-8" />
 
             <h2>Common Agile Frameworks & Key Roles</h2>
             <p>Agile is an umbrella term for several frameworks. The most popular are:</p>
@@ -454,46 +458,51 @@ function WaterfallVsAgileDiagram() {
     return (
       <div className="not-prose my-12 p-8 bg-card border rounded-2xl shadow-sm text-center">
         <h3 className="text-2xl font-bold text-foreground mb-8">The Shift from Rigid to Flexible</h3>
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Waterfall Column */}
-          <div>
-            <h4 className="text-xl font-semibold text-red-600 mb-4">The Old Way: Waterfall</h4>
-            <div className="relative flex flex-col items-center gap-2">
-              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Requirements</div>
-              <div className="h-8 w-1 bg-red-200"></div>
-              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Design</div>
-              <div className="h-8 w-1 bg-red-200"></div>
-              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Build</div>
-              <div className="h-8 w-1 bg-red-200"></div>
-              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Test</div>
-              <div className="h-8 w-1 bg-red-200"></div>
-              <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Deploy</div>
-              <div className="absolute top-1/2 left-full ml-4 text-5xl text-red-400">❌</div>
+        <div className="relative">
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Waterfall Column */}
+              <div>
+                <h4 className="text-xl font-semibold text-red-600 mb-4">The Old Way: Waterfall</h4>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Requirements</div>
+                  <div className="h-8 w-1 bg-red-200"></div>
+                  <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Design</div>
+                  <div className="h-8 w-1 bg-red-200"></div>
+                  <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Build</div>
+                  <div className="h-8 w-1 bg-red-200"></div>
+                  <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Test</div>
+                  <div className="h-8 w-1 bg-red-200"></div>
+                  <div className="w-full bg-red-100 border border-red-200 text-red-800 rounded-lg p-3 shadow">Deploy</div>
+                </div>
+                <p className="text-muted-foreground mt-4 text-sm">A rigid, one-way process. Changes are costly and feedback comes too late.</p>
+              </div>
+      
+              {/* Agile Column */}
+              <div>
+                <h4 className="text-xl font-semibold text-green-600 mb-4">The New Way: Agile</h4>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                    <RefreshCw className="h-5 w-5" /> Sprint 1
+                  </div>
+                  <div className="h-8 w-1 bg-green-200"></div>
+                  <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                    <RefreshCw className="h-5 w-5" /> Sprint 2
+                  </div>
+                  <div className="h-8 w-1 bg-green-200"></div>
+                  <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
+                    <RefreshCw className="h-5 w-5" /> Sprint 3
+                  </div>
+                  <div className="h-8 w-1 bg-green-200"></div>
+                  <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow">...etc</div>
+                </div>
+                 <p className="text-muted-foreground mt-4 text-sm">An iterative, cyclical process. Feedback is continuous and value is delivered early.</p>
+              </div>
             </div>
-            <p className="text-muted-foreground mt-4 text-sm">A rigid, one-way process. Changes are costly and feedback comes too late.</p>
-          </div>
-  
-          {/* Agile Column */}
-          <div>
-            <h4 className="text-xl font-semibold text-green-600 mb-4">The New Way: Agile</h4>
-            <div className="relative flex flex-col items-center gap-2">
-              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
-                <RefreshCw className="h-5 w-5" /> Sprint 1
-              </div>
-              <div className="h-8 w-1 bg-green-200"></div>
-              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
-                <RefreshCw className="h-5 w-5" /> Sprint 2
-              </div>
-              <div className="h-8 w-1 bg-green-200"></div>
-              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow flex items-center justify-center gap-2">
-                <RefreshCw className="h-5 w-5" /> Sprint 3
-              </div>
-              <div className="h-8 w-1 bg-green-200"></div>
-              <div className="w-full bg-green-100 border border-green-200 text-green-800 rounded-lg p-3 shadow">...etc</div>
-              <div className="absolute top-1/2 left-full ml-4 text-5xl text-green-400">✅</div>
+            {/* Icons */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                <div className="text-5xl text-red-400 -translate-x-4">❌</div>
+                <div className="text-5xl text-green-400 translate-x-4">✅</div>
             </div>
-             <p className="text-muted-foreground mt-4 text-sm">An iterative, cyclical process. Feedback is continuous and value is delivered early.</p>
-          </div>
         </div>
       </div>
     );
@@ -524,6 +533,8 @@ function WhyAgileWasCreatedArticle() {
             </ul>
 
             <WaterfallVsAgileDiagram />
+            
+            <hr className="my-8" />
 
             <h2>The Manifesto for a Better Way</h2>
             <p>In 2001, a group of 17 software developers met in Utah, frustrated with the status quo. They recognized that the industry needed a new philosophy—one that embraced change, prioritized customer value, and enabled rapid delivery. The result of their meeting was the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Manifesto for Agile Software Development</a>.</p>
