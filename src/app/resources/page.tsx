@@ -1,4 +1,5 @@
 'use client';
+import * as React from 'react';
 import { LandingHeader } from '@/components/landing/header';
 import { Footer } from '@/components/landing/footer';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -6,7 +7,6 @@ import resources from '@/app/lib/placeholder-images.json';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-import type { Metadata } from 'next';
 
 // Note: Metadata is usually handled in Server Components, but for this client-side
 // reconstruction, we'll manage the title with useEffect. A proper implementation
