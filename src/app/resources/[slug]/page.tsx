@@ -5,7 +5,7 @@ import curriculumData from '../../../docs/curriculum.json';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, Check, CheckCircle, Code, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
+import { ArrowRight, BarChart, Check, CheckCircle, GitBranch, Layers, Lightbulb, Milestone, RefreshCw, Repeat, Search, Target, Users, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Logo } from '@/components/logo';
 
@@ -384,227 +384,60 @@ function WhatIsAgileMethodologyArticle() {
             <hr />
 
             <h2 id="introduction">Introduction: Understanding Agile in the Modern World</h2>
-            <p>In today’s fast-paced digital environment, where customer expectations evolve rapidly and technology changes almost daily, traditional methods of project execution often struggle to keep up. This is where Agile Methodology emerges as a powerful alternative.</p>
-            <p>Agile is not just a way to manage projects — it is a philosophy, a mindset, and a structured approach to delivering value continuously while adapting to change. It focuses on flexibility, collaboration, customer satisfaction, and incremental progress rather than rigid planning and long execution cycles.</p>
-            <p>Agile methodology helps teams respond to uncertainty effectively, break complex work into manageable pieces, deliver faster, and improve continuously. Platforms like AgileSuit are built to support this entire lifecycle — from sprint planning and tracking to retrospectives and advanced reporting — making Agile more actionable and measurable.</p>
+            <p>Agile is a modern approach to project management that helps teams deliver value faster and more efficiently. Unlike traditional methods that require rigid, long-term planning, Agile focuses on flexibility, customer collaboration, and delivering work in small, incremental steps.</p>
+            <p>This iterative process allows teams to adapt to change, improve continuously, and respond to customer feedback in real-time. Platforms like <a href="#">AgileSuit</a> are designed to support this entire lifecycle, making Agile principles actionable and measurable.</p>
             
             <hr/>
 
-            <h2 id="what-is-agile">What is Agile Methodology?</h2>
-            <h3>Definition:</h3>
-            <blockquote className="border-l-4 border-primary bg-muted/50 p-6 italic text-xl">
-                Agile Methodology is an iterative and incremental approach to project management and software development that emphasizes flexibility, customer collaboration, continuous delivery, and rapid response to change.
+            <h2 id="what-is-agile">What is Agile? The Core Idea</h2>
+            <blockquote>
+                Agile Methodology is an iterative approach to project management and software development that helps teams deliver value to their customers faster and with fewer headaches.
             </blockquote>
-            <p>Rather than planning everything upfront, Agile divides a project into small cycles called iterations or sprints, enabling teams to review progress regularly and adapt based on feedback.</p>
-            <h4>Agile encourages:</h4>
+            <p>Instead of a single "big bang" launch, Agile breaks projects into short cycles called **sprints**. Each sprint delivers a working piece of the product, which allows for regular reviews and quick adjustments based on feedback.</p>
+            <p>The philosophy is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, which prioritizes:</p>
             <ul>
-                <li>Working software over extensive documentation</li>
-                <li>Customer collaboration over contract negotiation</li>
-                <li>Responding to change over following a fixed plan</li>
                 <li>Individuals and interactions over processes and tools</li>
+                <li>Working software over comprehensive documentation</li>
+                <li>Customer collaboration over contract negotiation</li>
+                <li>Responding to change over following a plan</li>
             </ul>
-            <p>Agile methodology is guided by the <a href="https://agilemanifesto.org/" target="_blank" rel="noopener noreferrer">Agile Manifesto</a>, a foundational document created in 2001 by 17 software professionals who wanted a better way to develop products.</p>
-
-            <hr/>
 
             <AgileFlowDiagram />
 
-            <hr/>
-
-            <h2 id="core-principles">Core Principles of Agile Methodology</h2>
-            <p>Agile is driven by 12 core principles, some of the most important include:</p>
-            <ul>
-                <li>Deliver working software frequently</li>
-                <li>Welcome changing requirements, even late in development</li>
-                <li>Business people and developers must work together daily</li>
-                <li>Simplicity is essential</li>
-                <li>Continuous attention to technical excellence</li>
-                <li>Regular reflection and adjustment</li>
-            </ul>
-            <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
-                <p className="font-semibold m-0 text-lg">How AgileSuit Helps:</p>
-                <ul className="my-2 space-y-2">
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Track sprint progress visually</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Conduct retrospectives</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Monitor performance analytics</li>
-                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Improve sprint outcomes over time</li>
-                </ul>
-            </div>
-
-            <hr/>
-
-            <h2 id="key-components">Key Components of Agile Methodology</h2>
-            <ol>
-                <li><strong>Iterative Development:</strong> The project is broken into short cycles (sprints usually 1–4 weeks). Each sprint delivers a usable piece of the product.</li>
-                <li><strong>Incremental Delivery:</strong> Products are built piece by piece rather than all at once.</li>
-                <li><strong>Continuous Feedback:</strong> Feedback from stakeholders and users is integrated frequently.</li>
-                <li><strong>Cross-Functional Teams:</strong> Agile teams include developers, testers, designers, analysts, and product owners working together.</li>
-                <li><strong>Flexible Planning:</strong> Planning adapts as new information emerges.</li>
-            </ol>
-
-            <hr/>
-            
-            <h2 id="agile-vs-waterfall">Agile vs Traditional Project Management</h2>
-            <p><strong>Traditional (Waterfall) Approach:</strong></p>
-            <p>Requirements → Design → Development → Testing → Deployment</p>
-            <p>Executed linearly, with changes being expensive and difficult.</p>
-            <p><strong>Agile Approach:</strong></p>
-            <p>Plan → Build → Test → Review → Improve → Repeat</p>
-            <p>Executed iteratively, allowing flexibility and faster time to value.</p>
+            <h2 id="agile-vs-waterfall">Agile vs. Traditional Waterfall</h2>
+            <p>The core difference between Agile and traditional models like Waterfall is flexibility. Waterfall is a linear, sequential process where each phase must be completed before the next begins. Agile, on the other hand, is an iterative loop of planning, building, and learning.</p>
             
             <AgileVsWaterfallTable />
 
-             <hr/>
-
-            <h2 id="why-created">Why Agile Methodology Was Created</h2>
-            <p>Agile was created due to the failure of rigid project management models. Organizations faced challenges such as:</p>
+            <h2 id="frameworks-and-roles">Common Agile Frameworks & Key Roles</h2>
+            <p>Agile is an umbrella term for several frameworks. The most popular are:</p>
             <ul>
-                <li>Projects exceeding budget</li>
-                <li>Delayed delivery</li>
-                <li>Failed user adoption</li>
-                <li>Inflexible planning</li>
-                <li>Misalignment with business needs</li>
+                <li><strong>Scrum:</strong> A framework based on sprints, specific roles, and regular meetings (events) to get work done.</li>
+                <li><strong>Kanban:</strong> Focuses on visualizing workflow, limiting work-in-progress, and maximizing efficiency.</li>
+                <li><strong>SAFe (Scaled Agile Framework):</strong> Designed for large organizations to apply Agile principles at an enterprise scale.</li>
             </ul>
-            <p>Agile was designed to:</p>
-            <ul>
-                <li>Embrace change instead of resisting it</li>
-                <li>Improve collaboration across teams</li>
-                <li>Enhance speed and quality</li>
-                <li>Focus on real customer value</li>
-            </ul>
-             <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
-                <p className="m-0 text-lg">AgileSuit enhances this philosophy by providing real-time visibility and structured workflows for teams adapting Agile principles.</p>
-            </div>
 
-            <hr/>
-
-            <h2 id="frameworks">Agile Methodology Frameworks</h2>
-            <p>Agile is an umbrella concept supported by multiple frameworks:</p>
-            <ol>
-                <li><strong>Scrum:</strong> Most popular Agile framework. Uses Sprints, Daily Standups, Sprint Reviews, and Retrospectives.</li>
-                <li><strong>Kanban:</strong> Focuses on visual workflow and continuous delivery without fixed sprints.</li>
-                <li><strong>Extreme Programming (XP):</strong> Emphasizes technical excellence and continuous testing.</li>
-                <li><strong>SAFe (Scaled Agile Framework):</strong> Used by large organizations to scale Agile across multiple teams.</li>
-            </ol>
-            
-            <hr/>
-
-            <h2 id="roles">Agile Roles Explained</h2>
-            <p><strong>Product Owner:</strong> Defines requirements and prioritizes work.</p>
-            <p><strong>Scrum Master:</strong> Facilitates Agile practices and removes obstacles.</p>
-            <p><strong>Development Team:</strong> Delivers the product incrementally.</p>
-
+            <p>In a typical Agile (Scrum) team, there are three key roles:</p>
             <AgileTeamStructureDiagram />
 
-            <hr/>
-
-            <h2 id="lifecycle">Agile Lifecycle Stages</h2>
-            <ol>
-                <li>Concept</li>
-                <li>Inception</li>
-                <li>Iteration</li>
-                <li>Release</li>
-                <li>Maintenance</li>
-                <li>Retirement</li>
-            </ol>
-            <p>Each stage promotes flexibility, ensuring better adaptability to change.</p>
+            <h2 id="agilesuit-integration">How AgileSuit Powers the Agile Cycle</h2>
+            <p>AgileSuit is designed to simplify and enhance every stage of the Agile lifecycle. It provides the tools needed to turn Agile theory into measurable, day-to-day execution.</p>
             
-            <hr/>
-
-            <h2 id="mindset">Agile Mindset & Philosophy</h2>
-            <p>Agile is not only about tools; it’s about culture:</p>
-            <ul>
-                <li>Transparency</li>
-                <li>Trust</li>
-                <li>Accountability</li>
-                <li>Continuous learning</li>
-                <li>Customer focus</li>
-            </ul>
-            <div className="not-prose p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
-                <p className="m-0 text-lg">AgileSuit aligns seamlessly by allowing transparency across teams and leadership in real-time.</p>
-            </div>
-
-            <hr/>
-            
-            <h2 id="benefits">Benefits of Agile Methodology</h2>
-             <ul>
-                <li>Faster time to market</li>
-                <li>Better product quality</li>
-                <li>Higher customer satisfaction</li>
-                <li>Reduced risk</li>
-                <li>Increased team collaboration</li>
-                <li>Continuous improvement</li>
-            </ul>
-
-            <hr/>
-
-            <h2 id="myths">Common Myths About Agile</h2>
-            <div className="not-prose my-12 overflow-hidden rounded-lg border border-border shadow-md">
-                <div className="grid grid-cols-[1fr,2fr]">
-                    <div className="p-4 font-bold text-foreground border-b border-r">Myth</div>
-                    <div className="p-4 font-bold text-foreground border-b">Reality</div>
-                    
-                    <div className="p-4 text-sm text-foreground border-r">Agile has no planning</div>
-                    <div className="p-4 text-sm text-foreground">Agile involves <span className='font-semibold text-primary'>continuous</span> planning</div>
-
-                    <div className="p-4 text-sm text-foreground border-t border-r">Agile means no documentation</div>
-                    <div className="p-4 text-sm text-foreground border-t">Agile values <span className='font-semibold text-primary'>essential</span> documentation</div>
-
-                    <div className="p-4 text-sm text-foreground border-t border-r">Agile is only for IT</div>
-                    <div className="p-4 text-sm text-foreground border-t">Agile applies <span className='font-semibold text-primary'>across industries</span></div>
-                </div>
-            </div>
-
-            <hr/>
-
-            <h2 id="real-life">How Agile Works in Real Life</h2>
-            <p>Imagine building an e-commerce app: Instead of building it completely and launching after 1 year, Agile allows you to:</p>
-            <ul>
-                <li>Release login system first</li>
-                <li>Add payment next</li>
-                <li>Add recommendation engine later</li>
-                <li>Improve based on user feedback</li>
-            </ul>
-            <p>Each step delivers value.</p>
-            
-            <hr/>
-
-            <h2 id="agilesuit-integration">Agile + AgileSuit = Structured Excellence</h2>
-            <p>AgileSuit simplifies Agile implementation by providing:</p>
-            <ul>
-                <li>Sprint planning tools</li>
-                <li>Real-time task tracking</li>
-                <li>Retrospective analysis</li>
-                <li>Performance metrics</li>
-                <li>Department segmentation</li>
-                <li>Team hierarchy control</li>
-            </ul>
-            <p>This turns Agile from theory into measurable execution.</p>
-
             <AgileSuitCycleDiagram />
 
-            <hr/>
+            <div className="not-prose my-12 p-6 bg-primary/5 border-l-4 border-primary rounded-r-lg">
+                <p className="font-semibold m-0 text-lg">AgileSuit streamlines your workflow with:</p>
+                <ul className="my-2 space-y-2">
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Sprint planning and task tracking boards.</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Real-time analytics and burndown charts.</li>
+                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary"/>Tools for running effective retrospectives.</li>
+                </ul>
+            </div>
 
-            <h2 id="non-it">Agile Methodology in Non-IT Fields</h2>
-            <p>Agile is now used in:</p>
-            <ul>
-                <li>Marketing</li>
-                <li>HR</li>
-                <li>Education</li>
-                <li>Manufacturing</li>
-                <li>Healthcare</li>
-                <li>Product Design</li>
-            </ul>
-            <p>Its flexibility proves universal.</p>
-            
-            <hr/>
-            
-            <h2 id="conclusion">Conclusion</h2>
-            <p>Agile Methodology represents a transformation in how modern teams think, collaborate, and deliver value. It prioritizes people over processes, collaboration over control, and adaptability over rigidity.</p>
-            <p>By adopting Agile, organizations move from slow, rigid execution to smart, flexible, and responsive systems that drive innovation and efficiency.</p>
-            <p>With platforms like AgileSuit, Agile becomes structured, scalable, and measurable—offering businesses a powerful way to deliver continuous improvement while maintaining clarity and control.</p>
+            <h2 id="conclusion">Conclusion: The Agile Advantage</h2>
+            <p>Agile is more than a methodology—it's a mindset that empowers teams to thrive in an environment of change. By prioritizing flexibility, collaboration, and continuous improvement, organizations can reduce risk, increase customer satisfaction, and deliver better products faster.</p>
             <blockquote className="border-l-4 border-primary bg-muted/50 p-6 text-2xl text-center italic">
-                Agile is not just a methodology — it is the heartbeat of modern innovation.
+                Agile is the heartbeat of modern innovation.
             </blockquote>
         </article>
     );
