@@ -294,6 +294,85 @@ function AgileSuitCycleDiagram() {
     );
 }
 
+const comparisonData = [
+    {
+      block: 'Term',
+      waterfall: 'Sequential development process in pre-defined phases',
+      agile: 'Iterative development in short sprints',
+    },
+    {
+      block: 'Adaptability',
+      waterfall: 'Fixed requirements and structure',
+      agile: 'Flexible and adaptable',
+    },
+    {
+      block: 'Teams',
+      waterfall: 'Homogeneous teams with strong hierarchy',
+      agile: 'Network of empowered teams',
+    },
+    {
+      block: 'Mindset',
+      waterfall: 'Project-focused with the aim of reaching the delivery phase',
+      agile: 'Focused around collaboration and communication',
+    },
+    {
+      block: 'Process',
+      waterfall: 'Sequential approach',
+      agile: 'Incremental approach',
+    },
+    {
+      block: 'Documentation',
+      waterfall: 'Comprehensive',
+      agile: 'Light',
+    },
+    {
+      block: 'Value delivery',
+      waterfall: 'Slow - only at major milestones',
+      agile: 'Rapid (weekly / bi-weekly)',
+    },
+    {
+      block: 'Quality',
+      waterfall: 'Low - issues are not identified until the testing phase',
+      agile: 'Improved - issues identified after each sprint',
+    },
+    {
+      block: 'Risk',
+      waterfall: 'Increases as project progresses',
+      agile: 'Decreases as project progresses',
+    },
+    {
+      block: 'Customer feedback',
+      waterfall: 'Limited and delayed until project completion',
+      agile: 'Frequent - after each sprint',
+    },
+    {
+      block: 'Best for',
+      waterfall: 'Straightforward projects in predictable circumstances',
+      agile: 'Short projects in high-risk situations',
+    },
+];
+
+function AgileVsWaterfallTable() {
+    return (
+        <div className="not-prose my-12 overflow-hidden rounded-lg border border-border shadow-md">
+            <div className="grid grid-cols-3">
+                <div className="col-span-1 bg-primary/80 p-4 font-bold text-primary-foreground">Building Blocks</div>
+                <div className="col-span-1 p-4 font-bold text-foreground">Waterfall</div>
+                <div className="col-span-1 p-4 font-bold text-foreground">Agile</div>
+            </div>
+            <div className="grid grid-cols-3">
+                {comparisonData.map((row, index) => (
+                    <React.Fragment key={index}>
+                        <div className="col-span-1 bg-primary/80 p-4 text-sm font-medium text-primary-foreground border-t border-primary/50">{row.block}</div>
+                        <div className="col-span-1 p-4 text-sm text-foreground border-t border-border">{row.waterfall}</div>
+                        <div className="col-span-1 p-4 text-sm text-foreground border-t border-border">{row.agile}</div>
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 // Component for the "What is Agile Methodology?" article
 function WhatIsAgileMethodologyArticle() {
     return (
@@ -371,44 +450,8 @@ function WhatIsAgileMethodologyArticle() {
             <p><strong>Agile Approach:</strong></p>
             <p>Plan → Build → Test → Review → Improve → Repeat</p>
             <p>Executed iteratively, allowing flexibility and faster time to value.</p>
-            <div className="not-prose my-8">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Aspect</TableHead>
-                            <TableHead>Waterfall</TableHead>
-                            <TableHead>Agile</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell>Flexibility</TableCell>
-                            <TableCell>Low</TableCell>
-                            <TableCell className='font-semibold text-primary'>High</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Customer Feedback</TableCell>
-                            <TableCell>Late Stage</TableCell>
-                            <TableCell className='font-semibold text-primary'>Continuous</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Delivery</TableCell>
-                            <TableCell>End of Project</TableCell>
-                            <TableCell className='font-semibold text-primary'>Frequent</TableCell>
-                        </TableRow>
-                         <TableRow>
-                            <TableCell>Risk</TableCell>
-                            <TableCell>High</TableCell>
-                            <TableCell className='font-semibold text-primary'>Lower</TableCell>
-                        </TableRow>
-                         <TableRow>
-                            <TableCell>Adaptability</TableCell>
-                            <TableCell>Poor</TableCell>
-                            <TableCell className='font-semibold text-primary'>Excellent</TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-            </div>
+            
+            <AgileVsWaterfallTable />
 
              <hr/>
 
@@ -495,29 +538,20 @@ function WhatIsAgileMethodologyArticle() {
             <hr/>
 
             <h2 id="myths">Common Myths About Agile</h2>
-             <div className="not-prose my-8">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Myth</TableHead>
-                            <TableHead>Reality</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell>Agile has no planning</TableCell>
-                            <TableCell>Agile involves <span className='font-semibold text-primary'>continuous</span> planning</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Agile means no documentation</TableCell>
-                            <TableCell>Agile values <span className='font-semibold text-primary'>essential</span> documentation</TableCell>
-                        </TableRow>
-                        <TableRow>
-                            <TableCell>Agile is only for IT</TableCell>
-                            <TableCell>Agile applies <span className='font-semibold text-primary'>across industries</span></TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+            <div className="not-prose my-12 overflow-hidden rounded-lg border border-border shadow-md">
+                <div className="grid grid-cols-[1fr,2fr]">
+                    <div className="p-4 font-bold text-foreground border-b border-r">Myth</div>
+                    <div className="p-4 font-bold text-foreground border-b">Reality</div>
+                    
+                    <div className="p-4 text-sm text-foreground border-r">Agile has no planning</div>
+                    <div className="p-4 text-sm text-foreground">Agile involves <span className='font-semibold text-primary'>continuous</span> planning</div>
+
+                    <div className="p-4 text-sm text-foreground border-t border-r">Agile means no documentation</div>
+                    <div className="p-4 text-sm text-foreground border-t">Agile values <span className='font-semibold text-primary'>essential</span> documentation</div>
+
+                    <div className="p-4 text-sm text-foreground border-t border-r">Agile is only for IT</div>
+                    <div className="p-4 text-sm text-foreground border-t">Agile applies <span className='font-semibold text-primary'>across industries</span></div>
+                </div>
             </div>
 
             <hr/>
@@ -579,7 +613,7 @@ function WhatIsAgileMethodologyArticle() {
 // In a real scenario, you'd import these from your UI library
 const Table = ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => <table {...props} className="w-full text-left border-collapse">{children}</table>;
 const TableHeader = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props}>{children}</thead>;
-const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props} className="border-b">{children}</tr>;
+const TableRow = ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props}>{children}</tr>;
 const TableHead = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <th {...props} className="p-4 font-medium text-muted-foreground text-base">{children}</th>;
 const TableBody = ({ children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <tbody {...props}>{children}</tbody>;
 const TableCell = ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => <td {...props} className="p-4 text-base">{children}</td>;
