@@ -38,14 +38,14 @@ function Sidebar() {
     const defaultActiveTopic = level.topics.find(topic => topic.points.some(p => toSlug(p) === subTopicSlug))?.title;
 
     return (
-        <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 border-r border-gray-200/80 p-6">
+        <aside className="w-full md:w-64 lg:w-72 flex-shrink-0 border-r border-gray-200/80 p-6 bg-white">
             <h2 className="text-lg font-semibold text-foreground mb-4">Topics</h2>
-            <Accordion type="single" collapsible defaultValue={defaultActiveTopic ? toSlug(defaultActiveTopic) : undefined}>
+            <Accordion type="single" collapsible defaultValue={defaultActiveTopic ? toSlug(defaultActiveTopic) : undefined} className="w-full">
                 {level.topics.map((topic) => {
                     const topicSlug = toSlug(topic.title);
                     return (
                         <AccordionItem value={topicSlug} key={topicSlug}>
-                            <AccordionTrigger className="text-base font-medium hover:no-underline">
+                            <AccordionTrigger className="text-base font-medium hover:no-underline text-left">
                                 {topic.title}
                             </AccordionTrigger>
                             <AccordionContent>
@@ -88,13 +88,17 @@ export default function ResourcesLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const params = useParams();
+    // This will only render the sidebar if we are on a specific resource page, not the main resources page.
+    const showSidebar = params.slug;
+
     return (
-        <div className="min-h-screen flex flex-col bg-white">
+        <div className="min-h-screen flex flex-col bg-gray-50">
             <LandingHeader />
             <div className="flex-grow container mx-auto">
-                <div className="flex flex-col md:flex-row">
-                    <Sidebar />
-                    <main className="flex-grow p-6 md:p-8 lg:p-12">
+                <div className={cn("flex flex-col", showSidebar && "md:flex-row")}>
+                    {showSidebar && <Sidebar />}
+                    <main className="flex-grow md:p-8 lg:p-12 bg-white">
                         {children}
                     </main>
                 </div>

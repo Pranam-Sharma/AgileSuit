@@ -22,15 +22,15 @@ const toSlug = (title: string) => {
     .replace(/-+/g, '-');
 };
 
-const levelIcons: Record<string, { icon: React.ElementType; color: string }> = {
-    'LEVEL 1': { icon: BookOpen, color: 'bg-teal-100 text-teal-600' },
-    'LEVEL 2': { icon: Star, color: 'bg-yellow-100 text-yellow-600' },
-    'LEVEL 3': { icon: Cpu, color: 'bg-orange-100 text-orange-600' },
-    'LEVEL 4': { icon: BarChart, color: 'bg-blue-100 text-blue-600' },
-    'LEVEL 5': { icon: Scaling, color: 'bg-purple-100 text-purple-600' },
-    'LEVEL 6': { icon: Users, color: 'bg-red-100 text-red-600' },
-    'LEVEL 7': { icon: Cpu, color: 'bg-amber-100 text-amber-700' },
-    'LEVEL 8': { icon: GraduationCap, color: 'bg-slate-100 text-slate-600' },
+const levelIcons: Record<string, { icon: React.ElementType; color: string, gradient: string }> = {
+    'LEVEL 1': { icon: BookOpen, color: 'text-teal-600', gradient: 'from-teal-50 to-white' },
+    'LEVEL 2': { icon: Star, color: 'text-yellow-600', gradient: 'from-yellow-50 to-white' },
+    'LEVEL 3': { icon: Cpu, color: 'text-orange-600', gradient: 'from-orange-50 to-white' },
+    'LEVEL 4': { icon: BarChart, color: 'text-blue-600', gradient: 'from-blue-50 to-white' },
+    'LEVEL 5': { icon: Scaling, color: 'text-purple-600', gradient: 'from-purple-50 to-white' },
+    'LEVEL 6': { icon: Users, color: 'text-red-600', gradient: 'from-red-50 to-white' },
+    'LEVEL 7': { icon: Cpu, color: 'text-amber-700', gradient: 'from-amber-50 to-white' },
+    'LEVEL 8': { icon: GraduationCap, color: 'text-slate-600', gradient: 'from-slate-50 to-white' },
 };
 
 export default function ResourcesPage() {
@@ -40,53 +40,63 @@ export default function ResourcesPage() {
 
   return (
     <>
-      <main className="flex-grow">
-        <section className="py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-4xl text-center">
-                <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                    Agile Methodology Learning Hub
-                </h1>
-                <div className="mt-6 flex items-center justify-center gap-2 text-lg leading-8 text-muted-foreground">
-                    Powered by <Logo /> <span>(Free for Everyone)</span>
+      <main className="flex-grow bg-gray-50">
+        <section className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent -z-0" />
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 py-24 sm:py-32 relative z-10">
+                <div className="mx-auto max-w-4xl text-center">
+                    <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+                        Agile Methodology Learning Hub
+                    </h1>
+                    <div className="mt-6 flex items-center justify-center gap-2 text-lg leading-8 text-muted-foreground">
+                        Powered by <Logo /> <span>(Free for Everyone)</span>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div className="mt-20 space-y-16">
-              <div className="mx-auto grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
-                {curriculumData.learningHubContent.map((level, levelIndex) => {
-                  const levelNumber = level.level.split(':')[0];
-                  const Icon = levelIcons[levelNumber]?.icon || BookOpen;
-                  const iconColor = levelIcons[levelNumber]?.color || 'bg-gray-100 text-gray-600';
-                  const simpleTitle = getSimpleTitle(level.level);
-                  const levelSlug = toSlug(level.level);
+        <section className="py-16 -mt-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="column-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+              {curriculumData.learningHubContent.map((level, levelIndex) => {
+                const levelNumber = level.level.split(':')[0];
+                const Icon = levelIcons[levelNumber]?.icon || BookOpen;
+                const iconColor = levelIcons[levelNumber]?.color || 'text-gray-600';
+                const gradient = levelIcons[levelNumber]?.gradient || 'from-gray-50 to-white';
+                const simpleTitle = getSimpleTitle(level.level);
+                const levelSlug = toSlug(level.level);
 
-                  return (
-                    <Link key={level.level} href={`/resources/${levelSlug}`} className="block group">
-                        <Card className="h-full border-2 border-gray-200/80 rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/50 transition-all duration-300">
-                            <CardContent className="p-6 flex gap-6 items-start">
-                                <div className={cn("flex-shrink-0 rounded-lg h-16 w-16 flex items-center justify-center", iconColor)}>
-                                    <Icon className="h-8 w-8" />
-                                </div>
-                                <div className='flex-grow'>
-                                    <h2 className="text-xl font-bold text-foreground">
-                                       <span className='text-primary'>{levelIndex + 1}</span> {simpleTitle}
-                                    </h2>
-                                    <ul className="mt-4 space-y-2 text-md text-muted-foreground">
-                                        {level.topics.map(topic => (
-                                            <li key={topic.title} className='flex items-center gap-2 hover:text-foreground transition-colors'>
-                                                {topic.title}
-                                                <ArrowRight className='h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity' />
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </Link>
-                  );
-                })}
-              </div>
+                return (
+                  <Link key={level.level} href={`/resources/${levelSlug}`} className="block group break-inside-avoid">
+                      <Card className={cn(
+                          "h-full border-2 border-transparent rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br",
+                          gradient
+                          )}>
+                          <CardContent className="p-6">
+                              <div className="flex items-center gap-4">
+                                  <div className={cn("flex-shrink-0 rounded-full h-12 w-12 flex items-center justify-center bg-white shadow-inner", iconColor)}>
+                                      <Icon className="h-6 w-6" />
+                                  </div>
+                                  <div className='flex-grow'>
+                                      <h2 className="text-xl font-bold text-foreground">
+                                         {simpleTitle}
+                                      </h2>
+                                      <p className="text-sm text-muted-foreground">{level.level.split('(')[1].replace(')','')}</p>
+                                  </div>
+                              </div>
+                              <ul className="mt-6 space-y-3 text-md text-muted-foreground">
+                                  {level.topics.map(topic => (
+                                      <li key={topic.title} className='flex items-center gap-3 group-hover:text-foreground transition-colors'>
+                                          <ArrowRight className='h-4 w-4 text-primary/50 group-hover:text-primary transition-colors' />
+                                          <span>{topic.title}</span>
+                                      </li>
+                                  ))}
+                              </ul>
+                          </CardContent>
+                      </Card>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
