@@ -47,20 +47,22 @@ export function LandingHeader() {
   const isLandingPage = pathname === '/';
 
   React.useEffect(() => {
+    if (!isLandingPage) return;
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isLandingPage]);
 
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 transition-all duration-300',
+        'z-50 transition-all duration-300',
+        isLandingPage ? 'sticky top-0' : 'bg-gray-50',
         isScrolled
           ? 'bg-background/80 shadow-sm backdrop-blur-sm'
-          : 'bg-transparent'
+          : isLandingPage ? 'bg-transparent' : ''
       )}
     >
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
