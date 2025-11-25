@@ -17,8 +17,6 @@ const navLinks = [
 ];
 
 function NavLink({ href, label }: { href: string; label: string }) {
-  const pathname = usePathname();
-
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
     const targetId = href.replace(/.*#/, '');
@@ -45,6 +43,8 @@ function NavLink({ href, label }: { href: string; label: string }) {
 
 export function LandingHeader() {
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const pathname = usePathname();
+  const isLandingPage = pathname === '/';
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -66,11 +66,13 @@ export function LandingHeader() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-8">
                 <Logo />
-                <nav className="hidden items-center gap-2 md:flex">
-                    {navLinks.map((link) => (
-                    <NavLink key={link.href} {...link} />
-                    ))}
-                </nav>
+                {isLandingPage && (
+                  <nav className="hidden items-center gap-2 md:flex">
+                      {navLinks.map((link) => (
+                      <NavLink key={link.href} {...link} />
+                      ))}
+                  </nav>
+                )}
             </div>
             <div className="hidden items-center gap-4 md:flex">
                 <Button variant="ghost" asChild>
@@ -91,13 +93,15 @@ export function LandingHeader() {
                     <SheetContent side="right">
                     <div className="flex flex-col gap-6 p-6">
                         <Logo />
-                        <nav className="flex flex-col gap-4">
-                        {navLinks.map((link) => (
-                            <Link key={link.href} href={link.href} className="text-lg font-medium text-foreground">
-                                {link.label}
-                            </Link>
-                        ))}
-                        </nav>
+                        {isLandingPage && (
+                            <nav className="flex flex-col gap-4">
+                            {navLinks.map((link) => (
+                                <Link key={link.href} href={link.href} className="text-lg font-medium text-foreground">
+                                    {link.label}
+                                </Link>
+                            ))}
+                            </nav>
+                        )}
                         <div className="mt-auto flex flex-col gap-4">
                         <Button variant="outline" asChild>
                             <Link href="/login">Sign In</Link>
