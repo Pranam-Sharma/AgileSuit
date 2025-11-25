@@ -57,7 +57,7 @@ export default function ResourcesPage() {
 
         <section className="py-16 -mt-16">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="column-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {curriculumData.learningHubContent.map((level, levelIndex) => {
                 const levelNumber = level.level.split(':')[0];
                 const Icon = levelIcons[levelNumber]?.icon || BookOpen;
@@ -68,7 +68,7 @@ export default function ResourcesPage() {
                 const description = level.level.split('(')[1];
 
                 return (
-                  <Link key={level.level} href={`/resources/${levelSlug}`} className="block group break-inside-avoid">
+                  <Link key={level.level} href={`/resources/${levelSlug}`} className="block group">
                       <Card className={cn(
                           "h-full border-2 border-transparent rounded-2xl shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br",
                           gradient
@@ -79,10 +79,11 @@ export default function ResourcesPage() {
                                       <Icon className="h-6 w-6" />
                                   </div>
                                   <div className='flex-grow'>
+                                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{levelNumber}</p>
                                       <h2 className="text-xl font-bold text-foreground">
                                          {simpleTitle}
                                       </h2>
-                                      <p className="text-sm text-muted-foreground">{description ? description.replace(')','') : ''}</p>
+                                      {description && <p className="text-sm text-muted-foreground">{description.replace(')','')}</p>}
                                   </div>
                               </div>
                               <ul className="mt-6 space-y-3 text-md text-muted-foreground">
