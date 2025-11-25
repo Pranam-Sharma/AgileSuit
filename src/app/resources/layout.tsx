@@ -98,7 +98,7 @@ export default function ResourcesLayout({
             <div className="flex-grow container mx-auto">
                 <div className={cn("flex flex-col", showSidebar && "md:flex-row")}>
                     {showSidebar && <Sidebar />}
-                    <main className="flex-grow md:p-8 lg:p-12 bg-white">
+                    <main className="flex-grow bg-white">
                         {children}
                     </main>
                 </div>

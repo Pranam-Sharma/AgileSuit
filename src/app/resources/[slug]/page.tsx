@@ -48,7 +48,7 @@ function LevelIntro({ level }: { level: any }) {
     const startLearningHref = firstTopic && firstSubtopic ? `/resources/${toSlug(simpleLevelTitle)}?subtopic=${toSlug(firstSubtopic)}` : '#';
 
     return (
-        <article className="prose prose-lg max-w-none">
+        <article className="prose prose-lg max-w-none p-6 md:p-8 lg:p-12">
              <p className="text-sm font-medium text-primary uppercase tracking-wider">Learning Hub</p>
              <h1 className="mt-1 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
                 {simpleLevelTitle}
@@ -75,7 +75,7 @@ function LevelIntro({ level }: { level: any }) {
 
 function SubTopicArticle({ topic, point }: { topic: any, point: string }) {
      return (
-        <article className="prose prose-lg max-w-none">
+        <article className="prose prose-lg max-w-none p-6 md:p-8 lg:p-12">
             <p className="text-sm font-medium text-primary uppercase tracking-wider">{topic.title}</p>
             <h1 className="mt-1 text-4xl font-bold tracking-tight text-foreground">
                 {point}
@@ -385,7 +385,7 @@ function AgileVsWaterfallTable() {
 // Component for the "What is Agile Methodology?" article
 function WhatIsAgileMethodologyArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">What is Agile Methodology?</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">A Complete, In-Depth Guide for Modern Product Teams</p>
 
@@ -517,7 +517,7 @@ function WaterfallVsAgileDiagram() {
 // Component for "Why Agile Was Created"
 function WhyAgileWasCreatedArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 p-6 md:p-8 lg:p-12">
             <h1 className='font-bold'>Why Agile Was Created</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Problems That Sparked a Revolution in Software Development</p>
 
@@ -568,7 +568,7 @@ function WhyAgileWasCreatedArticle() {
 // Component for "Traditional Waterfall vs. Agile"
 function WaterfallVsAgileArticle() {
   return (
-    <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+    <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 p-6 md:p-8 lg:p-12">
       <h1 className="font-bold">Traditional Waterfall vs. Agile</h1>
       <p className="lead !text-xl !font-normal text-muted-foreground">Understanding the Two Core Development Philosophies</p>
       
@@ -619,7 +619,7 @@ function WaterfallVsAgileArticle() {
 // Component for "Problems Agile Solves"
 function ProblemsAgileSolvesArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">Problems Agile Solves in Modern Development</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">Why Teams Are Moving Away from Traditional Methods</p>
 
@@ -659,7 +659,7 @@ function ProblemsAgileSolvesArticle() {
 // Component for "Agile Mindset & Philosophy"
 function AgileMindsetArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">The Agile Mindset & Philosophy</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">It's Not Just What You Do, It's How You Think</p>
 
@@ -724,7 +724,7 @@ function FourCoreValuesDiagram() {
 
 function FourCoreValuesArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">The 4 Core Values of the Agile Manifesto</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Simple Statements That Revolutionized Software Development</p>
             
@@ -771,7 +771,7 @@ function TwelvePrinciplesArticle() {
       { title: "Reflect and Adjust", description: "At regular intervals, the team reflects on how to become more effective, then tunes and adjusts its behavior accordingly." },
     ];
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">The 12 Principles of Agile Software</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Guiding Rules Behind the Agile Manifesto</p>
             <hr className="my-8" />
@@ -809,7 +809,7 @@ function TwelvePrinciplesArticle() {
 
 function ScrumIntroArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">Introduction to Scrum</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">The Most Popular Agile Framework for Complex Projects</p>
 
@@ -873,7 +873,7 @@ function KanbanVsScrumDiagram() {
 
 function KanbanIntroArticle() {
     return (
-        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground">
+        <article className="prose lg:prose-xl max-w-none prose-headings:font-bold prose-headings:text-foreground p-6 md:p-8 lg:p-12">
             <h1 className="font-bold">Introduction to Kanban</h1>
             <p className="lead !text-xl !font-normal text-muted-foreground">Visualizing Work, Limiting WIP, and Maximizing Flow</p>
 
