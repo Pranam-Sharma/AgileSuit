@@ -4,6 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Logo } from '../logo';
+import { AnimatedSection } from './animated-section';
 
 export function SolutionsSection() {
   const [isVisible, setIsVisible] = React.useState(false);
@@ -36,7 +37,7 @@ export function SolutionsSection() {
     <section id="solutions" className="py-24 sm:py-32 bg-white" ref={sectionRef}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
-            <div className={cn('transition-all duration-1000 ease-out', isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10')}>
+            <AnimatedSection className={cn('transition-all duration-1000 ease-out', isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10')}>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Your Command Center</h3>
                 <h2 className="mt-4 text-6xl font-bold tracking-tight text-foreground">
                     Solutions for Every Agile Need
@@ -44,8 +45,8 @@ export function SolutionsSection() {
                 <p className="mt-6 text-xl leading-8 text-muted-foreground">
                     Whether it&apos;s planning, tracking, retrospective, or reporting, AgileSuit has you covered.
                 </p>
-            </div>
-            <div className={cn('rounded-xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
+            </AnimatedSection>
+            <AnimatedSection className={cn('rounded-xl overflow-hidden transition-all duration-1000 ease-out', isVisible ? 'scale-100 opacity-100' : 'scale-90 opacity-0')}>
                 <Image
                     src="/images/dashboard-showcase-v3.jpg"
                     alt="AgileSuit dashboard showcase"
@@ -53,7 +54,7 @@ export function SolutionsSection() {
                     height={1164}
                     className="object-cover"
                 />
-            </div>
+            </AnimatedSection>
         </div>
       </div>
     </section>
