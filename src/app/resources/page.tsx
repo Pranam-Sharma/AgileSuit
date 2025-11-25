@@ -65,6 +65,7 @@ export default function ResourcesPage() {
                 const gradient = levelIcons[levelNumber]?.gradient || 'from-gray-50 to-white';
                 const simpleTitle = getSimpleTitle(level.level);
                 const levelSlug = toSlug(level.level);
+                const description = level.level.split('(')[1];
 
                 return (
                   <Link key={level.level} href={`/resources/${levelSlug}`} className="block group break-inside-avoid">
@@ -81,7 +82,7 @@ export default function ResourcesPage() {
                                       <h2 className="text-xl font-bold text-foreground">
                                          {simpleTitle}
                                       </h2>
-                                      <p className="text-sm text-muted-foreground">{level.level.split('(')[1].replace(')','')}</p>
+                                      <p className="text-sm text-muted-foreground">{description ? description.replace(')','') : ''}</p>
                                   </div>
                               </div>
                               <ul className="mt-6 space-y-3 text-md text-muted-foreground">
