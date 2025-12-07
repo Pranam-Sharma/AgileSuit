@@ -1,11 +1,17 @@
+'use client';
+
 import { Package } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/hooks/use-user';
 
 export function Logo({ className }: { className?: string }) {
+  const { user } = useUser();
+  const href = user ? '/dashboard' : '/';
+
   return (
     <Link
-      href="/"
+      href={href}
       className={cn('flex items-center gap-2', className)}
       aria-label="AgileSuit Home"
     >
