@@ -14,11 +14,10 @@ export async function createSprint(db: Firestore, sprintData: Sprint & { userId:
     }
 }
 
-export async function getSprints(db: Firestore, userId: string): Promise<(Sprint & { id: string })[]> {
+export async function getSprints(db: Firestore): Promise<(Sprint & { id: string })[]> {
     try {
         const q = query(
             collection(db, "sprints"),
-            where("userId", "==", userId),
             orderBy("sprintNumber", "desc")
         );
 

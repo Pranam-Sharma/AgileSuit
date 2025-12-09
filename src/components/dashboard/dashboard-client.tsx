@@ -107,7 +107,7 @@ export function DashboardClient() {
     async function fetchSprints() {
       setIsSprintsLoading(true);
       try {
-        const userSprints = await getSprints(firestore, userId);
+        const userSprints = await getSprints(firestore);
         setSprints(userSprints);
       } catch (error) {
         toast({
