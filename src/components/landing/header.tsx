@@ -13,7 +13,7 @@ const navLinks = [
   { href: '#solutions', label: 'Solutions' },
   { href: '#features', label: 'Features' },
   { href: '#resources', label: 'Resources' },
-  { href: '#pricing', label: 'Pricing' },
+  { href: '/pricing', label: 'Pricing' },
 ];
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -65,58 +65,58 @@ export function LandingHeader() {
           : isLandingPage ? 'bg-transparent' : ''
       )}
     >
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-8">
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-8">
+          <Logo />
+          {isLandingPage && (
+            <nav className="hidden items-center gap-2 md:flex">
+              {navLinks.map((link) => (
+                <NavLink key={link.href} {...link} />
+              ))}
+            </nav>
+          )}
+        </div>
+        <div className="hidden items-center gap-4 md:flex">
+          <Button variant="ghost" asChild>
+            <Link href="/login">Sign In</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Get Demo</Link>
+          </Button>
+        </div>
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <div className="flex flex-col gap-6 p-6">
                 <Logo />
                 {isLandingPage && (
-                  <nav className="hidden items-center gap-2 md:flex">
-                      {navLinks.map((link) => (
-                      <NavLink key={link.href} {...link} />
-                      ))}
+                  <nav className="flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                      <Link key={link.href} href={link.href} className="text-lg font-medium text-foreground">
+                        {link.label}
+                      </Link>
+                    ))}
                   </nav>
                 )}
-            </div>
-            <div className="hidden items-center gap-4 md:flex">
-                <Button variant="ghost" asChild>
+                <div className="mt-auto flex flex-col gap-4">
+                  <Button variant="outline" asChild>
                     <Link href="/login">Sign In</Link>
-                </Button>
-                <Button asChild>
+                  </Button>
+                  <Button asChild>
                     <Link href="/signup">Get Demo</Link>
-                </Button>
-            </div>
-            <div className="md:hidden">
-                <Sheet>
-                    <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                    </SheetTrigger>
-                    <SheetContent side="right">
-                    <div className="flex flex-col gap-6 p-6">
-                        <Logo />
-                        {isLandingPage && (
-                            <nav className="flex flex-col gap-4">
-                            {navLinks.map((link) => (
-                                <Link key={link.href} href={link.href} className="text-lg font-medium text-foreground">
-                                    {link.label}
-                                </Link>
-                            ))}
-                            </nav>
-                        )}
-                        <div className="mt-auto flex flex-col gap-4">
-                        <Button variant="outline" asChild>
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href="/signup">Get Demo</Link>
-                        </Button>
-                        </div>
-                    </div>
-                    </SheetContent>
-                </Sheet>
-            </div>
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
+      </div>
     </header>
   );
 }
