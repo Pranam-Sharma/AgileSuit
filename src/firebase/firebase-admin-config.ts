@@ -5,7 +5,9 @@ let app: admin.app.App;
 
 if (!admin.apps.length) {
   app = admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    // For local development with service account file
+    credential: admin.credential.cert(process.cwd() + '/service-account.json'),
+    projectId: 'agilesuit',
   });
 } else {
   app = admin.app();

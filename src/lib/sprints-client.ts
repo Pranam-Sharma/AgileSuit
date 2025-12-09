@@ -1,7 +1,7 @@
 
 'use client';
 
-import { collection, addDoc, getDocs, query, where, orderBy, Firestore, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, orderBy, Firestore, deleteDoc, doc, getDoc } from "firebase/firestore";
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 
 export async function createSprint(db: Firestore, sprintData: Sprint & { userId: string }) {
@@ -25,7 +25,7 @@ export async function getSprints(db: Firestore, userId: string): Promise<(Sprint
         const querySnapshot = await getDocs(q);
         const sprints: (Sprint & { id: string })[] = [];
         querySnapshot.forEach((doc) => {
-            sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id:string });
+            sprints.push({ id: doc.id, ...doc.data() } as Sprint & { id: string });
         });
         return sprints;
     } catch (error) {
@@ -40,5 +40,21 @@ export async function deleteSprint(db: Firestore, sprintId: string): Promise<voi
     } catch (error: any) {
         console.error("Error deleting document: ", error);
         throw new Error('Failed to delete sprint.');
+    }
+}
+
+export async function getSprint(db: Firestore, sprintId: string): Promise<(Sprint & { id: string }) | null> {
+    try {
+        const docRef = doc(db, "sprints", sprintId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return { id: docSnap.id, ...docSnap.data() } as Sprint & { id: string };
+        } else {
+            return null;
+        }
+    } catch (error) {
+        console.error("Error getting document:", error);
+        throw new Error('Failed to fetch sprint');
     }
 }

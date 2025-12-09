@@ -33,25 +33,26 @@ import { createSprint } from '@/lib/sprints-client';
 import { useFirestore } from '@/firebase/provider';
 
 const sprintSchema = z.object({
-    sprintNumber: z.string().min(1, 'Sprint number is required.'),
-    sprintName: z.string().min(1, 'Sprint name is required.'),
-    projectName: z.string().min(1, 'Project name is required.'),
-    department: z.string().min(1, 'Department is required.'),
-    team: z.string().min(1, 'Team is required.'),
-    isFacilitator: z.boolean().default(false),
-    facilitatorName: z.string().optional(),
-    plannedPoints: z.coerce.number().optional(),
-    completedPoints: z.coerce.number().optional(),
-  }).refine(
-    (data) => {
-      if (data.isFacilitator) return true;
-      return !!data.facilitatorName;
-    },
-    {
-      message: 'Facilitator name is required if you are not the facilitator.',
-      path: ['facilitatorName'],
-    }
-  );
+  sprintNumber: z.string().min(1, 'Sprint number is required.'),
+  sprintName: z.string().min(1, 'Sprint name is required.'),
+  projectName: z.string().min(1, 'Project name is required.'),
+  department: z.string().min(1, 'Department is required.'),
+  team: z.string().min(1, 'Team is required.'),
+  isFacilitator: z.boolean().default(false),
+  facilitatorName: z.string().optional(),
+  plannedPoints: z.coerce.number().optional(),
+  completedPoints: z.coerce.number().optional(),
+  userId: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.isFacilitator) return true;
+    return !!data.facilitatorName;
+  },
+  {
+    message: 'Facilitator name is required if you are not the facilitator.',
+    path: ['facilitatorName'],
+  }
+);
 
 export type Sprint = z.infer<typeof sprintSchema>;
 
@@ -85,39 +86,39 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
 
   async function onSubmit(values: Sprint) {
     if (!user) {
-        toast({
-            title: 'Authentication Error',
-            description: 'You must be logged in to create a sprint.',
-            variant: 'destructive'
-        });
-        return;
+      toast({
+        title: 'Authentication Error',
+        description: 'You must be logged in to create a sprint.',
+        variant: 'destructive'
+      });
+      return;
     }
 
     setIsLoading(true);
-    
+
     let finalValues = { ...values };
     if (values.isFacilitator) {
       finalValues.facilitatorName = user?.displayName ?? user?.email ?? 'Me';
     }
 
     try {
-        if (!firestore) throw new Error("Firestore is not initialized");
-        const newSprint = await createSprint(firestore, { ...finalValues, userId: user.uid });
-        onCreateSprint(newSprint);
-        toast({
-            title: 'Sprint Created!',
-            description: `Sprint "${values.sprintName}" has been successfully created.`,
-        });
-        setOpen(false);
-        form.reset();
+      if (!firestore) throw new Error("Firestore is not initialized");
+      const newSprint = await createSprint(firestore, { ...finalValues, userId: user.uid });
+      onCreateSprint(newSprint);
+      toast({
+        title: 'Sprint Created!',
+        description: `Sprint "${values.sprintName}" has been successfully created.`,
+      });
+      setOpen(false);
+      form.reset();
     } catch (error: any) {
-        toast({
-            title: 'Error Creating Sprint',
-            description: error.message || 'An unknown error occurred.',
-            variant: 'destructive',
-        });
+      toast({
+        title: 'Error Creating Sprint',
+        description: error.message || 'An unknown error occurred.',
+        variant: 'destructive',
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -207,9 +208,9 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
-               <FormField
+              <FormField
                 control={form.control}
                 name="plannedPoints"
                 render={({ field }) => (
@@ -281,7 +282,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
                 />
               )}
             </div>
-            
+
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (

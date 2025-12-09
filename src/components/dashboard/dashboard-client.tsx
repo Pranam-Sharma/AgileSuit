@@ -86,14 +86,14 @@ export function DashboardClient() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
-  const [sprints, setSprints] = React.useState<(Sprint & {id: string})[]>([]);
+  const [sprints, setSprints] = React.useState<(Sprint & { id: string })[]>([]);
   const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filters, setFilters] = React.useState<Filters>({
     department: [],
     team: [],
   });
-  
+
   React.useEffect(() => {
     if (isUserLoading) return;
     if (!user) {
@@ -102,10 +102,12 @@ export function DashboardClient() {
     }
     if (!firestore) return;
 
+    const userId = user.uid;
+
     async function fetchSprints() {
       setIsSprintsLoading(true);
       try {
-        const userSprints = await getSprints(firestore, user.uid);
+        const userSprints = await getSprints(firestore, userId);
         setSprints(userSprints);
       } catch (error) {
         toast({
@@ -128,41 +130,41 @@ export function DashboardClient() {
   const handleDeleteSprint = (sprintId: string) => {
     setSprints((prevSprints) => prevSprints.filter(sprint => sprint.id !== sprintId));
   };
-  
+
   const allDepartments = React.useMemo(() => Array.from(new Set(sprints.map(s => s.department))), [sprints]);
   const allTeams = React.useMemo(() => Array.from(new Set(sprints.map(s => s.team))), [sprints]);
 
   const handleFilterChange = (category: keyof Filters, value: string) => {
     setFilters(prev => {
-        const newFilters = prev[category].includes(value)
-            ? prev[category].filter(item => item !== value)
-            : [...prev[category], value];
-        return { ...prev, [category]: newFilters };
+      const newFilters = prev[category].includes(value)
+        ? prev[category].filter(item => item !== value)
+        : [...prev[category], value];
+      return { ...prev, [category]: newFilters };
     });
   };
 
   const filteredSprints = React.useMemo(() => {
     const lowercasedQuery = searchQuery.toLowerCase();
     return sprints.filter(sprint => {
-        const departmentMatch = filters.department.length === 0 || filters.department.includes(sprint.department);
-        const teamMatch = filters.team.length === 0 || filters.team.includes(sprint.team);
-        
-        if (!departmentMatch || !teamMatch) {
-            return false;
-        }
+      const departmentMatch = filters.department.length === 0 || filters.department.includes(sprint.department);
+      const teamMatch = filters.team.length === 0 || filters.team.includes(sprint.team);
 
-        if (searchQuery === '') {
-            return true;
-        }
+      if (!departmentMatch || !teamMatch) {
+        return false;
+      }
 
-        return (
-            sprint.sprintNumber.toLowerCase().includes(lowercasedQuery) ||
-            sprint.sprintName.toLowerCase().includes(lowercasedQuery) ||
-            sprint.projectName.toLowerCase().includes(lowercasedQuery) ||
-            sprint.department.toLowerCase().includes(lowercasedQuery) ||
-            sprint.team.toLowerCase().includes(lowercasedQuery) ||
-            (sprint.facilitatorName && sprint.facilitatorName.toLowerCase().includes(lowercasedQuery))
-        );
+      if (searchQuery === '') {
+        return true;
+      }
+
+      return (
+        sprint.sprintNumber.toLowerCase().includes(lowercasedQuery) ||
+        sprint.sprintName.toLowerCase().includes(lowercasedQuery) ||
+        sprint.projectName.toLowerCase().includes(lowercasedQuery) ||
+        sprint.department.toLowerCase().includes(lowercasedQuery) ||
+        sprint.team.toLowerCase().includes(lowercasedQuery) ||
+        (sprint.facilitatorName && sprint.facilitatorName.toLowerCase().includes(lowercasedQuery))
+      );
     });
   }, [sprints, filters, searchQuery]);
 
@@ -182,8 +184,8 @@ export function DashboardClient() {
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
           <Link href="/admin">
             <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
-                <Shield className="h-4 w-4" />
-                <span>Admin</span>
+              <Shield className="h-4 w-4" />
+              <span>Admin</span>
             </Button>
           </Link>
           <div className="relative w-full max-w-xs">
@@ -199,43 +201,43 @@ export function DashboardClient() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
-                    <ListFilter className="h-4 w-4" />
-                    <span>Filter</span>
-                </Button>
+              <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <ListFilter className="h-4 w-4" />
+                <span>Filter</span>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {allDepartments.length > 0 && (
-                    <>
-                        <DropdownMenuLabel className='font-normal text-muted-foreground'>Department</DropdownMenuLabel>
-                        {allDepartments.map(department => (
-                            <DropdownMenuCheckboxItem
-                                key={department}
-                                checked={filters.department.includes(department)}
-                                onCheckedChange={() => handleFilterChange('department', department)}
-                            >
-                                {department}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                    </>
-                )}
-                {allTeams.length > 0 && (
-                     <>
-                        <DropdownMenuLabel className='font-normal text-muted-foreground'>Team</DropdownMenuLabel>
-                        {allTeams.map(team => (
-                            <DropdownMenuCheckboxItem
-                                key={team}
-                                checked={filters.team.includes(team)}
-                                onCheckedChange={() => handleFilterChange('team', team)}
-                            >
-                                {team}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                    </>
-                )}
+              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allDepartments.length > 0 && (
+                <>
+                  <DropdownMenuLabel className='font-normal text-muted-foreground'>Department</DropdownMenuLabel>
+                  {allDepartments.map(department => (
+                    <DropdownMenuCheckboxItem
+                      key={department}
+                      checked={filters.department.includes(department)}
+                      onCheckedChange={() => handleFilterChange('department', department)}
+                    >
+                      {department}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {allTeams.length > 0 && (
+                <>
+                  <DropdownMenuLabel className='font-normal text-muted-foreground'>Team</DropdownMenuLabel>
+                  {allTeams.map(team => (
+                    <DropdownMenuCheckboxItem
+                      key={team}
+                      checked={filters.team.includes(team)}
+                      onCheckedChange={() => handleFilterChange('team', team)}
+                    >
+                      {team}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -254,23 +256,23 @@ export function DashboardClient() {
               improvement and smarter collaboration.
             </p>
           </div>
-          
+
           {isSprintsLoading ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <SprintCard.Skeleton />
-                <SprintCard.Skeleton />
-                <SprintCard.Skeleton />
+              <SprintCard.Skeleton />
+              <SprintCard.Skeleton />
+              <SprintCard.Skeleton />
             </div>
           ) : filteredSprints.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredSprints.map((sprint, index) => (
-                  <SprintCard key={sprint.id} sprint={sprint} onDelete={handleDeleteSprint} />
+                <SprintCard key={sprint.id} sprint={sprint} onDelete={handleDeleteSprint} />
               ))}
             </div>
           ) : (
             <div className="text-center py-16 rounded-2xl bg-white/50 shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
-                <h2 className="text-2xl font-bold text-gray-700">No Sprints Yet!</h2>
-                <p className="mt-2 text-gray-500">Click "Create Sprint" to get started.</p>
+              <h2 className="text-2xl font-bold text-gray-700">No Sprints Yet!</h2>
+              <p className="mt-2 text-gray-500">Click "Create Sprint" to get started.</p>
             </div>
           )}
         </div>
