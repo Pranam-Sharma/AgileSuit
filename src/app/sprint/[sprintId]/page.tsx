@@ -2,7 +2,6 @@
 import { SprintDetailClient } from '@/components/sprint-details/sprint-detail-client';
 import { getSprint } from '@/lib/sprints-server';
 import type { Metadata } from 'next';
-import { getAuth } from "firebase-admin/auth";
 import { firebaseAdminApp } from '@/firebase/firebase-admin-config';
 import { notFound } from 'next/navigation';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -13,7 +12,6 @@ export const metadata: Metadata = {
 };
 
 export default async function SprintDetailPage({ params }: { params: { sprintId: string } }) {
-    const auth = getAuth(firebaseAdminApp);
     // This is a placeholder for getting the current user. 
     // In a real app, you'd get this from the session.
     // For now, we assume no specific user check on server, it will be done on client.
