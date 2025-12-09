@@ -114,57 +114,25 @@ function StatCard({ title, value, children }: { title: string; value: string; ch
 }
 
 type SprintDetailClientProps = {
-    sprintId: string;
+    sprint: Sprint & { id: string };
 };
 
-export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
+export function SprintDetailClient({ sprint }: SprintDetailClientProps) {
   const { user, isLoading: isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-
   React.useEffect(() => {
-    if (!firestore || !user) return;
-
-    const fetchSprint = async () => {
-      setIsLoading(true);
-      try {
-        const sprintDocRef = doc(firestore, 'sprints', sprintId);
-        const sprintDoc = await getDoc(sprintDocRef);
-
-        if (sprintDoc.exists()) {
-          const sprintData = sprintDoc.data() as Sprint;
-          if (sprintData.userId === user.uid) {
-            setSprint({ id: sprintDoc.id, ...sprintData });
-          } else {
-            setSprint(null);
-            toast({
-                title: 'Access Denied',
-                description: "You don't have permission to view this sprint.",
-                variant: 'destructive',
-            });
-            router.push('/dashboard');
-          }
-        } else {
-          setSprint(null);
-        }
-      } catch (error: any) {
+    if (!isUserLoading && user && sprint.userId !== user.uid) {
         toast({
-          title: 'Error fetching sprint',
-          description: error.message || 'Could not load sprint details.',
-          variant: 'destructive',
+            title: 'Access Denied',
+            description: "You don't have permission to view this sprint.",
+            variant: 'destructive',
         });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        router.push('/dashboard');
+    }
+  }, [user, isUserLoading, sprint, router, toast]);
 
-    fetchSprint();
-  }, [sprintId, firestore, user, toast, router]);
-  
   const goalsAchieved = React.useMemo(() => {
     if (!sprint || !sprint.plannedPoints || sprint.plannedPoints === 0) {
         return 0;
@@ -195,12 +163,7 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
         </div>
       </header>
        <main className="flex-1">
-        {isLoading ? (
-          <div className="flex items-center justify-center pt-20">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </div>
-        ) : sprint ? (
-          <>
+        <>
             <div className="border-b bg-white">
               <div className="mx-auto max-w-7xl p-6 lg:p-8">
                 <div className="flex flex-col items-start gap-4 rounded-xl bg-violet-50 p-6 md:flex-row md:items-center">
@@ -394,15 +357,6 @@ export function SprintDetailClient({ sprintId }: SprintDetailClientProps) {
               </Tabs>
             </div>
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center pt-20 text-center">
-            <h2 className="text-2xl font-bold">Sprint Not Found</h2>
-            <p className="text-muted-foreground">The sprint you are looking for does not exist or you do not have permission to view it.</p>
-            <Button onClick={() => router.push('/dashboard')} className="mt-4">
-              Back to Dashboard
-            </Button>
-          </div>
-        )}
       </main>
     </div>
   );
