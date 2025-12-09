@@ -28,7 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CreateSprintDialog, type Sprint } from './create-sprint-dialog';
 import { SprintCard } from './sprint-card';
 import { Input } from '../ui/input';
-import { getSprints } from '@/lib/sprints';
+import { getSprints } from '@/lib/sprints-client';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 

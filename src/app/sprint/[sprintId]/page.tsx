@@ -1,6 +1,6 @@
 
 import { SprintDetailClient } from '@/components/sprint-details/sprint-detail-client';
-import { getSprint } from '@/lib/sprints';
+import { getSprint } from '@/lib/sprints-server';
 import type { Metadata } from 'next';
 import { getAuth } from "firebase-admin/auth";
 import { firebaseAdminApp } from '@/firebase/firebase-admin-config';

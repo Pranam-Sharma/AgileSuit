@@ -15,18 +15,8 @@ type FirebaseContextValue = FirebaseInstances | null;
 
 const FirebaseContext = createContext<FirebaseContextValue>(null);
 
-let firebaseInstances: FirebaseInstances | null = null;
-
-function initializeFirebase(): FirebaseInstances {
-  if (typeof window === 'undefined') {
-    // This should not happen in a client component, but as a safeguard:
-    throw new Error("Firebase should only be initialized on the client side.");
-  }
-  
-  if (firebaseInstances) {
-    return firebaseInstances;
-  }
-  
+let firebaseApp: FirebaseApp;
+if (!getApps().length) {
   const isFullyConfigured =
     firebaseConfig.apiKey &&
     firebaseConfig.authDomain &&
@@ -38,44 +28,37 @@ function initializeFirebase(): FirebaseInstances {
   if (!isFullyConfigured) {
     throw new Error('Firebase configuration is incomplete.');
   }
-
-  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const firestore = getFirestore(app);
-
-  firebaseInstances = { app, auth, firestore };
-  return firebaseInstances;
+  firebaseApp = initializeApp(firebaseConfig);
+} else {
+  firebaseApp = getApp();
 }
 
+const auth = getAuth(firebaseApp);
+const firestore = getFirestore(firebaseApp);
+
+const firebaseInstances: FirebaseInstances = { app: firebaseApp, auth, firestore };
 
 export function FirebaseProvider({ children }: { children: ReactNode }) {
-  const [value, setValue] = useState<FirebaseContextValue>(null);
-
-  useEffect(() => {
-    // Initialize Firebase on the client side and only once.
-    const instances = initializeFirebase();
-    setValue(instances);
-  }, []);
-
-  // Return a loading state or null until Firebase is initialized.
-  if (!value) {
-    // Or a loading spinner, etc.
-    return null; 
-  }
-
+  // The value is now constant, so no need for state.
   return (
-    <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>
+    <FirebaseContext.Provider value={firebaseInstances}>
+      {children}
+    </FirebaseContext.Provider>
   );
 }
 
-export const useFirebase = (): FirebaseInstances | null => {
-  return useContext(FirebaseContext);
+export const useFirebase = (): FirebaseInstances => {
+  const context = useContext(FirebaseContext);
+  if (!context) {
+    throw new Error('useFirebase must be used within a FirebaseProvider');
+  }
+  return context;
 };
 
-export const useAuth = (): Auth | null => {
-  return useFirebase()?.auth ?? null;
+export const useAuth = (): Auth => {
+  return useFirebase().auth;
 };
 
-export const useFirestore = (): Firestore | null => {
-    return useFirebase()?.firestore ?? null;
+export const useFirestore = (): Firestore => {
+    return useFirebase().firestore;
 };

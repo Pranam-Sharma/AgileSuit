@@ -29,7 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
-import { createSprint } from '@/lib/sprints';
+import { createSprint } from '@/lib/sprints-client';
 import { useFirestore } from '@/firebase/provider';
 
 const sprintSchema = z.object({

@@ -8,7 +8,7 @@ import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
 import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
-import { deleteSprint } from '@/lib/sprints';
+import { deleteSprint } from '@/lib/sprints-client';
 import { useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import {
