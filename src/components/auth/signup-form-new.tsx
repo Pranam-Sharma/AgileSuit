@@ -25,6 +25,8 @@ import {
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
 import { useAuth } from '@/firebase/provider';
+import { useSearchParams } from 'next/navigation';
+import { syncUser } from '@/app/actions/user';
 
 const formSchema = z
   .object({
@@ -42,6 +44,8 @@ const formSchema = z
 export function SignUpForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
   const { toast } = useToast();
   const auth = useAuth();
 
@@ -61,8 +65,16 @@ export function SignUpForm() {
       if (!auth) {
         throw new Error("Auth service is not available.");
       }
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+
+      // Sync user to firestore via server action
+      await syncUser(userCredential.user.uid, values.email);
+
+      if (plan) {
+        router.push(`/checkout?plan=${plan}`);
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (error: any) {
       toast({
@@ -82,24 +94,32 @@ export function SignUpForm() {
       if (!auth) {
         throw new Error("Auth service is not available.");
       }
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+
+      // Sync user
+      await syncUser(result.user.uid, result.user.email!, result.user.displayName);
+
+      if (plan) {
+        router.push(`/checkout?plan=${plan}`);
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (error: any) {
-       toast({
+      toast({
         title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }
-  
+
   const inputStyles = "h-14 text-lg border-none bg-accent placeholder:text-accent-foreground/50 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0";
 
   return (
-     <div className="w-full max-w-sm mx-auto flex flex-col gap-8">
+    <div className="w-full max-w-sm mx-auto flex flex-col gap-8">
       <div>
         <h1 className="text-4xl font-bold text-fuchsia-600">Create Account</h1>
         <p className="text-muted-foreground mt-2">

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase/provider';
 import { useUser } from '@/hooks/use-user';
+import { useUserRole } from '@/hooks/use-user-role';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
 import {
@@ -83,6 +84,7 @@ type Filters = {
 
 export function DashboardClient() {
   const { user, isLoading: isUserLoading } = useUser();
+  const { isAdmin } = useUserRole();
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -182,12 +184,15 @@ export function DashboardClient() {
         <Logo className="text-white" />
         <div className="flex items-center gap-4">
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
-          <Link href="/admin">
-            <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
-              <Shield className="h-4 w-4" />
-              <span>Admin</span>
-            </Button>
-          </Link>
+          <CreateSprintDialog onCreateSprint={handleCreateSprint} />
+          {isAdmin && (
+            <Link href="/admin">
+              <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
+                <Shield className="h-4 w-4" />
+                <span>Admin</span>
+              </Button>
+            </Link>
+          )}
           <div className="relative w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input

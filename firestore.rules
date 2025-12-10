@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Sprints:
+    // - Read: Any authenticated user (Shared Workspace)
+    // - Create/Update: Authenticated users
+    // - Delete: Authenticated users (Consider restricting to owner/admin later)
+    match /sprints/{sprintId} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // Users: Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Organizations: 
+    // - Read: Authenticated users (for now, to simplify dashboard fetching)
+    // - Write: Deny (handled by Server Actions)
+    match /organizations/{orgId} {
+      allow read: if request.auth != null;
+      allow write: if false; 
+    }
+
+    // Organization Members:
+    // - Read: Authenticated users can read valid memberships (or ideally just their own)
+    // - Write: Deny (handled by Server Actions)
+    match /organizationMembers/{memberId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.uid == resource.data.userId); 
+       // Note: In queries, the resource.data isn't available for filtering, so we rely on query constraints.
+       // Allow querying where userId == auth.uid
+      allow list: if request.auth != null && request.query.limit <= 100 && request.query.userId == request.auth.uid; 
+      allow write: if false;
+    }
+
+    // Subscriptions:
+    // - Read: Users can read their own subscriptions
+    match /subscriptions/{subId} {
+       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+       allow list: if request.auth != null && request.query.userId == request.auth.uid;
+    }
+    
+    // Default deny for other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

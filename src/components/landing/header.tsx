@@ -18,13 +18,15 @@ const navLinks = [
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    e.preventDefault();
-    const targetId = href.replace(/.*#/, '');
-    const elem = document.getElementById(targetId);
-    if (elem) {
-      elem.scrollIntoView({
-        behavior: 'smooth',
-      });
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const targetId = href.replace(/.*#/, '');
+      const elem = document.getElementById(targetId);
+      if (elem) {
+        elem.scrollIntoView({
+          behavior: 'smooth',
+        });
+      }
     }
   };
 

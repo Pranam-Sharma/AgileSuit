@@ -14,4 +14,4 @@ if (!getApps().length) {
 const auth: Auth = getAuth(app);
 const firestore: Firestore = getFirestore(app);
 
-export { app, auth, firestore };
+export { app, auth, firestore, firestore as db };

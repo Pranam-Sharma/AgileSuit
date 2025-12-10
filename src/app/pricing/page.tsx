@@ -15,58 +15,92 @@ import {
 
 const items = [
     {
-        price: 'Free',
-        period: 'Forever',
-        name: 'Starter',
-        description: 'Perfect for small teams and startups getting started with agile.',
-        features: [
-            'Up to 5 team members',
-            'Unlimited sprints',
-            'Basic retrospective tools',
-            'Community support',
-        ],
-        buttonText: 'Get Started',
-        href: '/signup',
-        popular: false,
-    },
-    {
-        price: '$49',
+        order: 1,
+        id: 'starter',
+        price: '$9',
         period: 'per month',
-        name: 'Pro',
-        description: 'Advanced features for growing teams that need more power.',
+        name: 'Starter',
+        description: 'For small teams getting started with Agile.',
         features: [
-            'Up to 20 team members',
-            'Advanced analytics & reporting',
-            'Custom workflows',
-            'Priority email support',
-            'Jira & GitHub integration',
+            '1 Workspace',
+            '1 Team',
+            'Up to 5 Users',
+            'Up to 3 Active Sprints',
+            'Basic Retrospectives',
+            'Standard Reports',
         ],
-        buttonText: 'Start Free Trial',
-        href: '/signup?plan=pro',
-        popular: true,
+        buttonText: 'Get Starter',
+        href: '/signup?plan=starter',
+        popular: false,
+        variant: 'outline',
     },
     {
+        order: 2,
+        id: 'team',
+        price: '$29',
+        period: 'per month',
+        name: 'Team',
+        description: 'For growing teams that need more structure.',
+        features: [
+            'Up to 3 Teams',
+            'Up to 20 Users',
+            'Unlimited Sprints',
+            'Advanced Planning (Goals, Milestones)',
+            'Velocity & Burndown Charts',
+            'Team Dashboards',
+        ],
+        buttonText: 'Choose Team',
+        href: '/signup?plan=team',
+        popular: true,
+        variant: 'default',
+    },
+    {
+        order: 3,
+        id: 'business',
+        price: '$79',
+        period: 'per month',
+        name: 'Business',
+        description: 'For multi-team organizations with advanced analytics.',
+        features: [
+            'Unlimited Teams',
+            'Up to 100 Users',
+            'Cross-team Sprint Comparison',
+            'Department & Platform Views',
+            'Custom Reports & Exports',
+            'Role-based Access',
+            'Priority Support',
+        ],
+        buttonText: 'Choose Business',
+        href: '/signup?plan=business',
+        popular: false,
+        variant: 'outline',
+    },
+    {
+        order: 4,
+        id: 'enterprise',
         price: 'Custom',
         period: 'contact us',
         name: 'Enterprise',
-        description: 'Scalable solutions for large organizations with specific needs.',
+        description: 'For large organizations with custom needs.',
         features: [
-            'Unlimited team members',
-            'SSO & Advanced Security',
-            'Dedicated Success Manager',
-            'Custom SLA',
-            'On-premise deployment option',
+            'Unlimited Users',
+            'SSO / SAML',
+            'Dedicated Support',
+            'Custom Onboarding',
+            'Security Reviews',
+            'SLA Guarantees',
         ],
         buttonText: 'Contact Sales',
-        href: '/contact',
+        href: 'mailto:sales@agilesuit.com', // Simple contact link for now
         popular: false,
+        variant: 'outline',
     },
 ];
 
 const faqs = [
     {
         question: 'How does the free trial work?',
-        answer: 'You can test drive the Pro plan for 14 days with no credit card required. At the end of the trial, you can choose to subscribe or downgrade to the Free plan.',
+        answer: 'You can test drive the Team plan for 14 days with no credit card required. At the end of the trial, you can choose to subscribe or downgrade to the Starter plan.',
     },
     {
         question: 'Can I change plans later?',
@@ -78,7 +112,7 @@ const faqs = [
     },
     {
         question: 'What payment methods do you accept?',
-        answer: 'We accept all major credit cards (Visa, Mastercard, Amex) and PayPal. For Enterprise plans, we also support invoicing.',
+        answer: 'We accept all major credit cards (Visa, Mastercard, Amex), PayPal, and UPI. Secure processing is handled by Stripe.',
     },
 ];
 
@@ -93,10 +127,10 @@ export default function PricingPage() {
                     <div className="mx-auto max-w-2xl py-24 sm:py-32 lg:py-40">
                         <div className="text-center">
                             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl font-headline">
-                                Simple, transparent pricing
+                                Plans that scale with you
                             </h1>
                             <p className="mt-6 text-lg leading-8 text-gray-600">
-                                Choose the plan that's right for your team. All plans include a 14-day free trial.
+                                Choose the perfect plan for your team size and needs. Transparent pricing, no hidden fees.
                             </p>
                         </div>
                     </div>
@@ -104,7 +138,7 @@ export default function PricingPage() {
 
                 {/* Pricing Cards */}
                 <div className="mx-auto max-w-7xl px-6 lg:px-8 pb-24">
-                    <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-x-8">
+                    <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-4 sm:gap-x-8">
                         {items.map((item) => (
                             <div
                                 key={item.name}
@@ -119,18 +153,23 @@ export default function PricingPage() {
                                     </div>
                                 )}
 
-                                <h3 className={`text-2xl font-bold tracking-tight ${item.popular ? 'text-white' : 'text-gray-900'}`}>
+                                <h3 className={`text-xl font-bold tracking-tight ${item.popular ? 'text-white' : 'text-gray-900'}`}>
                                     {item.name}
                                 </h3>
 
-                                <div className="mt-4 flex items-baseline text-5xl font-bold tracking-tight">
+                                <div className="mt-4 flex items-baseline text-4xl font-bold tracking-tight">
                                     {item.price}
-                                    <span className={`text-lg font-semibold tracking-normal ${item.popular ? 'text-gray-300' : 'text-gray-500'}`}>
-                                        /{item.period}
-                                    </span>
+                                    {item.price !== 'Custom' && (
+                                        <span className={`text-sm font-semibold tracking-normal ml-1 ${item.popular ? 'text-gray-300' : 'text-gray-500'}`}>
+                                            /mo
+                                        </span>
+                                    )}
                                 </div>
+                                <p className={`text-sm ${item.popular ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {item.period === 'contact us' ? '' : 'billed monthly'}
+                                </p>
 
-                                <p className={`mt-6 text-base leading-7 ${item.popular ? 'text-gray-300' : 'text-gray-600'}`}>
+                                <p className={`mt-6 text-sm leading-6 ${item.popular ? 'text-gray-300' : 'text-gray-600'}`}>
                                     {item.description}
                                 </p>
 
@@ -159,7 +198,7 @@ export default function PricingPage() {
                 </div>
 
                 {/* FAQ Section */}
-                <div className="mx-auto max-w-4xl px-6 pb-24 lg:px-8">
+                <div className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 text-center mb-12">
                         Frequently Asked Questions
                     </h2>

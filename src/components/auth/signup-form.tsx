@@ -25,7 +25,9 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { useSearchParams } from 'next/navigation';
 
 const formSchema = z
   .object({
@@ -43,6 +45,8 @@ const formSchema = z
 export function SignUpForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,8 +61,21 @@ export function SignUpForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/dashboard');
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+
+      // Create user document
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        email: values.email,
+        createdAt: serverTimestamp(),
+        // plan: plan || null, // Optional: store plan if needed here, but we pass it to checkout
+      });
+
+      if (plan) {
+        router.push(`/checkout?plan=${plan}`);
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (error: any) {
       toast({
@@ -75,8 +92,21 @@ export function SignUpForm() {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
+      const result = await signInWithPopup(auth, provider);
+
+      // Create/Update user document (using setDoc with merge to avoid overwriting existing fields if any)
+      await setDoc(doc(db, 'users', result.user.uid), {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+
+      if (plan) {
+        router.push(`/checkout?plan=${plan}`);
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (error: any) {
       toast({
@@ -167,7 +197,7 @@ export function SignUpForm() {
         )}
         Google
       </Button>
-       <div className="text-center text-sm">
+      <div className="text-center text-sm">
         Already have an account?{' '}
         <Link href="/login" className="underline">
           Sign in
