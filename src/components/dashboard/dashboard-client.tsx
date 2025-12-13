@@ -51,7 +51,7 @@ function UserNav({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
+            <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.user_metadata?.full_name || ''} />
             <AvatarFallback className='bg-white/20 text-white'>{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
@@ -60,7 +60,7 @@ function UserNav({ user }: { user: User }) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.displayName ?? 'User'}
+              {user.user_metadata?.full_name || 'User'}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
