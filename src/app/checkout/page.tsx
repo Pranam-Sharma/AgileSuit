@@ -5,8 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2, Check, ShieldCheck, Lock, CreditCard, Wallet, Banknote, Smartphone, Building2, ArrowLeft } from 'lucide-react';
 import { createCheckoutSession } from '@/app/actions/stripe';
-import { useAuth } from '@/firebase/provider';
-import { auth } from '@/lib/firebase';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,17 +42,27 @@ const PLANS = {
     },
 };
 
+import { createClient } from '@/lib/supabase/client';
+
 function CheckoutContent() {
     const searchParams = useSearchParams();
     const planId = searchParams.get('plan');
     const [isLoading, setIsLoading] = React.useState(false);
     const [user, setUser] = React.useState<any>(null);
+    const supabase = createClient();
 
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((u) => {
-            setUser(u);
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        }
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session ? session.user : null);
         });
-        return () => unsubscribe();
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const plan = PLANS[planId as keyof typeof PLANS];
@@ -66,7 +74,7 @@ function CheckoutContent() {
         }
         setIsLoading(true);
         try {
-            await createCheckoutSession(planId!, user.uid);
+            await createCheckoutSession(planId!, user.id);
         } catch (error) {
             console.error('Checkout error:', error);
             setIsLoading(false);

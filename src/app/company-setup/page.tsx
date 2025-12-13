@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { auth } from '@/lib/firebase';
+import { createClient } from '@/lib/supabase/client';
 import { createOrganization } from '@/app/actions/organization';
 
 const formSchema = z.object({
@@ -31,16 +31,18 @@ export default function CompanySetupPage() {
     const [isLoading, setIsLoading] = React.useState(false);
     const [user, setUser] = React.useState<any>(null);
     const router = useRouter();
+    const supabase = createClient();
 
     React.useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((u) => {
-            if (!u) {
+        const getUser = async () => {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error || !user) {
                 router.push('/login');
             } else {
-                setUser(u);
+                setUser(user);
             }
-        });
-        return () => unsubscribe();
+        }
+        getUser();
     }, [router]);
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -65,7 +67,7 @@ export default function CompanySetupPage() {
         setIsLoading(true);
         try {
             await createOrganization({
-                userId: user.uid,
+                userId: user.id,
                 name: values.name,
                 slug: values.slug,
             });
@@ -142,6 +144,19 @@ export default function CompanySetupPage() {
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Create Workspace
                         </Button>
+
+                        <div className="text-center">
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const { signOut } = await import('@/app/actions/auth');
+                                    await signOut();
+                                }}
+                                className="text-xs text-red-500 hover:underline"
+                            >
+                                Stuck? Sign Out & Try Again
+                            </button>
+                        </div>
 
                     </form>
                 </Form>

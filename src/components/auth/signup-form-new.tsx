@@ -17,16 +17,10 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import {
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-} from 'firebase/auth';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
-import { useAuth } from '@/firebase/provider';
 import { useSearchParams } from 'next/navigation';
-import { syncUser } from '@/app/actions/user';
 
 const formSchema = z
   .object({
@@ -47,7 +41,7 @@ export function SignUpForm() {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan');
   const { toast } = useToast();
-  const auth = useAuth();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,13 +56,21 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
-      if (!auth) {
-        throw new Error("Auth service is not available.");
-      }
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.email.split('@')[0], // Default name
+          }
+        }
+      });
 
-      // Sync user to firestore via server action
-      await syncUser(userCredential.user.uid, values.email);
+      if (error) {
+        throw error;
+      }
+
+      // Profile creation is handled by Supabase Trigger (handle_new_user)
 
       if (plan) {
         router.push(`/checkout?plan=${plan}`);
@@ -89,29 +91,23 @@ export function SignUpForm() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      if (!auth) {
-        throw new Error("Auth service is not available.");
-      }
-      const result = await signInWithPopup(auth, provider);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${location.origin}/auth/callback${plan ? `?plan=${plan}` : ''}`,
+        },
+      });
 
-      // Sync user
-      await syncUser(result.user.uid, result.user.email!, result.user.displayName);
+      if (error) throw error;
 
-      if (plan) {
-        router.push(`/checkout?plan=${plan}`);
-      } else {
-        router.push('/dashboard');
-      }
-      router.refresh();
+      // Note: Redirect happens automatically, so no router.push here usually
     } catch (error: any) {
       toast({
         title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   }

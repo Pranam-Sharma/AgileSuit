@@ -1,6 +1,7 @@
 'use server';
 
-import { db } from '@/firebase/firebase-admin-config';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function createOrganization(data: {
     userId: string;
@@ -13,67 +14,89 @@ export async function createOrganization(data: {
         throw new Error('Missing required fields');
     }
 
-    // Check if slug is taken (simple check)
-    const snapshot = await db.collection('organizations').where('slug', '==', slug).get();
-    if (!snapshot.empty) {
+    // 1. Verify Authentication & Identity
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    console.log("[createOrganization] Server User ID:", user?.id);
+    console.log("[createOrganization] Client User ID:", userId);
+
+    if (!user || user.id !== userId) {
+        console.error("[createOrganization] Unauthorized: Mismatch or No Session");
+        throw new Error('Unauthorized');
+    }
+
+    // 2. Use Admin Client for Database Operations (Bypassing RLS)
+    const adminSupabase = createAdminClient();
+
+    // 3. Check if slug is taken
+    const { data: existingOrg } = await adminSupabase
+        .from('organizations')
+        .select('slug')
+        .eq('slug', slug)
+        .single();
+
+    if (existingOrg) {
         throw new Error('This URL is already taken. Please choose another one.');
     }
 
-    // Create Organization
-    // User requested "OrganizationName -> subscription", implying readable IDs. 
-    // We'll use the unique 'slug' as the Document ID.
-    const orgRef = db.collection('organizations').doc(slug);
-    const orgId = slug; // The ID is now the slug
-
-    // Find active subscription for this user
-    // Query specific user's subscriptions subcollection
-    const subsSnapshot = await db.collection('users').doc(userId).collection('subscriptions')
-        .where('status', '==', 'active')
-        .orderBy('createdAt', 'desc')
+    // 4. Find any "paid" pending subscription for this user
+    const { data: pendingSub } = await adminSupabase
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'paid')
+        .order('created_at', { ascending: false })
         .limit(1)
-        .get();
+        .single();
 
-    let planId = 'free'; // Default or fallback
-    if (!subsSnapshot.empty) {
-        planId = subsSnapshot.docs[0].data().planId;
+    let planId = 'free';
+    if (pendingSub) {
+        planId = pendingSub.plan_id;
     }
 
-    await orgRef.set({
-        name,
+    // 5. Create Organization
+    const { error: orgError } = await adminSupabase.from('organizations').insert({
         slug,
-        ownerUserId: userId,
-        planId,
-        createdAt: new Date(),
+        name,
+        owner_id: userId,
+        plan_id: planId,
     });
 
-    // MOVE Subscription to Organization
-    if (!subsSnapshot.empty) {
-        const userSubDoc = subsSnapshot.docs[0];
-        const subData = userSubDoc.data();
+    if (orgError) {
+        console.error('Error creating org:', orgError);
+        throw new Error('Failed to create organization');
+    }
 
-        // Create new sub in organizations/{slug}/subscriptions
-        await orgRef.collection('subscriptions').doc(userSubDoc.id).set({
-            ...subData,
-            orgId: slug, // Update link
-            updatedAt: new Date(),
+    // 6. Create Organization Member (Owner)
+    const { error: memberError } = await adminSupabase.from('organization_members').insert({
+        org_slug: slug,
+        user_id: userId,
+        role: 'owner',
+    });
+
+    if (memberError) {
+        console.error('Error adding member:', memberError);
+    }
+
+    // 7. Move Pending Subscription to Actual Subscription (if exists)
+    if (pendingSub) {
+        const { error: subError } = await adminSupabase.from('subscriptions').insert({
+            id: pendingSub.session_id,
+            org_slug: slug,
+            plan_id: planId,
+            status: 'active',
+            stripe_customer_id: 'mock_cus_' + Date.now(),
+            stripe_subscription_id: 'mock_sub_' + Date.now(),
         });
 
-        // Delete from user (Move operation) to strictly follow the "Organization holds subscription" model
-        await userSubDoc.ref.delete();
+        if (!subError) {
+            await adminSupabase.from('pending_subscriptions').delete().eq('session_id', pendingSub.session_id);
+        }
     }
 
-    // Add Member to Organization Subcollection (users)
-    await orgRef.collection('users').doc(userId).set({
-        userId,
-        role: 'owner',
-        createdAt: new Date(),
-    });
+    // 8. Update User Profile with Org ID
+    await adminSupabase.from('profiles').update({ org_id: slug }).eq('id', userId);
 
-    // Update User Document with Org ID (Link user to org)
-    await db.collection('users').doc(userId).set({
-        orgId: slug,
-        updatedAt: new Date()
-    }, { merge: true });
-
-    return { success: true, orgId };
+    return { success: true, orgId: slug };
 }

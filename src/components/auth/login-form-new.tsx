@@ -17,10 +17,9 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { GoogleIcon } from '../icons/google-icon';
-import { useAuth } from '@/firebase/provider';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -31,7 +30,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const auth = useAuth();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,10 +43,15 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      if (!auth) {
-        throw new Error("Auth service is not available.");
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        throw error;
       }
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+
       router.push('/dashboard');
       router.refresh();
     } catch (error: any) {
@@ -63,21 +67,22 @@ export function LoginForm() {
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      if (!auth) {
-        throw new Error("Auth service is not available.");
-      }
-      await signInWithPopup(auth, provider);
-      router.push('/dashboard');
-      router.refresh();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
     } catch (error: any) {
       toast({
         title: 'Error signing in with Google',
         description: error.message,
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   }
@@ -141,7 +146,7 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-      
+
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -175,3 +180,4 @@ export function LoginForm() {
     </div>
   );
 }
+

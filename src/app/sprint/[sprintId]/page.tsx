@@ -1,10 +1,7 @@
-
 import { SprintDetailClient } from '@/components/sprint-details/sprint-detail-client';
-import { getSprint } from '@/lib/sprints-server';
-import type { Metadata } from 'next';
-import { firebaseAdminApp } from '@/firebase/firebase-admin-config';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { notFound } from 'next/navigation';
-import { getFirestore } from 'firebase-admin/firestore';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
     title: 'Sprint Details',
@@ -13,22 +10,39 @@ export const metadata: Metadata = {
 
 export default async function SprintDetailPage({ params }: { params: Promise<{ sprintId: string }> }) {
     const { sprintId } = await params;
-    // This is a placeholder for getting the current user. 
-    // In a real app, you'd get this from the session.
-    // For now, we assume no specific user check on server, it will be done on client.
-    const firestore = getFirestore(firebaseAdminApp);
+    const supabase = createAdminClient();
 
     try {
-        const sprint = await getSprint(firestore, sprintId);
+        const { data: sprint, error } = await supabase
+            .from('sprints')
+            .select('*')
+            .eq('id', sprintId)
+            .single();
 
-        if (!sprint) {
+        if (error || !sprint) {
+            console.error("Error fetching sprint:", error);
             notFound();
         }
 
-        return <SprintDetailClient sprint={sprint} sprintId={sprintId} />;
+        // Map snake_case DB fields to camelCase for the client component
+        const mappedSprint = {
+            id: sprint.id,
+            sprintNumber: sprint.sprint_number,
+            sprintName: sprint.name,
+            projectName: sprint.project_name,
+            department: sprint.department,
+            team: sprint.team,
+            facilitatorName: sprint.facilitator_name,
+            plannedPoints: sprint.planned_points,
+            completedPoints: sprint.completed_points,
+            isFacilitator: false, // Default, client can verify with user comparison
+            userId: sprint.created_by
+        };
+
+        return <SprintDetailClient sprint={mappedSprint} sprintId={sprintId} />;
 
     } catch (error) {
-        console.warn("Failed to fetch sprint server-side, falling back to client-side:", error);
+        console.warn("Failed to fetch sprint server-side:", error);
         return <SprintDetailClient sprintId={sprintId} />;
     }
 }

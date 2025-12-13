@@ -28,9 +28,9 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/hooks/use-user';
-import { createSprint } from '@/lib/sprints-client';
-import { useFirestore } from '@/firebase/provider';
+// import { useUser } from '@/hooks/use-user'; // Removed
+// import { createSprint } from '@/lib/sprints-client'; // Removed
+// import { useFirestore } from '@/firebase/provider'; // Removed
 
 const sprintSchema = z.object({
   sprintNumber: z.string().min(1, 'Sprint number is required.'),
@@ -64,8 +64,8 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
-  const { user } = useUser();
-  const firestore = useFirestore();
+  // const { user } = useUser(); // Removed
+  // const firestore = useFirestore(); // Removed
 
   const form = useForm<Sprint>({
     resolver: zodResolver(sprintSchema),
@@ -85,26 +85,21 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   const isFacilitator = form.watch('isFacilitator');
 
   async function onSubmit(values: Sprint) {
-    if (!user) {
-      toast({
-        title: 'Authentication Error',
-        description: 'You must be logged in to create a sprint.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     let finalValues = { ...values };
     if (values.isFacilitator) {
-      finalValues.facilitatorName = user?.displayName ?? user?.email ?? 'Me';
+      // For now, we'll just use "Me" or let the server handle it if we fetched user name
+      // ideally we pass the user name from the parent or fetch it
+      finalValues.facilitatorName = 'Me';
     }
 
     try {
-      if (!firestore) throw new Error("Firestore is not initialized");
-      const newSprint = await createSprint(firestore, { ...finalValues, userId: user.uid });
-      onCreateSprint(newSprint);
+      const { createSprintAction } = await import('@/app/actions/sprints');
+      const { sprint } = await createSprintAction(finalValues);
+
+      onCreateSprint({ ...values, id: sprint.id }); // Optimistic update / UI update
+
       toast({
         title: 'Sprint Created!',
         description: `Sprint "${values.sprintName}" has been successfully created.`,
@@ -125,8 +120,8 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 rounded-full bg-white text-violet-600 font-bold shadow-md hover:bg-violet-100 transition-shadow">
-          <PlusCircle className="h-4 w-4" />
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
           <span>Create Sprint</span>
         </Button>
       </DialogTrigger>
@@ -209,34 +204,7 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="plannedPoints"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Planned Story Points</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 40" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="completedPoints"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Completed Story Points</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="e.g., 25" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            {/* Removed Story Points fields as per user request */}
 
             <FormField
               control={form.control}

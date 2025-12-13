@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/firebase/firebase-admin-config';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export async function createCheckoutSession(planId: string, userId: string) {
@@ -8,67 +8,64 @@ export async function createCheckoutSession(planId: string, userId: string) {
         throw new Error('Missing planId or userId');
     }
 
+    const supabase = await createClient();
+
     // Mock Session ID
     const mockSessionId = `mock_session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    // Store pending subscription in Firestore (Mocking Stripe's role)
-    // We treat this as if Stripe initialized a session
-    await db.collection('pendingSubscriptions').doc(mockSessionId).set({
-        userId,
-        planId,
+    // Store pending subscription in Supabase
+    const { error } = await supabase.from('pending_subscriptions').insert({
+        session_id: mockSessionId,
+        user_id: userId,
+        plan_id: planId,
         status: 'pending',
-        createdAt: new Date(),
-        sessionId: mockSessionId,
     });
 
+    if (error) {
+        console.error('Error creating pending subscription:', error);
+        throw new Error('Failed to create checkout session');
+    }
+
     // Redirect directly to success page with mock session ID
-    // Use relative path to ensure it works on any port (user is on 9002)
     redirect(`/payment/success?session_id=${mockSessionId}`);
 }
 
 export async function finalizeSubscription(sessionId: string) {
     if (!sessionId) throw new Error('Missing sessionId');
 
-    // MOCK VERIFICATION
-    // Here we just check if it exists in our pending collection
+    const supabase = await createClient();
 
-    // READING FIRST to get userId for the path
-    const pendingRef = db.collection('pendingSubscriptions').doc(sessionId);
-    const pendingSnap = await pendingRef.get();
+    // 1. Get Pending Subscription
+    const { data: pendingSub, error: fetchError } = await supabase
+        .from('pending_subscriptions')
+        .select('*')
+        .eq('session_id', sessionId)
+        .single();
 
-    if (!pendingSnap.exists) {
-        // Already processed or invalid
-        // Check if user already has it somehow? 
-        // For now, simple error or success if idempotent.
+    if (fetchError || !pendingSub) {
         console.warn("Session not found or already processed:", sessionId);
         return { success: false, error: 'Session not found' };
     }
 
-    const data = pendingSnap.data();
-    if (!data) return { success: false, error: 'No data' };
+    // 2. Create Active Subscription (Initially unlinked to an org, simply recorded)
+    // NOTE: In our new schema, `subscriptions` is linked to `organizations`.
+    // Since the user might not have an org yet, we might need to store this status 
+    // on the USER profile or keep it in pending until they create an org.
+    // 
+    // STRATEGY: Update the pending_subscription status to 'paid'.
+    // The `createOrganization` action will later look for this 'paid' pending subscription
+    // and move it to the real `subscriptions` table linked to the org.
 
-    // New Path: users/{userId}/subscriptions/{autoId}
-    const subscriptionRef = db.collection('users').doc(data.userId).collection('subscriptions').doc();
+    // For now, we just mark it as 'paid' in the pending table to verify payment success.
 
-    await db.runTransaction(async (t) => {
-        // Double check existence within transaction for safety
-        const pDoc = await t.get(pendingRef);
-        if (!pDoc.exists) {
-            throw new Error("Session processed concurrently");
-        }
+    const { error: updateError } = await supabase
+        .from('pending_subscriptions')
+        .update({ status: 'paid' })
+        .eq('session_id', sessionId);
 
-        t.set(subscriptionRef, {
-            userId: data.userId,
-            planId: data.planId,
-            stripeCustomerId: `mock_cus_${Date.now()}`,
-            stripeSubscriptionId: `mock_sub_${Date.now()}`,
-            status: 'active',
-            createdAt: new Date(),
-            orgId: null, // To be filled in company setup
-        });
+    if (updateError) {
+        throw new Error("Failed to finalize subscription");
+    }
 
-        t.delete(pendingRef);
-    });
-
-    return { success: true, subscriptionId: subscriptionRef.id };
+    return { success: true, subscriptionId: sessionId };
 }

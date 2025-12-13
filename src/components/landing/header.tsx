@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 
@@ -57,6 +58,15 @@ export function LandingHeader() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isLandingPage]);
 
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  const supabase = createClient();
+
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+  }, []);
+
   return (
     <header
       className={cn(
@@ -79,12 +89,20 @@ export function LandingHeader() {
           )}
         </div>
         <div className="hidden items-center gap-4 md:flex">
-          <Button variant="ghost" asChild>
-            <Link href="/login">Sign In</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Get Demo</Link>
-          </Button>
+          {isLoggedIn ? (
+            <Link href="/dashboard">
+              <Button variant="default" className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all">Go to Dashboard</Button>
+            </Link>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">Get Demo</Link>
+              </Button>
+            </>
+          )}
         </div>
         <div className="md:hidden">
           <Sheet>

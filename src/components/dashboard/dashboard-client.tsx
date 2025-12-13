@@ -3,7 +3,6 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut, type User } from 'firebase/auth';
 import {
   Loader2,
   LogOut,
@@ -11,8 +10,8 @@ import {
   Search,
   Shield,
 } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase/provider';
-import { useUser } from '@/hooks/use-user';
+// import { useAuth, useFirestore } from '@/firebase/provider'; // Removed
+// import { useUser } from '@/hooks/use-user'; // Removed
 import { useUserRole } from '@/hooks/use-user-role';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
@@ -36,11 +35,10 @@ import Link from 'next/link';
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
-  const auth = useAuth();
+  const supabase = createClient();
 
   const handleSignOut = async () => {
-    if (!auth) return;
-    await signOut(auth);
+    await supabase.auth.signOut();
     router.push('/login');
   };
 
@@ -82,12 +80,17 @@ type Filters = {
   team: string[];
 };
 
+import { createClient } from '@/lib/supabase/client';
+
+// ... other imports ...
+
 export function DashboardClient() {
-  const { user, isLoading: isUserLoading } = useUser();
-  const { isAdmin } = useUserRole();
+  const [user, setUser] = React.useState<any>(null);
+  const [isUserLoading, setIsUserLoading] = React.useState(true);
+  const { isAdmin } = useUserRole(); // Assuming this hook needs refactoring too, but addressing session first
   const router = useRouter();
   const { toast } = useToast();
-  const firestore = useFirestore();
+  // const firestore = useFirestore(); // REMOVE FIRESTORE
   const [sprints, setSprints] = React.useState<(Sprint & { id: string })[]>([]);
   const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -96,34 +99,47 @@ export function DashboardClient() {
     team: [],
   });
 
+  const supabase = createClient();
+
+  React.useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        router.push('/login');
+      } else {
+        setUser(user);
+      }
+      setIsUserLoading(false);
+    };
+    checkUser();
+  }, [router]);
+
+
+  // COMMENT OUT fetching sprints from Firestore for now
+  // Fetch sprints from Supabase
   React.useEffect(() => {
     if (isUserLoading) return;
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    if (!firestore) return;
-
-    const userId = user.uid;
+    if (!user) return;
 
     async function fetchSprints() {
       setIsSprintsLoading(true);
       try {
-        const userSprints = await getSprints(firestore);
-        setSprints(userSprints);
+        const { getSprintsAction } = await import('@/app/actions/sprints');
+        const userSprints = await getSprintsAction();
+        setSprints(userSprints as any);
       } catch (error) {
+        console.error("Failed to fetch sprints:", error);
         toast({
-          title: 'Error fetching sprints',
-          description: 'Could not load your sprints. Please try again later.',
-          variant: 'destructive',
+          title: "Error",
+          description: "Failed to load sprints.",
+          variant: "destructive"
         });
       } finally {
         setIsSprintsLoading(false);
       }
     }
-
     fetchSprints();
-  }, [user, isUserLoading, router, toast, firestore]);
+  }, [user, isUserLoading, toast]);
 
   const handleCreateSprint = (sprintData: Sprint & { id: string }) => {
     setSprints((prevSprints) => [sprintData, ...prevSprints]);
@@ -179,26 +195,25 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <header className="sticky top-0 z-10 flex h-20 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
-        <Logo className="text-white" />
+    <div className="flex min-h-screen w-full flex-col bg-gray-50/50">
+      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white/80 px-4 backdrop-blur-md sm:px-8">
+        <Logo className="text-primary" />
         <div className="flex items-center gap-4">
-          <CreateSprintDialog onCreateSprint={handleCreateSprint} />
           <CreateSprintDialog onCreateSprint={handleCreateSprint} />
           {isAdmin && (
             <Link href="/admin">
-              <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
+              <Button variant="outline" className="gap-2">
                 <Shield className="h-4 w-4" />
                 <span>Admin</span>
               </Button>
             </Link>
           )}
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <div className="relative w-full max-w-xs hidden sm:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search sprints..."
-              className="w-full rounded-full bg-violet-500/80 pl-10 h-10 border-violet-500 text-white placeholder:text-violet-200 focus-visible:bg-violet-500 focus-visible:shadow-lg focus-visible:shadow-violet-400/10 focus-visible:ring-white"
+              className="w-full bg-muted/50 pl-9 h-9 text-sm focus-visible:bg-background"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -206,7 +221,7 @@ export function DashboardClient() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 rounded-full bg-white/10 border-white/20 hover:bg-white/20 text-white">
+              <Button variant="outline" className="gap-2">
                 <ListFilter className="h-4 w-4" />
                 <span>Filter</span>
               </Button>
@@ -250,15 +265,13 @@ export function DashboardClient() {
         </div>
       </header>
       <main className="flex-1 p-4 sm:p-8">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-12 rounded-2xl bg-white/50 p-8 text-center shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
-            <h1 className="text-4xl font-bold font-headline text-red-800/80">
-              The Heart of Agile Excellence
+        <div className="mx-auto max-w-5xl space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Dashboard
             </h1>
-            <p className="mt-4 text-lg text-foreground/70">
-              AgileSuit brings clarity, structure, and insight to every sprint -
-              empowering teams to deliver better outcomes through continuous
-              improvement and smarter collaboration.
+            <p className="text-muted-foreground">
+              Manage your sprints and track team progress.
             </p>
           </div>
 
@@ -275,9 +288,14 @@ export function DashboardClient() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 rounded-2xl bg-white/50 shadow-lg shadow-fuchsia-200/50 backdrop-blur-sm">
-              <h2 className="text-2xl font-bold text-gray-700">No Sprints Yet!</h2>
-              <p className="mt-2 text-gray-500">Click "Create Sprint" to get started.</p>
+            <div className="flex flex-col items-center justify-center py-16 rounded-lg border border-dashed bg-background/50 text-center animate-in fade-in-50">
+              <div className="bg-muted p-4 rounded-full mb-4">
+                <ListFilter className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-semibold">No Sprints Found</h2>
+              <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                Get started by creating your first sprint to track your team's velocity and goals.
+              </p>
             </div>
           )}
         </div>
