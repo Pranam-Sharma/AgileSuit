@@ -33,6 +33,8 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 
+import { type User } from '@supabase/supabase-js';
+
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
   const supabase = createClient();
