@@ -27,6 +27,9 @@ const formSchema = z.object({
         .regex(/^[a-z0-9-]+$/, { message: 'Only lowercase letters, numbers, and hyphens are allowed.' }),
 });
 
+// ...
+export const dynamic = 'force-dynamic';
+
 export default function CompanySetupPage() {
     const [isLoading, setIsLoading] = React.useState(false);
     const [user, setUser] = React.useState<any>(null);
