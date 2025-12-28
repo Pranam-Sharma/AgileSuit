@@ -69,12 +69,29 @@ export default function CompanySetupPage() {
         if (!user) return;
         setIsLoading(true);
         try {
-            await createOrganization({
+            const response = await createOrganization({
                 userId: user.id,
                 name: values.name,
                 slug: values.slug,
             });
-            router.push('/dashboard');
+
+            if (response.error) {
+                // Determine if it's a slug error or general error
+                if (response.error.includes('URL')) {
+                    form.setError('slug', { message: response.error });
+                } else {
+                    form.setError('root', { message: response.error });
+                    // Also show as slug error if general, just to be visible
+                    if (!form.formState.errors.slug) {
+                        form.setError('slug', { message: response.error });
+                    }
+                }
+                return;
+            }
+
+            if (response.success) {
+                router.push('/dashboard');
+            }
         } catch (error: any) {
             console.error(error);
             form.setError('slug', { message: error.message || 'Failed to create organization' });
