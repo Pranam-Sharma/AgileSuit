@@ -12,7 +12,8 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 1
 
-  env:
+
+env:
   - variable: NEXT_PUBLIC_SUPABASE_URL
     value: 'https://juaxjuaiyicqqncdglrx.supabase.co'
   - variable: NEXT_PUBLIC_SUPABASE_ANON_KEY
