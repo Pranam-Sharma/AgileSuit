@@ -135,7 +135,9 @@ export default function CompanySetupPage() {
                                 <FormItem>
                                     <FormLabel>Workspace URL</FormLabel>
                                     <div className="flex items-center">
-                                        <span className="text-gray-500 mr-2 text-sm">agilesuit.com/</span>
+                                        <span className="text-gray-500 mr-2 text-sm">
+                                            {process.env.NEXT_PUBLIC_BASE_URL || 'agilesuit.com'}/
+                                        </span>
                                         <FormControl>
                                             <Input placeholder="acme-corp" {...field} disabled={isLoading} />
                                         </FormControl>

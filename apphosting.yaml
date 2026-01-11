@@ -20,4 +20,6 @@ env:
     value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1YXhqdWFpeWljcXFuY2RnbHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1MzUwNDAsImV4cCI6MjA4MTExMTA0MH0.wzAgHucn93fXgEqdklZqLUhlctHnTgvLpA2V6CAlfEI'
   - variable: SUPABASE_SERVICE_ROLE_KEY
     value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1YXhqdWFpeWljcXFuY2RnbHJ4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTUzNTA0MCwiZXhwIjoyMDgxMTExMDQwfQ.dLVKd6F7prTc7YP85yXBDlX4q4dVdLIamb4jaGhV0wk'
+  - variable: NEXT_PUBLIC_BASE_URL
+    value: 'agilesuit.com' # Default to Production. Overwrite in Firebase Console for Staging (stg.agilesuit.com)
 
