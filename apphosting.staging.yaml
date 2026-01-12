@@ -16,4 +16,10 @@ env:
   - variable: SUPABASE_SERVICE_ROLE_KEY
     value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1YXhqdWFpeWljcXFuY2RnbHJ4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTUzNTA0MCwiZXhwIjoyMDgxMTExMDQwfQ.dLVKd6F7prTc7YP85yXBDlX4q4dVdLIamb4jaGhV0wk'
   - variable: NEXT_PUBLIC_BASE_URL
-    value: 'stg.agilesuit.com' 
+    value: 'stg.agilesuit.com'
+  - variable: ENABLE_BASIC_AUTH
+    value: 'true'
+  - variable: BASIC_AUTH_USER
+    value: 'admin'
+  - variable: BASIC_AUTH_PASSWORD
+    value: 'agilesuit2024' 
