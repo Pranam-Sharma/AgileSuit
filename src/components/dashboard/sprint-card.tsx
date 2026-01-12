@@ -8,8 +8,8 @@ import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
 import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
-import { deleteSprint } from '@/lib/sprints-client';
-import { useFirestore } from '@/firebase/provider';
+// import { deleteSprint } from '@/lib/sprints-client'; // REMOVED
+// import { useFirestore } from '@/firebase/provider'; // REMOVED
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -23,11 +23,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-  } from "@/components/ui/dropdown-menu"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -37,30 +37,34 @@ type SprintCardProps = {
 };
 
 export function SprintCard({ sprint, onDelete }: SprintCardProps) {
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isDeleting, setIsDeleting] = React.useState(false);
+  // const firestore = useFirestore(); // REMOVED
+  const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
-    const handleDeleteConfirm = async () => {
-        setIsDeleting(true);
-        try {
-            if (!firestore) throw new Error("Firestore is not initialized");
-            await deleteSprint(firestore, sprint.id);
-            toast({
-                title: 'Sprint Deleted',
-                description: `Sprint "${sprint.sprintName}" has been deleted.`,
-            });
-            onDelete(sprint.id);
-        } catch (error: any) {
-            toast({
-                title: 'Error Deleting Sprint',
-                description: error.message || 'An unknown error occurred.',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsDeleting(false);
-        }
-    };
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      // Import the server action dynamically to ensure it works in Client Component if needed 
+      // (though usually imports at top level are fine for actions)
+      const { deleteSprintAction } = await import('@/app/actions/sprints');
+
+      await deleteSprintAction(sprint.id);
+
+      toast({
+        title: 'Sprint Deleted',
+        description: `Sprint "${sprint.sprintName}" has been deleted.`,
+      });
+      onDelete(sprint.id);
+    } catch (error: any) {
+      toast({
+        title: 'Error Deleting Sprint',
+        description: error.message || 'An unknown error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <AlertDialog>
@@ -70,55 +74,55 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
             <CardDescription className='text-xs'>{sprint.projectName}</CardDescription>
             <CardTitle className="text-lg font-bold pr-10">{sprint.sprintName} ({sprint.sprintNumber})</CardTitle>
             <AlertDialogTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    disabled={isDeleting}
-                    aria-label="Delete sprint"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-3 right-3 h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                disabled={isDeleting}
+                aria-label="Delete sprint"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </AlertDialogTrigger>
           </CardHeader>
           <CardContent className="flex-grow space-y-3 p-4 pt-0">
             <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{sprint.department}</Badge>
-                <Badge variant="secondary">{sprint.team}</Badge>
+              <Badge variant="secondary">{sprint.department}</Badge>
+              <Badge variant="secondary">{sprint.team}</Badge>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <UserCircle2 className="h-4 w-4" />
-                <span>Facilitator: {sprint.facilitatorName}</span>
+              <UserCircle2 className="h-4 w-4" />
+              <span>Facilitator: {sprint.facilitatorName}</span>
             </div>
           </CardContent>
           <CardFooter className='p-4 pt-0'>
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button className="w-full rounded-full font-bold" size="sm">
-                        <span>View Details</span>
-                        <ChevronDown className="h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className='w-56' align="end">
-                    <DropdownMenuItem asChild>
-                        <Link href={`/sprint/${sprint.id}/planning`}>
-                            <ListTodo className="mr-2 h-4 w-4" />
-                            <span>Planning</span>
-                        </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                         <Link href={`/sprint/${sprint.id}/retrospective`}>
-                            <History className="mr-2 h-4 w-4" />
-                            <span>Retrospective</span>
-                        </Link>
-                    </DropdownMenuItem>
-                     <DropdownMenuItem asChild>
-                         <Link href={`/sprint/${sprint.id}`}>
-                            <Rocket className="mr-2 h-4 w-4" />
-                            <span>Track</span>
-                        </Link>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full rounded-full font-bold" size="sm">
+                  <span>View Details</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className='w-56' align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/sprint/${sprint.id}/planning`}>
+                    <ListTodo className="mr-2 h-4 w-4" />
+                    <span>Planning</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/sprint/${sprint.id}/retrospective`}>
+                    <History className="mr-2 h-4 w-4" />
+                    <span>Retrospective</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/sprint/${sprint.id}`}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    <span>Track</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </CardFooter>
         </Card>
@@ -144,27 +148,27 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
 }
 
 SprintCard.Skeleton = function SprintCardSkeleton() {
-    return (
-        <div className="p-0.5 rounded-2xl bg-gray-200">
-            <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
-                <CardHeader className='p-4'>
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-6 w-2/3 mt-1" />
-                </CardHeader>
-                <CardContent className="flex-grow space-y-3 p-4 pt-0">
-                    <div className="flex flex-wrap gap-2">
-                        <Skeleton className="h-6 w-20" />
-                        <Skeleton className="h-6 w-20" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-4 w-4 rounded-full" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </div>
-                </CardContent>
-                <CardFooter className='p-4 pt-0'>
-                    <Skeleton className="h-9 w-full rounded-full" />
-                </CardFooter>
-            </Card>
-        </div>
-    )
+  return (
+    <div className="p-0.5 rounded-2xl bg-gray-200">
+      <Card className="flex flex-col rounded-[calc(1rem-2px)] h-full">
+        <CardHeader className='p-4'>
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-6 w-2/3 mt-1" />
+        </CardHeader>
+        <CardContent className="flex-grow space-y-3 p-4 pt-0">
+          <div className="flex flex-wrap gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-20" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        </CardContent>
+        <CardFooter className='p-4 pt-0'>
+          <Skeleton className="h-9 w-full rounded-full" />
+        </CardFooter>
+      </Card>
+    </div>
+  )
 }

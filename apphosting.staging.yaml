@@ -20,6 +20,6 @@ env:
   - variable: ENABLE_BASIC_AUTH
     value: 'true'
   - variable: BASIC_AUTH_USER
-    value: 'admin'
+    value: 'pranam.sharma@agilesuit.com'
   - variable: BASIC_AUTH_PASSWORD
     value: 'agilesuit2024' 

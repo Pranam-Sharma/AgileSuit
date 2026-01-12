@@ -113,3 +113,41 @@ export async function getSprintsAction() {
         isFacilitator: false // default
     }));
 }
+
+export async function deleteSprintAction(sprintId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // 1. Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // 2. Delete Sprint using Admin Client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .delete()
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id); // Security: Ensure deleting from own org
+
+    if (error) {
+        console.error('Error deleting sprint:', error);
+        throw new Error('Failed to delete sprint');
+    }
+
+    revalidatePath('/dashboard');
+    return { success: true };
+}
