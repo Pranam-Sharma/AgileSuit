@@ -6,7 +6,7 @@ export default async function SprintBoardPage({ params }: { params: Promise<{ sp
     const { sprintId } = await params;
     const supabase = createAdminClient();
 
-    let mappedSprint = null;
+    let mappedSprint = undefined;
 
     try {
         const { data: sprint, error } = await supabase
