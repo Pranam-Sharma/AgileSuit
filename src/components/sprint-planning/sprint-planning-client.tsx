@@ -19,7 +19,8 @@ import {
   Save,
   BarChart3,
   Milestone,
-  Presentation
+  Presentation,
+  Info
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
@@ -43,6 +44,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
 
 // --- Types ---
 
@@ -340,7 +344,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 scroll-smooth">
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="w-full max-w-none mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
             {/* Header for Active Section */}
             <div>
@@ -357,75 +361,136 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
             {/* Content Switcher */}
             <div className="min-h-[400px]">
               {activeSection === 'general' && (
-                <div className="space-y-8">
-                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-                    <CardHeader>
-                      <CardTitle>Sprint Duration</CardTitle>
-                      <CardDescription>Define the timeline for this sprint cycle.</CardDescription>
+                <div className="space-y-6">
+                  {/* General Information Card */}
+                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                    <CardHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-sm">
+                          <LayoutDashboard className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">General Information</CardTitle>
+                          <CardDescription>Setup the foundational details for this sprint.</CardDescription>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="grid gap-6 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Start & End Date
+                    <CardContent className="space-y-8 pt-8">
+
+                      {/* Reference Sprint Section */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-baseline">
+                          <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                            Reference Sprint
                           </label>
+                          <span className="text-xs text-muted-foreground">Optional source for targets</span>
+                        </div>
+                        <Select>
+                          <SelectTrigger className="h-12 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus:ring-primary/20 transition-all hover:border-primary/50">
+                            <SelectValue placeholder="Select a past sprint to copy data..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sprint-45">Sprint 45 - Checkout Flow (Past)</SelectItem>
+                            <SelectItem value="sprint-44">Sprint 44 - Auth (Past)</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {/* Theme-Consistent Info Alert */}
+                        <div className="rounded-lg bg-primary/5 p-4 border border-primary/10 flex gap-3 items-start">
+                          <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <Info className="h-3 w-3 text-primary" />
+                          </div>
+                          <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            Selection will pull <span className="font-medium text-primary">Team Velocity</span>, <span className="font-medium text-primary">Goals</span>, and <span className="font-medium text-primary">Milestones</span> from the reference sprint to populate your target baselines.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Date & Duration Section */}
+                      <div className="grid gap-6 md:grid-cols-3">
+
+                        {/* Days in Sprint */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Sprint Duration</label>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-primary transition-colors" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Working days (excludes weekends)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <div className="relative group">
+                            <div className="absolute inset-0 bg-primary/5 rounded-md -z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="h-12 flex items-center px-4 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-mono text-lg font-medium shadow-sm group-hover:border-primary/30 transition-colors">
+                              {calculateSprintDays()}
+                              <span className="ml-2 text-xs text-muted-foreground font-sans font-normal uppercase tracking-wider">Work Days</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Start Date */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Start Date</label>
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
-                                id="date"
                                 variant={"outline"}
                                 className={cn(
-                                  "w-full justify-start text-left font-normal h-11 border-zinc-300 dark:border-zinc-700",
-                                  !date && "text-muted-foreground"
+                                  "w-full h-12 justify-start text-left font-normal border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-primary/30 transition-all",
+                                  !date?.from && "text-muted-foreground"
                                 )}
                               >
-                                <CalendarIcon className="mr-2 h-4 w-4 text-zinc-500" />
-                                {date?.from ? (
-                                  date.to ? (
-                                    <>
-                                      {format(date.from, "LLL dd, y")} -{" "}
-                                      {format(date.to, "LLL dd, y")}
-                                    </>
-                                  ) : (
-                                    format(date.from, "LLL dd, y")
-                                  )
-                                ) : (
-                                  <span>Pick a date range</span>
-                                )}
+                                <CalendarIcon className="mr-2 h-4 w-4 text-primary/70" />
+                                {date?.from ? format(date.from, "PPP") : <span>Pick a date</span>}
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
+                            <PopoverContent className="w-auto p-0">
                               <Calendar
+                                mode="single"
+                                selected={date?.from}
+                                onSelect={(selected) => setDate(prev => ({ ...prev, from: selected, to: prev?.to }))}
                                 initialFocus
-                                mode="range"
-                                defaultMonth={date?.from}
-                                selected={date}
-                                onSelect={setDate}
-                                numberOfMonths={2}
+                                className="rounded-md border border-zinc-100 shadow-xl"
                               />
                             </PopoverContent>
                           </Popover>
                         </div>
 
+                        {/* End Date */}
                         <div className="space-y-2">
-                          <label className="text-sm font-medium leading-none">Working Days</label>
-                          <div className="flex items-center h-11 px-4 rounded-md border border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900">
-                            <span className="text-2xl font-bold text-primary mr-2">{calculateSprintDays()}</span>
-                            <span className="text-sm text-muted-foreground">days</span>
-                          </div>
+                          <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">End Date</label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full h-12 justify-start text-left font-normal border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-primary/30 transition-all",
+                                  !date?.to && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4 text-primary/70" />
+                                {date?.to ? format(date.to, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar
+                                mode="single"
+                                selected={date?.to}
+                                onSelect={(selected) => setDate(prev => ({ ...prev, to: selected, from: prev?.from }))}
+                                initialFocus
+                                className="rounded-md border border-zinc-100 shadow-xl"
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
 
-                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm">
-                    <CardHeader>
-                      <CardTitle>Sprint Cadence</CardTitle>
-                      <CardDescription>Verify the routine capabilities.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-sm text-muted-foreground italic">
-                        Calculated velocity settings and capacity planning inputs will appear here.
                       </div>
                     </CardContent>
                   </Card>

@@ -245,45 +245,80 @@ export function DashboardClient() {
               </div>
             </div>
 
-            {/* The Two Requested Metrics (Glass Style - Enhanced) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* The Two Requested Metrics (Glass Style - Compact Redesign) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Active Sprints Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-6 text-white shadow-2xl hover:bg-white/15 transition-all group hover:-translate-y-1 duration-300">
-                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl" />
-
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Zap className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="font-semibold text-white/90">Active Sprints</span>
-                  </div>
-                  <Badge className="bg-white/20 text-white border-none hover:bg-white/30">Live Now</Badge>
+              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-5 text-white shadow-2xl hover:shadow-orange-500/20 hover:border-white/30 hover:from-white/15 hover:to-white/10 transition-all duration-500 group hover:-translate-y-1">
+                {/* Decorative Background Elements */}
+                <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                  <Sparkles className="h-32 w-32 text-white/5 absolute -top-8 -right-8 rotate-12" />
                 </div>
-                <div className="text-5xl font-bold mb-2 tracking-tight">{activeSprintsCount}</div>
-                <p className="text-sm text-white/70 font-medium">Sprints currently in progress</p>
+                <div className="absolute -bottom-8 -right-8 h-48 w-48 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors duration-700" />
+
+                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <Zap className="h-4 w-4 text-orange-200" />
+                        <span className="font-semibold tracking-wide uppercase text-[10px]">Momentum</span>
+                      </div>
+                      <h3 className="text-lg font-medium text-white">Active Sprints</h3>
+                    </div>
+                    <Badge className="bg-orange-500 text-white border-white/20 shadow-lg px-2 py-0.5 text-xs animate-pulse">
+                      Live Now
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-5xl font-bold tracking-tighter drop-shadow-sm">{activeSprintsCount}</span>
+                      <span className="text-sm text-white/60 font-medium">Currently Running</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Completion Rate Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-6 text-white shadow-2xl hover:bg-white/15 transition-all group hover:-translate-y-1 duration-300">
-                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors blur-xl" />
+              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-5 text-white shadow-2xl hover:shadow-emerald-500/20 hover:border-white/30 hover:from-white/15 hover:to-white/10 transition-all duration-500 group hover:-translate-y-1">
+                {/* Decorative Background Elements */}
+                <div className="absolute -left-8 -bottom-8 h-48 w-48 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-700" />
+                <CheckCircle2 className="absolute -right-6 -bottom-6 h-32 w-32 text-white/5 rotate-[-15deg] group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 ease-out" />
 
-                <div className="flex items-center justify-between mb-4 relative z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <CheckCircle2 className="h-4 w-4 text-white" />
+                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <Target className="h-4 w-4 text-emerald-200" />
+                        <span className="font-semibold tracking-wide uppercase text-[10px]">Efficiency</span>
+                      </div>
+                      <h3 className="text-lg font-medium text-white">Completion Rate</h3>
                     </div>
-                    <span className="font-semibold text-white/90">Completion</span>
+                    <div className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-emerald-100 text-[10px] font-bold shadow-sm">
+                      <CheckCircle2 className="h-3 w-3" />
+                      On Track
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold bg-emerald-500/20 text-emerald-100 px-2 py-1 rounded-full border border-emerald-500/30">On Track</span>
-                </div>
-                <div className="flex items-end gap-2 mb-3">
-                  <div className="text-5xl font-bold tracking-tight">{completionRate}%</div>
-                  <span className="text-sm text-white/60 mb-2">of weekly target</span>
-                </div>
-                {/* Custom Progress Bar for White/Glass Context */}
-                <div className="h-2.5 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm">
-                  <div className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] rounded-full transition-all duration-1000 ease-out" style={{ width: `${completionRate}%` }} />
+
+                  <div>
+                    <div className="flex items-end justify-between mb-3">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold tracking-tighter">{completionRate}</span>
+                        <span className="text-2xl font-bold text-white/40">%</span>
+                      </div>
+                      <div className="text-right pb-1">
+                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/60">Target</span>
+                        <span className="font-mono text-sm font-bold">90%</span>
+                      </div>
+                    </div>
+
+                    {/* Custom Progress Bar with Glow */}
+                    <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm shadow-inner ring-1 ring-white/10">
+                      <div
+                        className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full relative after:absolute after:top-0 after:right-0 after:bottom-0 after:w-0.5 after:bg-white/50 after:shadow-[0_0_8px_white]"
+                        style={{ width: `${completionRate}%`, transition: 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)' }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
