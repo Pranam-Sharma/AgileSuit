@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -20,7 +19,18 @@ import {
   BarChart3,
   Milestone,
   Presentation,
-  Info
+  Info,
+  Crown,
+  Shield,
+  Code,
+  Bug,
+  Palette,
+  Briefcase,
+  Zap,
+  Plus,
+  Trash2,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
@@ -200,6 +210,61 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     from: new Date(),
     to: addDays(new Date(), 13),
   });
+
+  // Project Priorities State
+  const [projects, setProjects] = React.useState<Array<{
+    id: string;
+    name: string;
+    priority: 'critical' | 'high' | 'medium' | 'low' | 'negligible';
+    remarks: string;
+  }>>([
+    {
+      id: '1',
+      name: 'User Authentication Overhaul',
+      priority: 'critical',
+      remarks: 'Security vulnerability fix'
+    },
+    {
+      id: '2',
+      name: 'Dashboard Redesign',
+      priority: 'medium',
+      remarks: 'UX improvements'
+    }
+  ]);
+
+  const addProject = () => {
+    const newProject = {
+      id: Date.now().toString(),
+      name: '',
+      priority: 'medium' as const,
+      remarks: ''
+    };
+    setProjects(prev => [...prev, newProject]);
+  };
+
+  const deleteProject = (id: string) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+  };
+
+  const moveProject = (id: string, direction: 'up' | 'down') => {
+    setProjects(prev => {
+      const index = prev.findIndex(p => p.id === id);
+      if (index === -1) return prev;
+      if (direction === 'up' && index === 0) return prev;
+      if (direction === 'down' && index === prev.length - 1) return prev;
+
+      const newProjects = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      [newProjects[index], newProjects[targetIndex]] = [newProjects[targetIndex], newProjects[index]];
+      return newProjects;
+    });
+  };
+
+  const updateProject = (id: string, field: 'name' | 'priority' | 'remarks', value: string) => {
+    setProjects(prev => prev.map(p =>
+      p.id === id ? { ...p, [field]: value } : p
+    ));
+  };
 
   const handleChecklistToggle = (id: string) => {
     setChecklist(prev => ({ ...prev, [id]: !prev[id] }));
@@ -497,7 +562,469 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                 </div>
               )}
 
-              {activeSection !== 'general' && (
+              {activeSection === 'team' && (
+                <div className="space-y-6">
+                  {/* Team Composition Card */}
+                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                    <CardHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-sm">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Team Composition</CardTitle>
+                          <CardDescription>Assign team members and define their roles for this sprint.</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-8 pt-8">
+
+                      {/* Team Roles Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* Product Owners */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-amber-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Crown className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Product Owners</h4>
+                                <p className="text-xs text-muted-foreground">Strategic vision</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-amber-200 dark:border-amber-900 text-amber-700 dark:text-amber-400">
+                              0 / 2
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select Product Owners..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="po-1">Sarah Johnson</SelectItem>
+                              <SelectItem value="po-2">Michael Chen</SelectItem>
+                              <SelectItem value="po-3">Emily Rodriguez</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Scrum Masters */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Shield className="h-5 w-5 text-blue-600 dark:text-blue-500" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Scrum Masters</h4>
+                                <p className="text-xs text-muted-foreground">Process guardians</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-400">
+                              0 / 2
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select Scrum Masters..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="sm-1">David Kim</SelectItem>
+                              <SelectItem value="sm-2">Lisa Wang</SelectItem>
+                              <SelectItem value="sm-3">James Anderson</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Developers */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Code className="h-5 w-5 text-green-600 dark:text-green-500" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Developers</h4>
+                                <p className="text-xs text-muted-foreground">Core builders</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-green-200 dark:border-green-900 text-green-700 dark:text-green-400">
+                              0 / 8
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select Developers..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="dev-1">Alex Thompson</SelectItem>
+                              <SelectItem value="dev-2">Rachel Green</SelectItem>
+                              <SelectItem value="dev-3">Tom Martinez</SelectItem>
+                              <SelectItem value="dev-4">Nina Patel</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* QA Engineers */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Bug className="h-5 w-5 text-purple-600 dark:text-purple-500" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">QA Engineers</h4>
+                                <p className="text-xs text-muted-foreground">Quality assurance</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-purple-200 dark:border-purple-900 text-purple-700 dark:text-purple-400">
+                              0 / 3
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select QA Engineers..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="qa-1">Sophie Miller</SelectItem>
+                              <SelectItem value="qa-2">Chris Davis</SelectItem>
+                              <SelectItem value="qa-3">Maya Singh</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* UI/UX Designers */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-pink-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Palette className="h-5 w-5 text-pink-600 dark:text-pink-500" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">UI/UX Designers</h4>
+                                <p className="text-xs text-muted-foreground">User experience</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-pink-200 dark:border-pink-900 text-pink-700 dark:text-pink-400">
+                              0 / 2
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select Designers..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="des-1">Emma Wilson</SelectItem>
+                              <SelectItem value="des-2">Lucas Brown</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Project Managers */}
+                        <div className="group space-y-3 p-5 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-primary/30 hover:shadow-md transition-all duration-300 bg-gradient-to-br from-white to-zinc-50/50 dark:from-zinc-950 dark:to-zinc-900/50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Briefcase className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Project Managers</h4>
+                                <p className="text-xs text-muted-foreground">Execution leads</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-primary/20 text-primary">
+                              0 / 2
+                            </Badge>
+                          </div>
+                          <Select>
+                            <SelectTrigger className="h-11 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-primary/50 transition-colors">
+                              <SelectValue placeholder="Select Project Managers..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pm-1">Jessica Lee</SelectItem>
+                              <SelectItem value="pm-2">Robert Taylor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                      </div>
+
+                      {/* Team Summary */}
+                      <Separator />
+                      <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 p-6 border border-primary/20">
+                        <div className="flex items-start gap-4">
+                          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                            <Users className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Team Size Overview</h4>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Current team composition: <strong>0 members</strong> assigned across <strong>6 roles</strong>
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="secondary" className="text-xs">
+                                <Target className="h-3 w-3 mr-1" />
+                                Recommended: 12-15 members
+                              </Badge>
+                              <Badge variant="outline" className="text-xs border-primary/20 text-primary">
+                                <Zap className="h-3 w-3 mr-1" />
+                                Velocity: TBD
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeSection === 'priority' && (
+                <div className="space-y-6">
+                  {/* Project Priority Card */}
+                  <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                    <CardHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shadow-sm">
+                          <Target className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Project Priority</CardTitle>
+                          <CardDescription>Define and prioritize projects for this sprint cycle.</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-8">
+
+                      {/* Priority Distribution Summary */}
+                      <div className="rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100/50 dark:from-zinc-900/50 dark:to-zinc-800/30 p-6 border border-zinc-200 dark:border-zinc-800 mb-6 relative overflow-hidden">
+
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                          <div>
+                            <h4 className="font-semibold text-lg text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                              <BarChart3 className="h-5 w-5 text-primary" />
+                              Priority Distribution
+                            </h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Overview of project urgency and impact
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{projects.length}</span>
+                            <span className="text-sm text-muted-foreground ml-2">Total Projects</span>
+                          </div>
+                        </div>
+
+                        {/* Visual Distribution Bar */}
+                        <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex mb-6 shadow-inner">
+                          {['critical', 'high', 'medium', 'low', 'negligible'].map((priority) => {
+                            const count = projects.filter(p => p.priority === priority).length;
+                            if (count === 0) return null;
+                            const width = (count / projects.length) * 100;
+                            let colorClass = '';
+                            switch (priority) {
+                              case 'critical': colorClass = 'bg-red-500'; break;
+                              case 'high': colorClass = 'bg-orange-500'; break;
+                              case 'medium': colorClass = 'bg-yellow-500'; break;
+                              case 'low': colorClass = 'bg-blue-500'; break;
+                              case 'negligible': colorClass = 'bg-gray-500'; break;
+                            }
+                            return (
+                              <div
+                                key={priority}
+                                style={{ width: `${width}%` }}
+                                className={`${colorClass} h-full transition-all duration-500 ease-out border-r border-white/20 last:border-0`}
+                                title={`${priority.charAt(0).toUpperCase() + priority.slice(1)}: ${count}`}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 relative z-10">
+                          {[
+                            { id: 'critical', label: 'Critical', color: 'text-red-600 dark:text-red-500', bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-100 dark:border-red-900/50', indicator: 'bg-red-500' },
+                            { id: 'high', label: 'High', color: 'text-orange-600 dark:text-orange-500', bg: 'bg-orange-50 dark:bg-orange-950/30', border: 'border-orange-100 dark:border-orange-900/50', indicator: 'bg-orange-500' },
+                            { id: 'medium', label: 'Medium', color: 'text-yellow-600 dark:text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-950/30', border: 'border-yellow-100 dark:border-yellow-900/50', indicator: 'bg-yellow-500' },
+                            { id: 'low', label: 'Low', color: 'text-blue-600 dark:text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-100 dark:border-blue-900/50', indicator: 'bg-blue-500' },
+                            { id: 'negligible', label: 'Negligible', color: 'text-gray-600 dark:text-gray-400', bg: 'bg-gray-50 dark:bg-gray-900/30', border: 'border-gray-100 dark:border-gray-800', indicator: 'bg-gray-500' }
+                          ].map((stat) => {
+                            const count = projects.filter(p => p.priority === stat.id).length;
+                            return (
+                              <div key={stat.id} className={`p-4 rounded-xl border ${stat.bg} ${stat.border} flex flex-col items-center justify-center transition-transform hover:scale-105 duration-200`}>
+                                <div className={`text-3xl font-bold ${stat.color} mb-1 tracking-tight`}>{count}</div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className={`w-2 h-2 rounded-full ${stat.indicator}`} />
+                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{stat.label}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <Separator className="mb-6" />
+
+                      {/* Priority Info Banner */}
+                      <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-5 border border-amber-200/50 dark:border-amber-800/30">
+                        <div className="flex items-start gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                            <Info className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm text-amber-900 dark:text-amber-100 mb-1">Priority Guidelines</h4>
+                            <p className="text-xs text-amber-700 dark:text-amber-300">
+                              Rank projects by business impact and urgency. Critical projects require immediate attention, while lower priorities can be deferred if capacity is limited.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Project List */}
+                      <div className="space-y-4">
+                        {projects.map((project, index) => {
+                          const getPriorityColor = (priority: string) => {
+                            switch (priority) {
+                              case 'critical': return 'from-red-500 to-red-600';
+                              case 'high': return 'from-orange-500 to-orange-600';
+                              case 'medium': return 'from-yellow-500 to-yellow-600';
+                              case 'low': return 'from-blue-500 to-blue-600';
+                              case 'negligible': return 'from-gray-500 to-gray-600';
+                              default: return 'from-gray-500 to-gray-600';
+                            }
+                          };
+
+                          return (
+                            <div key={project.id} className="group relative rounded-xl border-2 border-zinc-200 dark:border-zinc-800 hover:border-primary/30 transition-all duration-300 bg-white dark:bg-zinc-950 overflow-hidden">
+                              {/* Priority Indicator Strip */}
+                              <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${getPriorityColor(project.priority)}`} />
+
+                              <div className="p-5 pl-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                  {/* Drag Handle / Reorder Buttons */}
+                                  <div className="hidden lg:flex lg:col-span-1 flex-col items-center justify-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                      onClick={() => moveProject(project.id, 'up')}
+                                      disabled={index === 0}
+                                    >
+                                      <ArrowUp className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                                      onClick={() => moveProject(project.id, 'down')}
+                                      disabled={index === projects.length - 1}
+                                    >
+                                      <ArrowDown className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+
+                                  {/* Project Name */}
+                                  <div className="lg:col-span-4">
+                                    <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Project Name</label>
+                                    <Input
+                                      placeholder="Enter project name..."
+                                      className="h-10 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:border-primary/50 transition-colors"
+                                      value={project.name}
+                                      onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                                    />
+                                  </div>
+
+                                  {/* Priority */}
+                                  <div className="lg:col-span-3">
+                                    <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Priority Level</label>
+                                    <Select value={project.priority} onValueChange={(value) => updateProject(project.id, 'priority', value)}>
+                                      <SelectTrigger className="h-10 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="critical">
+                                          <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-red-500" />
+                                            <span>Critical</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="high">
+                                          <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-orange-500" />
+                                            <span>High</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="medium">
+                                          <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                            <span>Medium</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="low">
+                                          <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                            <span>Low</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="negligible">
+                                          <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-gray-500" />
+                                            <span>Negligible</span>
+                                          </div>
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  {/* Remarks */}
+                                  <div className="lg:col-span-3">
+                                    <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 block">Remarks</label>
+                                    <Input
+                                      placeholder="Brief notes..."
+                                      className="h-10 bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:border-primary/50 transition-colors"
+                                      value={project.remarks}
+                                      onChange={(e) => updateProject(project.id, 'remarks', e.target.value)}
+                                    />
+                                  </div>
+
+                                  {/* Delete Button */}
+                                  <div className="lg:col-span-1 flex items-end justify-end">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => deleteProject(project.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Add Project Button */}
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                        onClick={addProject}
+                      >
+                        <Plus className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
+                        Add Project Priority
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeSection !== 'general' && activeSection !== 'team' && activeSection !== 'priority' && (
                 <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
                   <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
                     {React.createElement(PLANNING_SECTIONS.find(s => s.id === activeSection)?.icon || Circle, { className: "h-6 w-6 text-zinc-400" })}
