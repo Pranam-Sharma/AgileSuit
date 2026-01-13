@@ -1,0 +1,386 @@
+'use client';
+
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import {
+    ChevronLeft,
+    LogOut,
+    CheckCircle2,
+    Circle,
+    Clock,
+    Lightbulb,
+    Smile,
+    AlertTriangle,
+    Loader2
+} from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { Logo } from '@/components/logo';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Area, AreaChart, Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Badge } from '@/components/ui/badge';
+import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
+import { useToast } from '@/hooks/use-toast';
+
+function UserNav({ user }: { user: any }) {
+    const router = useRouter();
+    const supabase = createClient();
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        router.replace('/login');
+    };
+
+    const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10">
+                    <Avatar className="h-9 w-9">
+                        <AvatarImage src={user?.photoURL ?? ''} alt={user?.displayName ?? ''} />
+                        <AvatarFallback className="bg-white/20 text-white">{userInitial}</AvatarFallback>
+                    </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                            {user?.displayName ?? 'User'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                            {user?.email}
+                        </p>
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+const chartData = [
+    { name: 'Sep 10', value: 200 },
+    { name: 'Sep 19', value: 300 },
+    { name: 'Sep 24', value: 450 },
+];
+
+const velocityData = [
+    { name: 'Spr 1', value: 35 },
+    { name: 'Sprt', value: 42 },
+    { name: 'Sp 3', value: 38 },
+];
+
+function StatCard({ title, value, children }: { title: string; value: string; children?: React.ReactNode }) {
+    return (
+        <Card className="shadow-sm bg-muted/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="text-4xl font-bold">{value}</div>
+                {children && <div className="h-16 -mx-6 -mb-6 mt-2">{children}</div>}
+            </CardContent>
+        </Card>
+    );
+}
+
+// ... imports
+
+export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?: Sprint & { id: string }, sprintId: string }) {
+    const router = useRouter();
+    const supabase = createClient();
+    const { toast } = useToast();
+    const [user, setUser] = React.useState<any>(null);
+    const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | undefined>(initialSprint);
+    const [isLoadingSprint, setIsLoadingSprint] = React.useState(!initialSprint);
+
+    React.useEffect(() => {
+        const checkUser = async () => {
+            // ...
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        checkUser();
+    }, []);
+
+    React.useEffect(() => {
+        async function fetchSprint() {
+            if (sprint || !sprintId) return;
+
+            try {
+                // ... fetch logic similar to before, kept as fallback
+                const { data: fetchedSprint, error } = await supabase
+                    .from('sprints')
+                    .select('*')
+                    .eq('id', sprintId)
+                    .single();
+
+                if (fetchedSprint) {
+                    // ... mapping
+                    const mappedSprint = {
+                        id: fetchedSprint.id,
+                        sprintNumber: fetchedSprint.sprint_number,
+                        sprintName: fetchedSprint.name,
+                        projectName: fetchedSprint.project_name,
+                        department: fetchedSprint.department,
+                        team: fetchedSprint.team,
+                        facilitatorName: fetchedSprint.facilitator_name,
+                        plannedPoints: fetchedSprint.planned_points,
+                        completedPoints: fetchedSprint.completed_points,
+                        isFacilitator: false,
+                        userId: fetchedSprint.created_by
+                    };
+                    setSprint(mappedSprint as any);
+                }
+            } catch (error) {
+                console.error("Failed to fetch sprint", error);
+            } finally {
+                setIsLoadingSprint(false);
+            }
+        }
+
+        if (!initialSprint) {
+            fetchSprint();
+        }
+    }, [sprintId, sprint, initialSprint, supabase]);
+
+    const goalsAchieved = React.useMemo(() => {
+        if (!sprint || !sprint.plannedPoints || sprint.plannedPoints === 0) {
+            return 0;
+        }
+        return Math.round(((sprint.completedPoints ?? 0) / sprint.plannedPoints) * 100);
+    }, [sprint]);
+
+    if (isLoadingSprint) {
+        return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>
+    }
+
+    if (!sprint) {
+        return <div className="flex justify-center items-center h-screen">Sprint not found</div>
+    }
+
+    return (
+        <div className="flex min-h-screen w-full flex-col bg-zinc-50 dark:bg-zinc-950 font-sans">
+            <header className="flex-shrink-0 h-14 bg-primary border-b border-primary/10 flex items-center justify-between px-6 z-20 shadow-md">
+                <div className="flex items-center gap-6">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-white/80 hover:text-white hover:bg-white/10" onClick={() => router.back()}>
+                        <ChevronLeft className="h-5 w-5" />
+                    </Button>
+
+                    <div className="flex items-center gap-4 divide-x divide-white/20">
+                        <Logo variant="white" className="hidden md:flex" />
+                        <div className="pl-4 flex flex-col justify-center h-full">
+                            <h1 className="text-lg font-bold text-white leading-tight">
+                                {sprint.sprintName}
+                            </h1>
+                            <div className="flex items-center gap-2 text-xs text-white/80">
+                                <span className="font-medium bg-white/20 px-1.5 py-0.5 rounded text-white">#{sprint.sprintNumber}</span>
+                                <span className="text-white">Track Board</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    {user && <UserNav user={user} />}
+                </div>
+            </header>
+
+            <main className="flex-1 flex flex-col p-6 lg:p-8 space-y-6">
+                {/* Metrics Section */}
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                    <StatCard title="Planned Points" value={sprint.plannedPoints?.toString() ?? '0'} />
+                    <StatCard title="Completed" value={sprint.completedPoints?.toString() ?? '0'} />
+                    <StatCard title="Velocity" value="12,5 SP" />
+                    <StatCard title="Goals Achieved" value={`${goalsAchieved}%`}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorUv)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </StatCard>
+                    <StatCard title="Burndown Chart" value="">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData.slice().reverse()} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorBurndown" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="name" hide />
+                                <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorBurndown)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </StatCard>
+                </div>
+
+                {/* Tabs Section */}
+                <div className="flex-1">
+                    <Tabs defaultValue="summary" className="w-full">
+                        <TabsList className="mb-6 grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted text-muted-foreground p-1 rounded-lg">
+                            <TabsTrigger value="ai-insights" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Insights</TabsTrigger>
+                            <TabsTrigger value="timeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Timeline</TabsTrigger>
+                            <TabsTrigger value="huddle" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Huddle</TabsTrigger>
+                            <TabsTrigger value="charts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Charts</TabsTrigger>
+                            <TabsTrigger value="burndown" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Burndown</TabsTrigger>
+                            <TabsTrigger value="performance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Individual Metrics</TabsTrigger>
+                            <TabsTrigger value="mood" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Team Mood Trend</TabsTrigger>
+                            <TabsTrigger value="summary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Summary</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="summary">
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                                <div className="lg:col-span-1 space-y-6">
+                                    <Card>
+                                        <CardHeader><CardTitle>Sprint Goals</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <ul className="space-y-2">
+                                                <li className="flex items-start gap-2">
+                                                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                                                    <span>Complete migration of APIC platform to DSDK 3.0.0</span>
+                                                </li>
+                                            </ul>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader>
+                                            <div className="flex justify-between items-center">
+                                                <CardTitle>Open Stories</CardTitle>
+                                                <span className="text-sm font-medium text-muted-foreground">Status</span>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className='space-y-4'>
+                                            <div className="flex justify-between items-center">
+                                                <div className='flex items-center gap-2'>
+                                                    <Circle className="h-4 w-4 text-orange-500 fill-current" />
+                                                    <span>Sprint 46-1</span>
+                                                </div>
+                                                <Badge variant="outline" className='text-orange-600 border-orange-200'>To Do</Badge>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className='flex items-center gap-2'>
+                                                    <Clock className="h-4 w-4 text-blue-500" />
+                                                    <span>Sprint 46-2</span>
+                                                </div>
+                                                <Badge variant="outline" className='text-blue-600 border-blue-200'>In Progress</Badge>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className='bg-primary/5 border-primary/20'>
+                                        <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm">The sprint is on track: 15 points remaining. API deprecation requires additional attention.</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                                <div className="lg:col-span-1 space-y-6">
+                                    <Card>
+                                        <CardHeader><CardTitle>Burndown Chart</CardTitle></CardHeader>
+                                        <CardContent className="h-64">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="burndownContent" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <XAxis dataKey="name" />
+                                                    <YAxis />
+                                                    <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#burndownContent)" />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                    <Card className='bg-primary/5 border-primary/20'>
+                                        <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm">The sprint is on track: 15.75 points remaining. API deprecation.</p>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                                <div className="lg:col-span-1 space-y-6">
+                                    <Card>
+                                        <CardHeader><CardTitle>Velocity Chart</CardTitle></CardHeader>
+                                        <CardContent className="h-[180px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <RechartsBarChart data={velocityData}>
+                                                    <XAxis dataKey="name" />
+                                                    <YAxis />
+                                                    <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                                </RechartsBarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader><CardTitle>Mood</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <div className='flex items-center justify-center gap-4 p-4 rounded-lg bg-green-50 border border-green-200'>
+                                                <Smile className='h-10 w-10 text-green-600' />
+                                                <span className='text-xl font-semibold text-green-700'>Positive</span>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader><CardTitle>Risks / Blockers</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <div className='flex items-center gap-2 text-amber-700'>
+                                                <AlertTriangle className='h-5 w-5' />
+                                                <p>Legacy support could cause delays</p>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="ai-insights">
+                            <p>AI Insights Content</p>
+                        </TabsContent>
+                        <TabsContent value="timeline">
+                            <p>Project Timeline Content</p>
+                        </TabsContent>
+                        <TabsContent value="huddle">
+                            <p>Daily Huddle Report Content</p>
+                        </TabsContent>
+                        <TabsContent value="charts">
+                            <p>Sprint Summary Chart View Content</p>
+                        </TabsContent>
+                        <TabsContent value="burndown">
+                            <p>Daily Burndown Chart Content</p>
+                        </TabsContent>
+                        <TabsContent value="performance">
+                            <p>Individual Performance Content</p>
+                        </TabsContent>
+                        <TabsContent value="mood">
+                            <p>Mood trend over sprints Content</p>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </main>
+        </div>
+    );
+}

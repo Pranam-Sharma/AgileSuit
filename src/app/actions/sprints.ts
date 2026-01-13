@@ -151,3 +151,54 @@ export async function deleteSprintAction(sprintId: string) {
     revalidatePath('/dashboard');
     return { success: true };
 }
+
+export async function getSprintAction(sprintId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return null;
+    }
+
+    // 1. Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        return null;
+    }
+
+    // 2. Fetch Sprint using Admin Client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { data: sprint, error } = await supabaseAdmin
+        .from('sprints')
+        .select('*')
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id)
+        .single();
+
+    if (error || !sprint) {
+        console.error('Error fetching sprint:', error);
+        return null;
+    }
+
+    // Map DB fields to UI model
+    return {
+        id: sprint.id,
+        sprintNumber: sprint.sprint_number,
+        sprintName: sprint.name,
+        projectName: sprint.project_name,
+        department: sprint.department,
+        team: sprint.team,
+        facilitatorName: sprint.facilitator_name,
+        plannedPoints: sprint.planned_points,
+        completedPoints: sprint.completed_points,
+        userId: sprint.created_by,
+        isFacilitator: false // default
+    };
+}

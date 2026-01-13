@@ -1,26 +1,17 @@
-
 'use client';
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-// import { signOut, type User } from 'firebase/auth'; // Removed
 import {
+  ClipboardList,
+  Briefcase,
+  History,
   Loader2,
   LogOut,
   ChevronLeft,
-  Bot,
-  Calendar,
+  CalendarDays,
   Users,
-  BarChart2,
-  TrendingDown,
-  Smile,
-  ClipboardList,
-  Briefcase,
-  AlertTriangle,
-  Lightbulb,
-  CheckCircle2,
-  Circle,
-  Clock,
+  ArrowRight
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
@@ -35,12 +26,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Sprint } from '../dashboard/create-sprint-dialog';
-// import { getSprint } from '@/lib/sprints-client'; // Removed
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Area, AreaChart, Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 function UserNav({ user }: { user: any }) {
   const router = useRouter();
@@ -51,15 +40,15 @@ function UserNav({ user }: { user: any }) {
     router.replace('/login');
   };
 
-  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : 'U';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-white/10 ring-2 ring-white/10 transition-shadow hover:ring-white/30">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? ''} />
-            <AvatarFallback className='bg-white/20 text-white'>{userInitial}</AvatarFallback>
+            <AvatarImage src={user?.photoURL ?? ''} alt={user?.displayName ?? ''} />
+            <AvatarFallback className="bg-primary-foreground/10 text-white font-medium">{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -67,10 +56,10 @@ function UserNav({ user }: { user: any }) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.displayName ?? 'User'}
+              {user?.displayName ?? 'User'}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {user?.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -84,39 +73,10 @@ function UserNav({ user }: { user: any }) {
   );
 }
 
-const chartData = [
-  { name: 'Sep 10', value: 200 },
-  { name: 'Sep 19', value: 300 },
-  { name: 'Sep 24', value: 450 },
-];
-
-const velocityData = [
-  { name: 'Spr 1', value: 35 },
-  { name: 'Sprt', value: 42 },
-  { name: 'Sp 3', value: 38 },
-];
-
-
-function StatCard({ title, value, children }: { title: string; value: string; children?: React.ReactNode }) {
-  return (
-    <Card className="shadow-sm bg-violet-50/50">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-4xl font-bold">{value}</div>
-        {children && <div className="h-16 -mx-6 -mb-6 mt-2">{children}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
 type SprintDetailClientProps = {
   sprint?: Sprint & { id: string };
   sprintId: string;
 };
-
-// ... other imports ...
 
 export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDetailClientProps) {
   const [user, setUser] = React.useState<any>(null);
@@ -148,7 +108,6 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
           .single();
 
         if (fetchedSprint) {
-          // Map snake_case DB fields to camelCase
           const mappedSprint = {
             id: fetchedSprint.id,
             sprintNumber: fetchedSprint.sprint_number,
@@ -187,233 +146,145 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
     }
   }, [sprintId, sprint, initialSprint, toast]);
 
-  // Access check logic below...
-
-
-  const goalsAchieved = React.useMemo(() => {
-    if (!sprint || !sprint.plannedPoints || sprint.plannedPoints === 0) {
-      return 0;
-    }
-    return Math.round(((sprint.completedPoints ?? 0) / sprint.plannedPoints) * 100);
-  }, [sprint]);
 
   if (isUserLoading || isLoadingSprint || !user || !sprint) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-white">
-      <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-violet-700/50 bg-violet-600 px-4 text-white sm:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-zinc-50 dark:bg-zinc-950 font-sans">
+
+      {/* Premium Header */}
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-primary/10 bg-primary px-4 text-white sm:px-8 shadow-sm backdrop-blur-xl bg-opacity-95 supports-[backdrop-filter]:bg-primary/95">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" className="h-9 w-9 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => router.push('/dashboard')}>
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-white/90 hover:text-white hover:bg-white/10 rounded-full transition-colors" onClick={() => router.push('/dashboard')}>
             <ChevronLeft className="h-5 w-5" />
             <span className="sr-only">Back to Dashboard</span>
           </Button>
-          <Logo className="text-white" />
+          <div className="h-6 w-px bg-white/20 mx-1" />
+          <Logo variant="white" />
         </div>
         <div className="flex items-center gap-4">
           <UserNav user={user} />
         </div>
       </header>
-      <main className="flex-1">
-        <>
-          <div className="border-b bg-white">
-            <div className="mx-auto max-w-7xl p-6 lg:p-8">
-              <div className="flex flex-col items-start gap-4 rounded-xl bg-violet-50 p-6 md:flex-row md:items-center">
-                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-                  <div className='text-center'>
-                    <p className='text-sm font-bold -mb-1'>sprint</p>
-                    <p className='text-4xl font-extrabold tracking-tighter'>{sprint.sprintNumber}</p>
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground">
-                    {sprint.sprintName} – {sprint.projectName}
-                  </h1>
-                  <p className="mt-1 text-sm text-muted-foreground">Facilitator: {sprint.facilitatorName}</p>
-                </div>
-              </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-                <StatCard title="Planned Points" value={sprint.plannedPoints?.toString() ?? '0'} />
-                <StatCard title="Completed" value={sprint.completedPoints?.toString() ?? '0'} />
-                <StatCard title="Velocity" value="12,5 SP" />
-                <StatCard title="Goals Achieved" value={`${goalsAchieved}%`}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorUv)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </StatCard>
-                <StatCard title="Burndown Chart" value="">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData.slice().reverse()} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorBurndown" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="name" hide />
-                      <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorBurndown)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </StatCard>
+      <main className="flex-1">
+        <div className="relative overflow-hidden bg-primary pb-24 pt-10">
+          {/* Abstract Background Decoration */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute -top-[100px] -left-[100px] h-[500px] w-[500px] bg-white/5 rounded-full blur-3xl" />
+            <div className="absolute top-[20%] right-[-50px] h-[300px] w-[300px] bg-orange-500/20 rounded-full blur-3xl mix-blend-overlay" />
+          </div>
+
+          <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-8 text-center text-white">
+            <Badge variant="secondary" className="mb-4 bg-white/10 text-white hover:bg-white/20 border-white/10 px-3 py-1 text-xs uppercase tracking-wider font-semibold backdrop-blur-sm">
+              Sprint #{sprint.sprintNumber}
+            </Badge>
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl mb-2 drop-shadow-sm">
+              {sprint.sprintName}
+            </h1>
+            <p className="text-lg text-white/80 font-medium mb-6 flex items-center justify-center gap-2">
+              <span className="opacity-70">Project:</span> {sprint.projectName}
+            </p>
+
+            <div className="inline-flex items-center gap-6 rounded-full bg-white/10 px-6 py-2 backdrop-blur-md border border-white/10 text-sm font-medium">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-white/70" />
+                <span>{sprint.team}</span>
+              </div>
+              <div className="h-4 w-px bg-white/20" />
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-white/70" />
+                <span>Facilitator: {sprint.facilitatorName || 'Unassigned'}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-            <Tabs defaultValue="summary" className="w-full">
-              <TabsList className="mb-6 grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 bg-muted text-muted-foreground p-1 rounded-lg">
-                <TabsTrigger value="ai-insights" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">AI Insights</TabsTrigger>
-                <TabsTrigger value="timeline" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Project Timeline</TabsTrigger>
-                <TabsTrigger value="huddle" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Huddle</TabsTrigger>
-                <TabsTrigger value="charts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Charts</TabsTrigger>
-                <TabsTrigger value="burndown" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Daily Burndown</TabsTrigger>
-                <TabsTrigger value="performance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Individual Metrics</TabsTrigger>
-                <TabsTrigger value="mood" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Team Mood Trend</TabsTrigger>
-                <TabsTrigger value="summary" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Sprint Summary</TabsTrigger>
-              </TabsList>
-              <TabsContent value="ai-insights">
-                <p>AI Insights Content</p>
-              </TabsContent>
-              <TabsContent value="timeline">
-                <p>Project Timeline Content</p>
-              </TabsContent>
-              <TabsContent value="huddle">
-                <p>Daily Huddle Report Content</p>
-              </TabsContent>
-              <TabsContent value="charts">
-                <p>Sprint Summary Chart View Content</p>
-              </TabsContent>
-              <TabsContent value="burndown">
-                <p>Daily Burndown Chart Content</p>
-              </TabsContent>
-              <TabsContent value="performance">
-                <p>Individual Performance Content</p>
-              </TabsContent>
-              <TabsContent value="mood">
-                <p>Mood trend over sprints Content</p>
-              </TabsContent>
-              <TabsContent value="summary">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                      <CardHeader><CardTitle>Sprint Goals</CardTitle></CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2">
-                          <li className="flex items-start gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                            <span>Complete migration of APIC platform to DSDK 3.0.0</span>
-                          </li>
-                        </ul>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader>
-                        <div className="flex justify-between items-center">
-                          <CardTitle>Open Stories</CardTitle>
-                          <span className="text-sm font-medium text-muted-foreground">Status</span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className='space-y-4'>
-                        <div className="flex justify-between items-center">
-                          <div className='flex items-center gap-2'>
-                            <Circle className="h-4 w-4 text-orange-500 fill-current" />
-                            <span>Sprint 46-1</span>
-                          </div>
-                          <Badge variant="outline" className='text-orange-600 border-orange-200'>To Do</Badge>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <div className='flex items-center gap-2'>
-                            <Clock className="h-4 w-4 text-blue-500" />
-                            <span>Sprint 46-2</span>
-                          </div>
-                          <Badge variant="outline" className='text-blue-600 border-blue-200'>In Progress</Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card className='bg-primary/5 border-primary/20'>
-                      <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
-                      <CardContent>
-                        <p className="text-sm">The sprint is on track: 15 points remaining. API deprecation requires additional attention.</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                      <CardHeader><CardTitle>Burndown Chart</CardTitle></CardHeader>
-                      <CardContent className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
-                            <defs>
-                              <linearGradient id="burndownContent" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#burndownContent)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                    <Card className='bg-primary/5 border-primary/20'>
-                      <CardHeader><CardTitle className='flex items-center gap-2 text-primary'><Lightbulb className='h-5 w-5' /> AI Insights</CardTitle></CardHeader>
-                      <CardContent>
-                        <p className="text-sm">The sprint is on track: 15.75 points remaining. API deprecation.</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                      <CardHeader><CardTitle>Velocity Chart</CardTitle></CardHeader>
-                      <CardContent className="h-[180px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RechartsBarChart data={velocityData}>
-                            <XAxis dataKey="name" />
-                            <YAxis />
-                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                          </RechartsBarChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader><CardTitle>Mood</CardTitle></CardHeader>
-                      <CardContent>
-                        <div className='flex items-center justify-center gap-4 p-4 rounded-lg bg-green-50 border border-green-200'>
-                          <Smile className='h-10 w-10 text-green-600' />
-                          <span className='text-xl font-semibold text-green-700'>Positive</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader><CardTitle>Risks / Blockers</CardTitle></CardHeader>
-                      <CardContent>
-                        <div className='flex items-center gap-2 text-amber-700'>
-                          <AlertTriangle className='h-5 w-5' />
-                          <p>Legacy support could cause delays</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+        <div className="relative z-20 mx-auto max-w-5xl px-6 lg:px-8 -mt-16">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+
+            {/* Planning Card */}
+            <Card
+              className="group relative overflow-hidden bg-white/95 dark:bg-zinc-900 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              onClick={() => router.push(`/sprint/${sprintId}/planning`)}
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600" />
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                  <ClipboardList className="h-6 w-6" />
                 </div>
-              </TabsContent>
-            </Tabs>
+                <CardTitle className="text-xl font-bold flex items-center justify-between">
+                  Planning
+                  <ArrowRight className="h-5 w-5 text-zinc-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-zinc-500">
+                  Setup scope & goals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Define user stories, assign story points, and establish sprint objectives for the team.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Track Board Card - Highlighted as Primary */}
+            <Card
+              className="group relative overflow-hidden bg-white/95 dark:bg-zinc-900 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer ring-1 ring-primary/5"
+              onClick={() => router.push(`/sprint/${sprintId}/board`)}
+            >
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary to-orange-600" />
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                  <Briefcase className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl font-bold flex items-center justify-between text-primary">
+                  Track Board
+                  <ArrowRight className="h-5 w-5 text-primary/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-primary/60">
+                  Manage execution
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
+                  Monitor progress, move tasks across the board, and view real-time sprint analytics.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Retrospective Card */}
+            <Card
+              className="group relative overflow-hidden bg-white/95 dark:bg-zinc-900 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              onClick={() => router.push(`/sprint/${sprintId}/retrospective`)}
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-400 to-violet-600" />
+              <CardHeader>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-violet-50 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
+                  <History className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-xl font-bold flex items-center justify-between">
+                  Retrospective
+                  <ArrowRight className="h-5 w-5 text-zinc-300 group-hover:text-violet-600 group-hover:translate-x-1 transition-all" />
+                </CardTitle>
+                <CardDescription className="text-sm font-medium text-zinc-500">
+                  Review & Improve
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Reflect on the sprint outcome, identify bottlenecks, and plan improvements.
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </>
+        </div>
       </main>
     </div>
   );

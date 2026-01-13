@@ -1,15 +1,13 @@
-
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
 import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
-// import { deleteSprint } from '@/lib/sprints-client'; // REMOVED
-// import { useFirestore } from '@/firebase/provider'; // REMOVED
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -22,14 +20,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 type SprintCardProps = {
   sprint: Sprint & { id: string };
@@ -37,17 +30,18 @@ type SprintCardProps = {
 };
 
 export function SprintCard({ sprint, onDelete }: SprintCardProps) {
-  // const firestore = useFirestore(); // REMOVED
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const router = useRouter();
+
+  const handleCardClick = () => {
+    router.push(`/sprint/${sprint.id}`);
+  };
 
   const handleDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
-      // Import the server action dynamically to ensure it works in Client Component if needed 
-      // (though usually imports at top level are fine for actions)
       const { deleteSprintAction } = await import('@/app/actions/sprints');
-
       await deleteSprintAction(sprint.id);
 
       toast({
@@ -57,7 +51,7 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
       onDelete(sprint.id);
     } catch (error: any) {
       toast({
-        title: 'Error Deleting Sprint',
+        title: 'Error',
         description: error.message || 'An unknown error occurred.',
         variant: 'destructive',
       });
@@ -68,101 +62,81 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
 
   return (
     <AlertDialog>
-      <Card className="group relative flex flex-col h-full border-border/50 bg-card hover:bg-accent/5 hover:border-accent hover:shadow-lg transition-all duration-300 overflow-hidden">
-        {/* Status Bar Indicator */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-fuchsia-500 opacity-80" />
+      <Card
+        onClick={handleCardClick}
+        className="group relative flex flex-col h-full bg-white dark:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 shadow-sm hover:shadow-[0_8px_30px_rgb(h_primary_rgb/0.12)] transition-all duration-500 overflow-hidden hover:-translate-y-1 cursor-pointer"
+      >
+        {/* Gradient Glow Effect on Hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-        <CardHeader className="p-5 pb-2">
+        {/* Status Line */}
+        <div className="absolute top-0 left-0 w-1 h-full bg-primary opacity-80 group-hover:opacity-100 transition-opacity" />
+
+        <CardHeader className="relative p-3 pb-1 pl-5">
           <div className="flex justify-between items-start">
-            <div className="space-y-1.5">
-              <CardDescription className="text-xs font-medium uppercase tracking-wider text-muted-foreground/80">
+            <div className="space-y-0.5 z-10">
+              <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                 {sprint.projectName}
               </CardDescription>
-              <CardTitle className="text-xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+              <CardTitle className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-primary transition-colors flex items-baseline gap-2">
                 {sprint.sprintName}
-                <span className="ml-2 text-muted-foreground font-normal text-lg">#{sprint.sprintNumber}</span>
+                <span className="text-zinc-400 font-medium text-xs">#{sprint.sprintNumber}</span>
               </CardTitle>
             </div>
 
-            <AlertDialogTrigger asChild>
+            <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 -mr-2 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                className="relative z-10 h-6 w-6 -mr-1 text-zinc-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                 disabled={isDeleting}
-                aria-label="Delete sprint"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </AlertDialogTrigger>
           </div>
         </CardHeader>
 
-        <CardContent className="flex-grow p-5 pt-2 space-y-5">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-400 shadow-sm">
+        <CardContent className="relative flex-grow p-3 pl-5 pt-2 space-y-3 z-10">
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-semibold bg-zinc-100/80 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 hover:bg-white hover:border-primary/20 transition-colors">
               {sprint.department}
             </Badge>
-            <Badge variant="outline" className="px-2.5 py-0.5 text-xs font-medium border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 dark:border-fuchsia-800 dark:bg-fuchsia-950/30 dark:text-fuchsia-400 shadow-sm">
+            <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-semibold bg-zinc-100/80 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 hover:bg-white hover:border-primary/20 transition-colors">
               {sprint.team}
             </Badge>
           </div>
 
-          <div className="flex items-center gap-3 text-sm text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/50">
-            <div className="p-1.5 bg-background rounded-full shadow-sm">
-              <UserCircle2 className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex -space-x-2 overflow-hidden">
+              <div className="inline-block h-5 w-5 rounded-full ring-2 ring-white dark:ring-zinc-900 bg-zinc-100 flex items-center justify-center">
+                <UserCircle2 className="h-3.5 w-3.5 text-zinc-400" />
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground/70">Facilitator</span>
-              <span className="font-medium text-foreground">{sprint.facilitatorName || 'Unassigned'}</span>
-            </div>
+            <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">{sprint.facilitatorName || 'Unassigned'}</span>
           </div>
         </CardContent>
 
-        <CardFooter className="p-5 pt-0 mt-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="w-full justify-between group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300" variant="secondary">
-                <span className="font-semibold">Manage Sprint</span>
-                <ChevronDown className="h-4 w-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/sprint/${sprint.id}/planning`} className="cursor-pointer">
-                  <ListTodo className="mr-2 h-4 w-4 text-blue-500" />
-                  <span>Planning</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/sprint/${sprint.id}`} className="cursor-pointer">
-                  <Rocket className="mr-2 h-4 w-4 text-fuchsia-500" />
-                  <span>Track Board</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/sprint/${sprint.id}/retrospective`} className="cursor-pointer">
-                  <History className="mr-2 h-4 w-4 text-orange-500" />
-                  <span>Retrospective</span>
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <CardFooter className="relative p-3 pl-5 pt-0 mt-auto z-10">
+          <div className="w-full flex justify-between items-center h-8">
+            <span className="text-[11px] font-medium text-zinc-400">View Sprint Dashboard</span>
+            <ChevronDown className="-rotate-90 h-3 w-3 text-zinc-400" />
+          </div>
         </CardFooter>
       </Card>
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete this sprint?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Sprint</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete <strong>{sprint.sprintName}</strong> and all associated data.
+            Are you sure? This will permanently delete <strong>{sprint.sprintName}</strong>.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+          <AlertDialogAction onClick={handleDeleteConfirm} disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
             {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete Sprint
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -172,27 +146,24 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
 
 SprintCard.Skeleton = function SprintCardSkeleton() {
   return (
-    <Card className="flex flex-col h-full border-border/50 overflow-hidden">
-      <div className="w-full h-1 bg-muted" />
-      <CardHeader className='p-5 pb-2'>
-        <Skeleton className="h-3 w-1/3 mb-2" />
-        <Skeleton className="h-6 w-2/3" />
+    <Card className="flex flex-col h-full border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <div className="w-1 h-full absolute left-0 bg-zinc-100 dark:bg-zinc-800" />
+      <CardHeader className='p-3 pl-5 pb-1'>
+        <Skeleton className="h-2.5 w-16 mb-1.5" />
+        <Skeleton className="h-5 w-32" />
       </CardHeader>
-      <CardContent className="flex-grow space-y-5 p-5 pt-2">
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-5 w-16 rounded-md" />
-          <Skeleton className="h-5 w-16 rounded-md" />
+      <CardContent className="flex-grow space-y-3 p-3 pl-5 pt-1">
+        <div className="flex flex-wrap gap-1.5">
+          <Skeleton className="h-4 w-12 rounded-md" />
+          <Skeleton className="h-4 w-12 rounded-md" />
         </div>
-        <div className="flex items-center gap-3 p-2.5 rounded-lg border border-border/50">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <div className="space-y-1 flex-1">
-            <Skeleton className="h-2 w-12" />
-            <Skeleton className="h-3 w-24" />
-          </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3.5 w-3.5 rounded-full" />
+          <Skeleton className="h-2.5 w-20" />
         </div>
       </CardContent>
-      <CardFooter className='p-5 pt-0 mt-auto'>
-        <Skeleton className="h-10 w-full rounded-md" />
+      <CardFooter className='p-3 pl-5 pt-0 mt-auto'>
+        <Skeleton className="h-8 w-full rounded-md" />
       </CardFooter>
     </Card>
   )

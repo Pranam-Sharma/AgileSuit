@@ -58,9 +58,11 @@ export type Sprint = z.infer<typeof sprintSchema>;
 
 type CreateSprintDialogProps = {
   onCreateSprint: (sprint: Sprint & { id: string }) => void;
+  triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  trigger?: React.ReactNode;
 };
 
-export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) {
+export function CreateSprintDialog({ onCreateSprint, triggerVariant = "default", trigger }: CreateSprintDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
@@ -120,10 +122,14 @@ export function CreateSprintDialog({ onCreateSprint }: CreateSprintDialogProps) 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          <span>Create Sprint</span>
-        </Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button variant={triggerVariant}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            <span>Create Sprint</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl bg-background/95 backdrop-blur-sm shadow-2xl shadow-blue-500/10 border-0">
         <DialogHeader>

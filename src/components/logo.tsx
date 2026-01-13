@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/hooks/use-user';
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, variant = 'default' }: { className?: string, variant?: 'default' | 'white' }) {
   const { user } = useUser();
   const href = user ? '/dashboard' : '/';
 
@@ -15,10 +15,22 @@ export function Logo({ className }: { className?: string }) {
       className={cn('flex items-center gap-2', className)}
       aria-label="AgileSuit Home"
     >
-      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-fuchsia-500">
-        <Package className="h-6 w-6 text-white" />
+      <div className={cn(
+        "p-2 rounded-lg",
+        variant === 'white'
+          ? "bg-white"
+          : "bg-gradient-to-br from-primary to-orange-600"
+      )}>
+        <Package className={cn(
+          "h-6 w-6",
+          variant === 'white' ? "text-primary" : "text-white"
+        )} />
       </div>
-      <span className={cn("text-2xl font-bold tracking-tight text-foreground font-headline", className)}>
+      <span className={cn(
+        "text-2xl font-bold tracking-tight font-headline",
+        variant === 'white' ? "text-white" : "text-foreground",
+        className
+      )}>
         AgileSuit
       </span>
     </Link>
