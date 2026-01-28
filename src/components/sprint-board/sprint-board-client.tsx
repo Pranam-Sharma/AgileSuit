@@ -49,6 +49,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import type { Sprint } from '@/components/dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import type { Story as DBStory } from '@/types/story';
+import { getStoriesBySprintId, moveStory, createStory, updateStory, deleteStory } from '@/app/actions/stories';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -466,6 +468,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | undefined>(initialSprint);
     const [isLoadingSprint, setIsLoadingSprint] = React.useState(!initialSprint);
     const [columns, setColumns] = React.useState<Column[]>(defaultColumns);
+    const [isLoadingStories, setIsLoadingStories] = React.useState(true);
     const [editingColumnId, setEditingColumnId] = React.useState<string | null>(null);
     const [editingColumnTitle, setEditingColumnTitle] = React.useState('');
     const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = React.useState(false);
@@ -530,6 +533,76 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             fetchSprint();
         }
     }, [sprintId, sprint, initialSprint, supabase]);
+
+    // Fetch stories from database
+    React.useEffect(() => {
+        async function fetchStories() {
+            if (!sprintId) return;
+
+            setIsLoadingStories(true);
+            try {
+                const { data: stories, error } = await getStoriesBySprintId(sprintId);
+
+                if (error) {
+                    console.error('Error fetching stories:', error);
+                    toast({
+                        title: 'Error loading stories',
+                        description: error,
+                        variant: 'destructive'
+                    });
+                    return;
+                }
+
+                if (stories) {
+                    // Group stories by column
+                    const storyMap = new Map<string, Story[]>();
+
+                    // Initialize all columns with empty arrays
+                    columns.forEach(col => {
+                        storyMap.set(col.id, []);
+                    });
+
+                    // Map database stories to component format and group by column
+                    stories.forEach(dbStory => {
+                        const story: Story = {
+                            id: dbStory.id,
+                            title: dbStory.title,
+                            description: dbStory.description || '',
+                            storyPoints: dbStory.story_points || undefined,
+                            assignee: dbStory.assignee || undefined,
+                            priority: dbStory.priority as 'low' | 'medium' | 'high',
+                            status: dbStory.status === 'done' ? 'completed' :
+                                   dbStory.status === 'blocked' ? 'blocked' :
+                                   dbStory.status === 'in_progress' ? 'in-progress' : 'not-started'
+                        };
+
+                        const columnStories = storyMap.get(dbStory.column_id) || [];
+                        columnStories.push(story);
+                        storyMap.set(dbStory.column_id, columnStories);
+                    });
+
+                    // Update columns with fetched stories
+                    setColumns(prevColumns =>
+                        prevColumns.map(col => ({
+                            ...col,
+                            stories: storyMap.get(col.id) || []
+                        }))
+                    );
+                }
+            } catch (error) {
+                console.error('Error in fetchStories:', error);
+                toast({
+                    title: 'Error loading stories',
+                    description: 'Failed to load stories. Please refresh the page.',
+                    variant: 'destructive'
+                });
+            } finally {
+                setIsLoadingStories(false);
+            }
+        }
+
+        fetchStories();
+    }, [sprintId, toast]);
 
     const handleColumnTitleClick = (columnId: string, currentTitle: string) => {
         setEditingColumnId(columnId);
@@ -684,7 +757,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         setDragOverColumnId(null);
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
         e.preventDefault();
 
         if (!draggedStory) return;
@@ -703,7 +776,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         if (!storyToMove) return;
 
-        // Remove story from source column and add to target column
+        // Optimistic UI update - show change immediately
         setColumns(prev => prev.map(col => {
             if (col.id === sourceColumnId) {
                 return { ...col, stories: col.stories.filter(s => s.id !== storyId) };
@@ -717,10 +790,51 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         setDraggedStory(null);
         setDragOverColumnId(null);
 
-        toast({
-            title: 'Story moved',
-            description: `Story moved to ${columns.find(col => col.id === targetColumnId)?.title}.`
+        // Persist to database
+        const targetColumn = columns.find(col => col.id === targetColumnId);
+        const newPosition = targetColumn?.stories.length || 0;
+
+        // Map column ID to status
+        const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
+            'backlog': 'todo',
+            'todo': 'todo',
+            'in-progress': 'in_progress',
+            'review': 'in_review',
+            'done': 'done',
+            'blocked': 'blocked'
+        };
+
+        const newStatus = statusMap[targetColumnId] || 'todo';
+
+        const { error } = await moveStory(storyId, {
+            column_id: targetColumnId,
+            position: newPosition,
+            status: newStatus
         });
+
+        if (error) {
+            // Revert optimistic update on error
+            setColumns(prev => prev.map(col => {
+                if (col.id === targetColumnId) {
+                    return { ...col, stories: col.stories.filter(s => s.id !== storyId) };
+                }
+                if (col.id === sourceColumnId) {
+                    return { ...col, stories: [...col.stories, storyToMove] };
+                }
+                return col;
+            }));
+
+            toast({
+                title: 'Error moving story',
+                description: error,
+                variant: 'destructive'
+            });
+        } else {
+            toast({
+                title: 'Story moved',
+                description: `Story moved to ${columns.find(col => col.id === targetColumnId)?.title}.`
+            });
+        }
     };
 
     const filterAndSortStories = (stories: Story[]) => {
@@ -794,10 +908,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         }
     };
 
-    if (isLoadingSprint) {
+    if (isLoadingSprint || isLoadingStories) {
         return (
-            <div className="flex justify-center items-center h-screen bg-zinc-50 dark:bg-zinc-950">
-                <Loader2 className="animate-spin h-10 w-10 text-primary" />
+            <div className="flex flex-col justify-center items-center h-screen bg-zinc-50 dark:bg-zinc-950">
+                <Loader2 className="animate-spin h-10 w-10 text-primary mb-4" />
+                <p className="text-sm text-zinc-500">
+                    {isLoadingSprint ? 'Loading sprint...' : 'Loading stories...'}
+                </p>
             </div>
         );
     }
