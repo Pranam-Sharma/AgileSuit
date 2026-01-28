@@ -27,6 +27,8 @@ export default async function SprintBoardPage({ params }: { params: Promise<{ sp
                 facilitatorName: sprint.facilitator_name,
                 plannedPoints: sprint.planned_points,
                 completedPoints: sprint.completed_points,
+                startDate: sprint.start_date,
+                endDate: sprint.end_date,
                 isFacilitator: false,
                 userId: sprint.created_by
             };

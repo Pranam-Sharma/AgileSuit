@@ -12,6 +12,8 @@ export type CreateSprintData = {
     facilitatorName?: string;
     plannedPoints?: number;
     completedPoints?: number;
+    startDate?: string;
+    endDate?: string;
 };
 
 export async function createSprintAction(data: CreateSprintData) {
@@ -48,6 +50,8 @@ export async function createSprintAction(data: CreateSprintData) {
             department: data.department,
             team: data.team,
             facilitator_name: data.facilitatorName,
+            start_date: data.startDate || null,
+            end_date: data.endDate || null,
             // planned_points: data.plannedPoints || 0, // Columns don't exist in DB yet
             // completed_points: data.completedPoints || 0,
             created_by: user.id
@@ -58,6 +62,31 @@ export async function createSprintAction(data: CreateSprintData) {
     if (error) {
         console.error('Error creating sprint:', error);
         throw new Error('Failed to create sprint');
+    }
+
+    // Sync dates with sprint_planning table if dates are provided
+    if (data.startDate || data.endDate) {
+        await supabaseAdmin
+            .from('sprint_planning')
+            .upsert({
+                sprint_id: sprint.id,
+                org_slug: profile.org_id,
+                start_date: data.startDate || null,
+                end_date: data.endDate || null,
+                sprint_days: 0,
+                team_members: [],
+                projects: [],
+                platforms: [],
+                goals: [],
+                milestones: [],
+                demo_items: [],
+                checklist: {},
+                created_by: user.id,
+                updated_by: user.id,
+            }, {
+                onConflict: 'sprint_id',
+                ignoreDuplicates: false,
+            });
     }
 
     revalidatePath('/dashboard');
@@ -109,6 +138,8 @@ export async function getSprintsAction() {
         facilitatorName: s.facilitator_name,
         plannedPoints: s.planned_points,
         completedPoints: s.completed_points,
+        startDate: s.start_date,
+        endDate: s.end_date,
         userId: s.created_by,
         isFacilitator: false // default
     }));
@@ -149,6 +180,48 @@ export async function deleteSprintAction(sprintId: string) {
     }
 
     revalidatePath('/dashboard');
+    return { success: true };
+}
+
+export async function updateSprintDatesAction(sprintId: string, startDate: string | null, endDate: string | null) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // 1. Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // 2. Update Sprint using Admin Client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update({
+            start_date: startDate,
+            end_date: endDate,
+        })
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error updating sprint dates:', error);
+        throw new Error('Failed to update sprint dates');
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}/planning`);
     return { success: true };
 }
 
@@ -198,6 +271,8 @@ export async function getSprintAction(sprintId: string) {
         facilitatorName: sprint.facilitator_name,
         plannedPoints: sprint.planned_points,
         completedPoints: sprint.completed_points,
+        startDate: sprint.start_date,
+        endDate: sprint.end_date,
         userId: sprint.created_by,
         isFacilitator: false // default
     };

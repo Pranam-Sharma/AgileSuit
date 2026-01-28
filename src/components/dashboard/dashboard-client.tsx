@@ -190,6 +190,14 @@ export function DashboardClient() {
 
   const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'User';
 
+  // Helper function for time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-zinc-50/50 dark:bg-zinc-950/50 font-sans">
 
@@ -216,19 +224,22 @@ export function DashboardClient() {
       <main className="flex-1">
 
         {/* Hero Section with Gradient */}
-        <div className="relative bg-gradient-to-br from-[#bd200b] via-[#ea580c] to-[#f97316] pt-12 pb-32 px-6 sm:px-8 shadow-xl">
+        <div className="relative bg-gradient-to-br from-orange-300 via-orange-400 via-30% to-red-400 to-90% pt-8 pb-12 px-6 sm:px-8 shadow-xl">
           {/* Background Texture/Pattern */}
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
 
-          {/* Abstract Shapes */}
-          <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
-            <div className="h-64 w-64 rounded-full bg-white blur-3xl opacity-20 -mr-20 -mt-20" />
+          {/* Abstract Shapes - Enhanced gradient effect */}
+          <div className="absolute top-0 right-0 p-12 opacity-20 pointer-events-none">
+            <div className="h-64 w-64 rounded-full bg-yellow-200 blur-3xl opacity-30 -mr-20 -mt-20" />
           </div>
-          <div className="absolute bottom-0 left-0 p-12 opacity-10 pointer-events-none">
-            <div className="h-48 w-48 rounded-full bg-yellow-300 blur-3xl opacity-20 -ml-20 -mb-20" />
+          <div className="absolute bottom-0 left-0 p-12 opacity-20 pointer-events-none">
+            <div className="h-48 w-48 rounded-full bg-pink-200 blur-3xl opacity-30 -ml-20 -mb-20" />
+          </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="h-96 w-96 rounded-full bg-orange-200 blur-3xl opacity-20" />
           </div>
 
-          <div className="max-w-7xl mx-auto space-y-8 relative z-10">
+          <div className="max-w-7xl mx-auto relative z-10">
             {/* Greeting & Header Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="space-y-1 relative">
@@ -237,96 +248,18 @@ export function DashboardClient() {
                   Workspace Overview
                 </Badge>
                 <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm">
-                  Good afternoon, {firstName}
+                  {getGreeting()}, {firstName}
                 </h1>
                 <p className="text-white/90 font-medium flex items-center gap-2 text-lg">
                   Your workspace is moving fast today.
                 </p>
               </div>
             </div>
-
-            {/* The Two Requested Metrics (Glass Style - Compact Redesign) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Active Sprints Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-5 text-white shadow-2xl hover:shadow-orange-500/20 hover:border-white/30 hover:from-white/15 hover:to-white/10 transition-all duration-500 group hover:-translate-y-1">
-                {/* Decorative Background Elements */}
-                <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
-                  <Sparkles className="h-32 w-32 text-white/5 absolute -top-8 -right-8 rotate-12" />
-                </div>
-                <div className="absolute -bottom-8 -right-8 h-48 w-48 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors duration-700" />
-
-                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-white/80">
-                        <Zap className="h-4 w-4 text-orange-200" />
-                        <span className="font-semibold tracking-wide uppercase text-[10px]">Momentum</span>
-                      </div>
-                      <h3 className="text-lg font-medium text-white">Active Sprints</h3>
-                    </div>
-                    <Badge className="bg-orange-500 text-white border-white/20 shadow-lg px-2 py-0.5 text-xs animate-pulse">
-                      Live Now
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-5xl font-bold tracking-tighter drop-shadow-sm">{activeSprintsCount}</span>
-                      <span className="text-sm text-white/60 font-medium">Currently Running</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Completion Rate Card */}
-              <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-5 text-white shadow-2xl hover:shadow-emerald-500/20 hover:border-white/30 hover:from-white/15 hover:to-white/10 transition-all duration-500 group hover:-translate-y-1">
-                {/* Decorative Background Elements */}
-                <div className="absolute -left-8 -bottom-8 h-48 w-48 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-700" />
-                <CheckCircle2 className="absolute -right-6 -bottom-6 h-32 w-32 text-white/5 rotate-[-15deg] group-hover:scale-110 group-hover:rotate-0 transition-all duration-700 ease-out" />
-
-                <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-white/80">
-                        <Target className="h-4 w-4 text-emerald-200" />
-                        <span className="font-semibold tracking-wide uppercase text-[10px]">Efficiency</span>
-                      </div>
-                      <h3 className="text-lg font-medium text-white">Completion Rate</h3>
-                    </div>
-                    <div className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-emerald-100 text-[10px] font-bold shadow-sm">
-                      <CheckCircle2 className="h-3 w-3" />
-                      On Track
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-end justify-between mb-3">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-bold tracking-tighter">{completionRate}</span>
-                        <span className="text-2xl font-bold text-white/40">%</span>
-                      </div>
-                      <div className="text-right pb-1">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/60">Target</span>
-                        <span className="font-mono text-sm font-bold">90%</span>
-                      </div>
-                    </div>
-
-                    {/* Custom Progress Bar with Glow */}
-                    <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm shadow-inner ring-1 ring-white/10">
-                      <div
-                        className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.6)] rounded-full relative after:absolute after:top-0 after:right-0 after:bottom-0 after:w-0.5 after:bg-white/50 after:shadow-[0_0_8px_white]"
-                        style={{ width: `${completionRate}%`, transition: 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Overlapping Content Container */}
-        <div className="px-6 sm:px-8 max-w-7xl mx-auto -mt-16 relative z-20">
+        <div className="px-6 sm:px-8 max-w-7xl mx-auto -mt-8 relative z-20">
           <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
 
             {/* Sprint Section Header */}

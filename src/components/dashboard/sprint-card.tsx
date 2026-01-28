@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import type { Sprint } from './create-sprint-dialog';
 import { Badge } from '../ui/badge';
-import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo } from 'lucide-react';
+import { UserCircle2, Trash2, ChevronDown, Rocket, History, ListTodo, Calendar } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -33,6 +33,12 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
   const router = useRouter();
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   const handleCardClick = () => {
     router.push(`/sprint/${sprint.id}`);
@@ -106,6 +112,15 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
               {sprint.team}
             </Badge>
           </div>
+
+          {(sprint.startDate || sprint.endDate) && (
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+              <Calendar className="h-3 w-3 text-zinc-400" />
+              <span>
+                {formatDate(sprint.startDate) || 'TBD'} - {formatDate(sprint.endDate) || 'TBD'}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2.5">
             <div className="flex -space-x-2 overflow-hidden">

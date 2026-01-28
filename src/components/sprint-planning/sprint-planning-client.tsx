@@ -53,6 +53,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Sprint } from '../dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Skeleton } from '../ui/skeleton';
 import { DateRange } from 'react-day-picker';
 import { addDays, format, isWeekend } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -94,6 +95,16 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  saveSprintPlanningAction,
+  getSprintPlanningAction,
+  type SprintPlanningData,
+  type SprintGoalData,
+  type MilestoneData,
+  type DemoItemData,
+  type PlatformData,
+  type ProjectPriorityData,
+} from '@/app/actions/sprint-planning';
 
 
 // --- Types ---
@@ -161,6 +172,20 @@ type Milestone = {
   isExpanded: boolean;
 };
 
+type DemoStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+
+type SprintDemoItem = {
+  id: string;
+  topic: string;
+  presenter: string;
+  dueDate: Date | undefined;
+  dueTime: string;
+  status: DemoStatus;
+  attendees: string;
+  description: string;
+  duration: string;
+};
+
 type SprintPlanningClientProps = {
   sprintId: string;
 };
@@ -191,7 +216,68 @@ const CHECKLIST_ITEMS = [
   { id: 'security', label: 'Security Audit' },
 ];
 
+const createEmptyDemoItem = (): SprintDemoItem => ({
+  id: crypto.randomUUID(),
+  topic: '',
+  presenter: '',
+  dueDate: undefined,
+  dueTime: '',
+  status: 'scheduled',
+  attendees: '',
+  description: '',
+  duration: '30',
+});
+
+const DEMO_STATUS_CONFIG: Record<DemoStatus, { label: string; color: string; bgColor: string }> = {
+  scheduled: { label: 'Scheduled', color: 'text-blue-700 dark:text-blue-300', bgColor: 'bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800' },
+  in_progress: { label: 'In Progress', color: 'text-amber-700 dark:text-amber-300', bgColor: 'bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800' },
+  completed: { label: 'Completed', color: 'text-emerald-700 dark:text-emerald-300', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800' },
+  cancelled: { label: 'Cancelled', color: 'text-red-700 dark:text-red-300', bgColor: 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' },
+};
+
 // --- Sub-Components ---
+
+function SectionLoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <CardHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 function UserNav({ user }: { user: User }) {
   const router = useRouter();
@@ -300,6 +386,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
   const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isPlanningDataLoading, setIsPlanningDataLoading] = React.useState(true);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
   const [activeSection, setActiveSection] = React.useState('general');
   const [checklist, setChecklist] = React.useState<ChecklistState>(() =>
     CHECKLIST_ITEMS.reduce((acc, item) => ({ ...acc, [item.id]: false }), {})
@@ -338,20 +427,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     name: string;
     priority: 'critical' | 'high' | 'medium' | 'low' | 'negligible';
     remarks: string;
-  }>>([
-    {
-      id: '1',
-      name: 'User Authentication Overhaul',
-      priority: 'critical',
-      remarks: 'Security vulnerability fix'
-    },
-    {
-      id: '2',
-      name: 'Dashboard Redesign',
-      priority: 'medium',
-      remarks: 'UX improvements'
-    }
-  ]);
+  }>>([]);
 
   const addProject = () => {
     const newProject = {
@@ -435,6 +511,27 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       if (m.id !== milestoneId) return m;
       return { ...m, phases: m.phases.filter(p => p.id !== phaseId) };
     }));
+  };
+
+  // Sprint Demo State and Handlers
+  const [demoItems, setDemoItems] = React.useState<SprintDemoItem[]>([createEmptyDemoItem()]);
+
+  const addDemoItem = () => {
+    setDemoItems(prev => [...prev, createEmptyDemoItem()]);
+  };
+
+  const removeDemoItem = (id: string) => {
+    if (demoItems.length > 1) {
+      setDemoItems(prev => prev.filter(item => item.id !== id));
+    }
+  };
+
+  const updateDemoItem = (id: string, field: keyof SprintDemoItem, value: any) => {
+    setDemoItems(prev =>
+      prev.map(item =>
+        item.id === id ? { ...item, [field]: value } : item
+      )
+    );
   };
 
   const onPhaseDragEnd = (result: DropResult) => {
@@ -591,6 +688,205 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     fetchSprint();
   }, [sprintId, user, isUserLoading, toast]);
 
+  // Load saved planning data
+  React.useEffect(() => {
+    if (!sprint) return;
+
+    const loadPlanningData = async () => {
+      setIsPlanningDataLoading(true);
+      try {
+        const planningData = await getSprintPlanningAction(sprintId);
+        if (planningData) {
+          // Restore date range
+          if (planningData.start_date || planningData.end_date) {
+            setDate({
+              from: planningData.start_date ? new Date(planningData.start_date) : undefined,
+              to: planningData.end_date ? new Date(planningData.end_date) : undefined,
+            });
+          }
+
+          // Restore checklist
+          if (planningData.checklist && Object.keys(planningData.checklist).length > 0) {
+            setChecklist(planningData.checklist);
+          }
+
+          // Restore projects
+          if (planningData.projects && planningData.projects.length > 0) {
+            setProjects(planningData.projects.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              priority: p.priority || 'medium',
+              remarks: p.remarks || '',
+            })));
+          }
+
+          // Restore platforms
+          if (planningData.platforms && planningData.platforms.length > 0) {
+            setPlatforms(planningData.platforms.map((p: any) => ({
+              id: p.id,
+              name: p.name || '',
+              members: p.members || [],
+              totalStoryPoints: p.total_story_points ?? p.totalStoryPoints ?? 0,
+              allocations: (p.allocations || []).map((a: any) => ({
+                projectId: a.project_id ?? a.projectId ?? '',
+                allocatedPercent: a.allocated_percent ?? a.allocatedPercent ?? 0,
+              })),
+              targetImprovement: p.target_improvement ?? p.targetImprovement ?? 0,
+              targetVelocity: p.target_velocity ?? p.targetVelocity ?? 0,
+              holidays: (p.holidays || []).map((h: any) => ({
+                id: h.id,
+                country: h.country || '',
+                days: h.days ?? 0,
+              })),
+              developerLeaves: (p.developer_leaves || p.developerLeaves || []).map((d: any) => ({
+                id: d.id,
+                name: d.name || '',
+                country: d.country || '',
+                capacity: d.capacity ?? 0,
+                plannedLeave: d.planned_leave ?? d.plannedLeave ?? 0,
+              })),
+              isExpanded: false,
+            })));
+          }
+
+          // Restore goals
+          if (planningData.goals && planningData.goals.length > 0) {
+            setSprintGoals(planningData.goals);
+          }
+
+          // Restore milestones
+          if (planningData.milestones && planningData.milestones.length > 0) {
+            setMilestones(planningData.milestones.map((m: any) => ({
+              ...m,
+              startDate: m.start_date ? new Date(m.start_date) : undefined,
+              endDate: m.end_date ? new Date(m.end_date) : undefined,
+              isExpanded: false,
+              phases: (m.phases || []).map((p: any) => ({
+                ...p,
+                startDate: p.start_date ? new Date(p.start_date) : undefined,
+                dueDate: p.due_date ? new Date(p.due_date) : undefined,
+              })),
+            })));
+          }
+
+          // Restore demo items
+          if (planningData.demo_items && planningData.demo_items.length > 0) {
+            setDemoItems(planningData.demo_items.map((d: any) => ({
+              ...d,
+              dueDate: d.due_date ? new Date(d.due_date) : undefined,
+              dueTime: d.due_time || '',
+            })));
+          }
+
+          setLastSaved(new Date(planningData.updated_at));
+        }
+      } catch (error) {
+        console.error('Error loading planning data:', error);
+      } finally {
+        setIsPlanningDataLoading(false);
+      }
+    };
+
+    loadPlanningData();
+  }, [sprint, sprintId]);
+
+  // Save all planning data
+  const handleSaveAll = async () => {
+    if (!sprint) return;
+
+    setIsSaving(true);
+    try {
+      const planningData: SprintPlanningData = {
+        sprint_id: sprintId,
+        start_date: date?.from ? date.from.toISOString().split('T')[0] : null,
+        end_date: date?.to ? date.to.toISOString().split('T')[0] : null,
+        sprint_days: calculateSprintDays(),
+        team_members: [], // Add when team composition is implemented
+        projects: projects.map(p => ({
+          id: p.id,
+          name: p.name,
+          code: '',
+          priority: ['critical', 'high', 'medium', 'low', 'negligible'].indexOf(p.priority),
+          allocation: 0,
+          color: '',
+          icon: '',
+        })),
+        platforms: platforms.map(p => ({
+          id: p.id,
+          name: p.name,
+          members: p.members,
+          total_story_points: p.totalStoryPoints,
+          allocations: p.allocations.map(a => ({
+            project_id: a.projectId,
+            allocated_percent: a.allocatedPercent,
+          })),
+          target_improvement: p.targetImprovement,
+          target_velocity: p.targetVelocity,
+          holidays: p.holidays,
+          developer_leaves: p.developerLeaves.map(d => ({
+            id: d.id,
+            name: d.name,
+            country: d.country,
+            capacity: d.capacity,
+            planned_leave: d.plannedLeave,
+          })),
+        })),
+        goals: sprintGoals.map(g => ({
+          id: g.id,
+          description: g.description,
+          status: g.status,
+          remark: g.remark,
+          order: g.order,
+        })),
+        milestones: milestones.map(m => ({
+          id: m.id,
+          name: m.name,
+          start_date: m.startDate ? m.startDate.toISOString().split('T')[0] : null,
+          end_date: m.endDate ? m.endDate.toISOString().split('T')[0] : null,
+          status: m.status,
+          description: m.description,
+          phases: m.phases.map(p => ({
+            id: p.id,
+            name: p.name,
+            pic: p.pic,
+            start_date: p.startDate ? p.startDate.toISOString().split('T')[0] : null,
+            due_date: p.dueDate ? p.dueDate.toISOString().split('T')[0] : null,
+            status: p.status,
+            remarks: p.remarks,
+          })),
+        })),
+        demo_items: demoItems.map(d => ({
+          id: d.id,
+          topic: d.topic,
+          presenter: d.presenter,
+          due_date: d.dueDate ? d.dueDate.toISOString().split('T')[0] : null,
+          due_time: d.dueTime,
+          status: d.status,
+          attendees: d.attendees,
+          description: d.description,
+          duration: d.duration,
+        })),
+        checklist: checklist,
+      };
+
+      await saveSprintPlanningAction(planningData);
+      setLastSaved(new Date());
+      toast({
+        title: 'Planning Saved',
+        description: 'Your sprint planning data has been saved successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error saving planning:', error);
+      toast({
+        title: 'Save Failed',
+        description: error.message || 'Failed to save planning data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isUserLoading || isLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -729,6 +1025,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
             {/* Content Switcher */}
             <div className="min-h-[400px]">
+              {isPlanningDataLoading ? (
+                <SectionLoadingSkeleton />
+              ) : (
+                <>
               {activeSection === 'general' && (
                 <div className="space-y-6">
                   {/* General Information Card */}
@@ -2821,18 +3121,673 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                   )}
                 </div>
               )}
-              {activeSection !== 'general' && activeSection !== 'team' && activeSection !== 'priority' && activeSection !== 'metrics' && activeSection !== 'goals' && activeSection !== 'milestones' && (
+              {activeSection === 'demo' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <Card className="border-none shadow-xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm ring-1 ring-zinc-200 dark:ring-zinc-800">
+                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 bg-white/50 dark:bg-zinc-900/50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 flex items-center justify-center border border-violet-500/20 shadow-sm">
+                            <Presentation className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Sprint Demo</CardTitle>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Plan and track demo topics, presenters, and schedules for the sprint review.
+                            </p>
+                          </div>
+                        </div>
+                        <Button onClick={addDemoItem} size="sm" className="gap-1.5 bg-violet-600 hover:bg-violet-700 text-white shadow-sm">
+                          <Plus className="h-4 w-4" />
+                          Add Demo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                      {demoItems.map((item, index) => (
+                        <Card key={item.id} className="border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                          <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
+                          <CardHeader className="pb-4 bg-zinc-50/50 dark:bg-zinc-900/30">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold text-sm">
+                                  {index + 1}
+                                </div>
+                                <CardTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                                  {item.topic || 'New Demo Topic'}
+                                </CardTitle>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={cn("border text-xs font-medium", DEMO_STATUS_CONFIG[item.status].bgColor, DEMO_STATUS_CONFIG[item.status].color)}>
+                                  {DEMO_STATUS_CONFIG[item.status].label}
+                                </Badge>
+                                {demoItems.length > 1 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    onClick={() => removeDemoItem(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 space-y-4">
+                            {/* Row 1: Topic and Presenter */}
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <Presentation className="h-4 w-4 text-zinc-400" />
+                                  Demo Topic <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                  placeholder="e.g., User Authentication Feature"
+                                  value={item.topic}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'topic', e.target.value)}
+                                  className="bg-white dark:bg-zinc-900"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-zinc-400" />
+                                  Presenter / PIC <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                  placeholder="e.g., John Doe"
+                                  value={item.presenter}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'presenter', e.target.value)}
+                                  className="bg-white dark:bg-zinc-900"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Row 2: Date, Time, Duration */}
+                            <div className="grid gap-4 md:grid-cols-3">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <CalendarIcon className="h-4 w-4 text-zinc-400" />
+                                  Demo Date <span className="text-red-500">*</span>
+                                </label>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full justify-start text-left font-normal bg-white dark:bg-zinc-900",
+                                        !item.dueDate && "text-muted-foreground"
+                                      )}
+                                    >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {item.dueDate ? format(item.dueDate, "PPP") : "Select date"}
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={item.dueDate}
+                                      onSelect={(date: Date | undefined) => updateDemoItem(item.id, 'dueDate', date)}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <Activity className="h-4 w-4 text-zinc-400" />
+                                  Demo Time
+                                </label>
+                                <Input
+                                  type="time"
+                                  value={item.dueTime}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'dueTime', e.target.value)}
+                                  className="bg-white dark:bg-zinc-900"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <Activity className="h-4 w-4 text-zinc-400" />
+                                  Duration
+                                </label>
+                                <Select
+                                  value={item.duration}
+                                  onValueChange={(value: string) => updateDemoItem(item.id, 'duration', value)}
+                                >
+                                  <SelectTrigger className="bg-white dark:bg-zinc-900">
+                                    <SelectValue placeholder="Select duration" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="15">15 minutes</SelectItem>
+                                    <SelectItem value="30">30 minutes</SelectItem>
+                                    <SelectItem value="45">45 minutes</SelectItem>
+                                    <SelectItem value="60">60 minutes</SelectItem>
+                                    <SelectItem value="90">90 minutes</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            {/* Row 3: Status and Attendees */}
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+                                <Select
+                                  value={item.status}
+                                  onValueChange={(value: string) => updateDemoItem(item.id, 'status', value as DemoStatus)}
+                                >
+                                  <SelectTrigger className="bg-white dark:bg-zinc-900">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="scheduled">
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                        Scheduled
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="in_progress">
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-amber-500" />
+                                        In Progress
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="completed">
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                                        Completed
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="cancelled">
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                                        Cancelled
+                                      </div>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-zinc-400" />
+                                  Attendees
+                                </label>
+                                <Input
+                                  placeholder="e.g., Product Team, Stakeholders"
+                                  value={item.attendees}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'attendees', e.target.value)}
+                                  className="bg-white dark:bg-zinc-900"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Row 4: Description */}
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Demo Description / Notes</label>
+                              <Textarea
+                                placeholder="Describe what will be demonstrated, key features to highlight, any dependencies or prerequisites..."
+                                value={item.description}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDemoItem(item.id, 'description', e.target.value)}
+                                className="min-h-[80px] bg-white dark:bg-zinc-900"
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+
+                      {/* Empty State */}
+                      {demoItems.length === 0 && (
+                        <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
+                          <Presentation className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
+                          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">No demos scheduled</h3>
+                          <p className="text-muted-foreground max-w-sm mt-2">
+                            Add demo topics to plan your sprint review presentation.
+                          </p>
+                          <Button onClick={addDemoItem} className="mt-4 gap-1.5">
+                            <Plus className="h-4 w-4" />
+                            Add First Demo
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {activeSection === 'save' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  {/* Hero Header with Animated Background */}
+                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 p-8 shadow-2xl">
+                    {/* Animated Background Effects */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                    </div>
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-300/20 rounded-full blur-2xl" />
+
+                    <div className="relative z-10">
+                      {/* Header Section */}
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
+                        <div className="flex items-start gap-4">
+                          <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30 shadow-xl">
+                            <Save className="h-8 w-8 text-white" />
+                          </div>
+                          <div>
+                            <h2 className="text-3xl font-black text-white mb-2 tracking-tight">Sprint Planning Review</h2>
+                            <p className="text-emerald-50 text-sm max-w-md">
+                              Comprehensive overview of your sprint planning data across all sections
+                            </p>
+                          </div>
+                        </div>
+                        {lastSaved && (
+                          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg">
+                            <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
+                              <CheckCircle2 className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="text-white">
+                              <div className="text-xs font-medium opacity-90">Last Saved</div>
+                              <div className="text-sm font-bold">{format(lastSaved, 'MMM dd, h:mm a')}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Quick Stats Grid - Glassmorphic Cards */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {(() => {
+                          const completedCount = Object.values(checklist).filter(Boolean).length;
+                          const totalCount = CHECKLIST_ITEMS.length;
+                          const percentage = Math.round((completedCount / totalCount) * 100);
+                          return (
+                            <>
+                              {/* Progress Card */}
+                              <div className="relative group">
+                                <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-5xl font-black text-white drop-shadow-lg">{percentage}%</div>
+                                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                                      <CheckCircle2 className="h-6 w-6 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-bold text-white/90 mb-2">Progress</div>
+                                  <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                                    <div className="h-full bg-white transition-all shadow-lg" style={{ width: `${percentage}%` }} />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Duration Card */}
+                              <div className="relative group">
+                                <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-5xl font-black text-white drop-shadow-lg">{calculateSprintDays()}</div>
+                                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                                      <CalendarIcon className="h-6 w-6 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-bold text-white/90 mb-1">Duration</div>
+                                  <div className="text-xs text-white/70 truncate">
+                                    {date?.from && date?.to ? `${format(date.from, 'MMM dd')} - ${format(date.to, 'MMM dd')}` : 'No dates set'}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Goals Card */}
+                              <div className="relative group">
+                                <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-5xl font-black text-white drop-shadow-lg">{sprintGoals.length}</div>
+                                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                                      <Target className="h-6 w-6 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-bold text-white/90 mb-1">Goals</div>
+                                  <div className="text-xs text-white/70">Sprint objectives</div>
+                                </div>
+                              </div>
+
+                              {/* Milestones Card */}
+                              <div className="relative group">
+                                <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="text-5xl font-black text-white drop-shadow-lg">{milestones.length}</div>
+                                    <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                                      <Milestone className="h-6 w-6 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="text-sm font-bold text-white/90 mb-1">Milestones</div>
+                                  <div className="text-xs text-white/70">Key deliverables</div>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Review Cards */}
+                  <div className="space-y-6">
+                    {/* General Information Review */}
+                    <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow">
+                        <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                              <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <CardTitle className="text-base font-semibold">General Information</CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-4 space-y-3">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Start Date</div>
+                              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {date?.from ? format(date.from, 'MMMM dd, yyyy') : 'Not set'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">End Date</div>
+                              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {date?.to ? format(date.to, 'MMMM dd, yyyy') : 'Not set'}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Project Priorities Review */}
+                      {projects.length > 0 && (
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                          <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                  <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <CardTitle className="text-base font-semibold">Project Priorities</CardTitle>
+                              </div>
+                              <Badge variant="secondary">{projects.length} projects</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <div className="space-y-2">
+                              {projects.map((project, index) => (
+                                <div key={project.id} className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                  <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                                    {index + 1}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                      {project.name || 'Untitled Project'}
+                                    </div>
+                                    {project.remarks && (
+                                      <div className="text-xs text-muted-foreground truncate mt-0.5">{project.remarks}</div>
+                                    )}
+                                  </div>
+                                  <Badge variant={
+                                    project.priority === 'critical' ? 'destructive' :
+                                    project.priority === 'high' ? 'default' :
+                                    project.priority === 'medium' ? 'secondary' : 'outline'
+                                  } className="shrink-0 capitalize">
+                                    {project.priority}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Platform Metrics Review */}
+                      {platforms.length > 0 && (
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                          <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
+                                  <BarChart3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                                </div>
+                                <CardTitle className="text-base font-semibold">Platform Metrics</CardTitle>
+                              </div>
+                              <Badge variant="secondary">{platforms.length} platforms</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <div className="grid gap-4">
+                              {platforms.map((platform) => (
+                                <div key={platform.id} className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="font-medium text-zinc-900 dark:text-zinc-100">{platform.name || 'Untitled Platform'}</div>
+                                    <Badge variant="outline">{platform.members.length} members</Badge>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div>
+                                      <div className="text-muted-foreground">Story Points</div>
+                                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.totalStoryPoints}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted-foreground">Target Velocity</div>
+                                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.targetVelocity}</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted-foreground">Improvement</div>
+                                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.targetImprovement}%</div>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted-foreground">Holidays</div>
+                                      <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
+                                        {platform.holidays.reduce((sum, h) => sum + h.days, 0)} days
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Sprint Goals Review */}
+                      {sprintGoals.length > 0 && (
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                          <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                  <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <CardTitle className="text-base font-semibold">Sprint Goals</CardTitle>
+                              </div>
+                              <Badge variant="secondary">{sprintGoals.length} goals</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <div className="space-y-2">
+                              {sprintGoals.map((goal, index) => (
+                                <div key={goal.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                  <div className="h-7 w-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">
+                                    {index + 1}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{goal.description || 'Untitled Goal'}</div>
+                                    {goal.remark && (
+                                      <div className="text-xs text-muted-foreground mt-1">{goal.remark}</div>
+                                    )}
+                                  </div>
+                                  <Badge variant="outline" className="shrink-0 capitalize text-xs">{goal.status}</Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Milestones Review */}
+                      {milestones.length > 0 && (
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                          <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                  <Milestone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <CardTitle className="text-base font-semibold">Milestones</CardTitle>
+                              </div>
+                              <Badge variant="secondary">{milestones.length} milestones</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <div className="space-y-3">
+                              {milestones.map((milestone) => (
+                                <div key={milestone.id} className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{milestone.name}</div>
+                                      {milestone.description && (
+                                        <div className="text-xs text-muted-foreground">{milestone.description}</div>
+                                      )}
+                                    </div>
+                                    <Badge variant="outline" className="shrink-0 ml-3 capitalize">{milestone.status}</Badge>
+                                  </div>
+                                  <div className="flex items-center gap-4 text-xs">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      <span>{milestone.startDate ? format(milestone.startDate, 'MMM dd') : 'No start'} - {milestone.endDate ? format(milestone.endDate, 'MMM dd') : 'No end'}</span>
+                                    </div>
+                                    {milestone.phases.length > 0 && (
+                                      <Badge variant="secondary" className="text-xs">{milestone.phases.length} phases</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Demo Items Review */}
+                      {demoItems.filter(d => d.topic).length > 0 && (
+                        <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                          <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                                  <Presentation className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <CardTitle className="text-base font-semibold">Sprint Demos</CardTitle>
+                              </div>
+                              <Badge variant="secondary">{demoItems.filter(d => d.topic).length} demos</Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <div className="space-y-2">
+                              {demoItems.filter(d => d.topic).map((demo) => (
+                                <div key={demo.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                  <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                                    <Presentation className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{demo.topic}</div>
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                      <span className="flex items-center gap-1">
+                                        <Users className="h-3 w-3" />
+                                        {demo.presenter || 'No presenter'}
+                                      </span>
+                                      {demo.dueDate && (
+                                        <span className="flex items-center gap-1">
+                                          <CalendarIcon className="h-3 w-3" />
+                                          {format(demo.dueDate, 'MMM dd')}
+                                          {demo.dueTime && ` at ${demo.dueTime}`}
+                                        </span>
+                                      )}
+                                      {demo.duration && (
+                                        <span className="flex items-center gap-1">
+                                          <Activity className="h-3 w-3" />
+                                          {demo.duration} min
+                                        </span>
+                                      )}
+                                    </div>
+                                    {demo.description && (
+                                      <div className="text-xs text-muted-foreground mt-2 line-clamp-2">{demo.description}</div>
+                                    )}
+                                  </div>
+                                  <Badge className={cn("border text-xs shrink-0", DEMO_STATUS_CONFIG[demo.status].bgColor, DEMO_STATUS_CONFIG[demo.status].color)}>
+                                    {DEMO_STATUS_CONFIG[demo.status].label}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Save Action Section */}
+                      <Card className="border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50">
+                        <CardContent className="p-6">
+                          <div className="flex flex-col items-center text-center gap-4">
+                            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                              <Save className="h-8 w-8 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Ready to Save?</h3>
+                              <p className="text-sm text-muted-foreground max-w-md">
+                                Review the information above and click save to persist all your planning data to the database.
+                              </p>
+                            </div>
+                            <Button
+                              onClick={handleSaveAll}
+                              disabled={isSaving}
+                              size="lg"
+                              className="w-full max-w-sm gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg shadow-emerald-500/20 h-12 text-base font-semibold"
+                            >
+                              {isSaving ? (
+                                <>
+                                  <Loader2 className="h-5 w-5 animate-spin" />
+                                  Saving to Database...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="h-5 w-5" />
+                                  Save All Planning Data
+                                </>
+                              )}
+                            </Button>
+                            <div className="flex items-center gap-6 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                <span>Auto-saves to cloud</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                <span>Syncs across devices</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+
+              {activeSection === 'security' && (
                 <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
                   <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
-                    {React.createElement(PLANNING_SECTIONS.find(s => s.id === activeSection)?.icon || Circle, { className: "h-6 w-6 text-zinc-400" })}
+                    <ShieldCheck className="h-6 w-6 text-zinc-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                    {PLANNING_SECTIONS.find(s => s.id === activeSection)?.label} Content
+                    Security Audit Content
                   </h3>
                   <p className="text-muted-foreground max-w-sm mt-2">
-                    This section is tailored for <strong>{activeSection}</strong> planning tasks. Form fields will be implemented here.
+                    This section is for security audit planning tasks. Form fields will be implemented here.
                   </p>
                 </div>
+              )}
+                </>
               )}
             </div>
           </div>

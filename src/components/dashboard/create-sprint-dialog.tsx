@@ -43,6 +43,8 @@ const sprintSchema = z.object({
   plannedPoints: z.coerce.number().optional(),
   completedPoints: z.coerce.number().optional(),
   userId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 }).refine(
   (data) => {
     if (data.isFacilitator) return true;
@@ -81,6 +83,8 @@ export function CreateSprintDialog({ onCreateSprint, triggerVariant = "default",
       facilitatorName: '',
       plannedPoints: 0,
       completedPoints: 0,
+      startDate: '',
+      endDate: '',
     },
   });
 
@@ -203,6 +207,35 @@ export function CreateSprintDialog({ onCreateSprint, triggerVariant = "default",
                     <FormLabel>Team</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Frontend" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
