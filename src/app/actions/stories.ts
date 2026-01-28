@@ -157,47 +157,9 @@ export async function moveStory(
     const newColumnId = input.column_id;
     const newPosition = input.position;
 
-    // If moving to a different column, update positions in both columns
-    if (oldColumnId !== newColumnId) {
-      // Decrement positions in the old column for stories after the removed one
-      await supabase
-        .from('stories')
-        .update({ position: supabase.rpc('stories', { position: 'position - 1' }) } as any)
-        .eq('sprint_id', currentStory.sprint_id)
-        .eq('column_id', oldColumnId)
-        .gt('position', currentStory.position);
-
-      // Increment positions in the new column for stories at or after the new position
-      await supabase.rpc('increment_story_positions', {
-        p_sprint_id: currentStory.sprint_id,
-        p_column_id: newColumnId,
-        p_position: newPosition,
-      }).catch(() => {
-        // Fallback if RPC doesn't exist
-        // We'll handle this in a transaction in production
-      });
-    } else if (newPosition !== currentStory.position) {
-      // Moving within the same column
-      if (newPosition < currentStory.position) {
-        // Moving up - increment positions between new and old
-        await supabase
-          .from('stories')
-          .update({ position: supabase.rpc('stories', { position: 'position + 1' }) } as any)
-          .eq('sprint_id', currentStory.sprint_id)
-          .eq('column_id', oldColumnId)
-          .gte('position', newPosition)
-          .lt('position', currentStory.position);
-      } else {
-        // Moving down - decrement positions between old and new
-        await supabase
-          .from('stories')
-          .update({ position: supabase.rpc('stories', { position: 'position - 1' }) } as any)
-          .eq('sprint_id', currentStory.sprint_id)
-          .eq('column_id', oldColumnId)
-          .gt('position', currentStory.position)
-          .lte('position', newPosition);
-      }
-    }
+    // For MVP, we'll use a simpler approach without complex position reordering
+    // Position conflicts will be resolved on the client side through the display order
+    // This avoids complex SQL transactions and race conditions
 
     // Update the story's position and column
     const updateData: any = {
