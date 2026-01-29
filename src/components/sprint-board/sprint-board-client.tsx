@@ -41,7 +41,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +51,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, moveStory, createStory, updateStory, deleteStory } from '@/app/actions/stories';
+import { getColumnsBySprintId, createColumn, updateColumn, deleteColumn } from '@/app/actions/columns';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -99,9 +100,12 @@ type Story = {
     title: string;
     description: string;
     storyPoints?: number;
+    completedStoryPoints?: number;
     assignee?: string;
-    priority: 'low' | 'medium' | 'high';
-    status?: 'not-started' | 'in-progress' | 'completed' | 'blocked';
+    priority: 'low' | 'medium' | 'high' | 'critical';
+    status?: 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked';
+    tags?: string[];
+    due_date?: string;
 };
 
 type Column = {
@@ -171,293 +175,11 @@ const columnThemes: Record<string, ColumnTheme> = {
 };
 
 const defaultColumns: Column[] = [
-    {
-        id: 'backlog',
-        title: 'Backlog',
-        gradient: 'slate',
-        stories: [
-            {
-                id: 'story-1',
-                title: 'User Authentication System',
-                description: 'Implement JWT-based authentication with refresh tokens and secure password storage',
-                storyPoints: 8,
-                assignee: 'Sarah Chen',
-                priority: 'high',
-                status: 'not-started'
-            },
-            {
-                id: 'story-2',
-                title: 'Database Migration Script',
-                description: 'Create migration scripts for updating user schema to support new fields',
-                storyPoints: 5,
-                assignee: 'Mike Johnson',
-                priority: 'medium',
-                status: 'not-started'
-            },
-            {
-                id: 'story-3',
-                title: 'API Documentation',
-                description: 'Write comprehensive API documentation using Swagger/OpenAPI specification',
-                storyPoints: 3,
-                assignee: 'Emma Wilson',
-                priority: 'low',
-                status: 'not-started'
-            },
-            {
-                id: 'story-4',
-                title: 'Email Notification Service',
-                description: 'Set up email service integration for user notifications and alerts',
-                storyPoints: 5,
-                assignee: 'David Lee',
-                priority: 'medium',
-                status: 'not-started'
-            },
-            {
-                id: 'story-5',
-                title: 'Payment Gateway Integration',
-                description: 'Integrate Stripe payment gateway for subscription management',
-                storyPoints: 13,
-                assignee: 'Alex Turner',
-                priority: 'high',
-                status: 'not-started'
-            }
-        ]
-    },
-    {
-        id: 'todo',
-        title: 'To Do',
-        gradient: 'blue',
-        stories: [
-            {
-                id: 'story-6',
-                title: 'User Profile Page',
-                description: 'Design and implement user profile page with edit capabilities',
-                storyPoints: 8,
-                assignee: 'Rachel Green',
-                priority: 'high',
-                status: 'not-started'
-            },
-            {
-                id: 'story-7',
-                title: 'Search Functionality',
-                description: 'Add full-text search with filters and sorting options',
-                storyPoints: 8,
-                assignee: 'Tom Harris',
-                priority: 'medium',
-                status: 'not-started'
-            },
-            {
-                id: 'story-8',
-                title: 'Dashboard Analytics',
-                description: 'Create analytics dashboard with charts and key metrics',
-                storyPoints: 13,
-                assignee: 'Lisa Park',
-                priority: 'high',
-                status: 'not-started'
-            },
-            {
-                id: 'story-9',
-                title: 'Mobile Responsive Design',
-                description: 'Optimize all pages for mobile and tablet devices',
-                storyPoints: 5,
-                assignee: 'John Smith',
-                priority: 'medium',
-                status: 'not-started'
-            },
-            {
-                id: 'story-10',
-                title: 'Unit Tests Setup',
-                description: 'Set up Jest and React Testing Library for component testing',
-                storyPoints: 3,
-                assignee: 'Maria Garcia',
-                priority: 'medium',
-                status: 'not-started'
-            },
-            {
-                id: 'story-11',
-                title: 'File Upload Feature',
-                description: 'Implement file upload with drag-and-drop and progress tracking',
-                storyPoints: 5,
-                assignee: 'Kevin Brown',
-                priority: 'low',
-                status: 'not-started'
-            }
-        ]
-    },
-    {
-        id: 'in-progress',
-        title: 'In Progress',
-        gradient: 'orange',
-        stories: [
-            {
-                id: 'story-12',
-                title: 'REST API Endpoints',
-                description: 'Develop RESTful API endpoints for CRUD operations',
-                storyPoints: 8,
-                assignee: 'Chris Anderson',
-                priority: 'high',
-                status: 'in-progress'
-            },
-            {
-                id: 'story-13',
-                title: 'Real-time Chat Feature',
-                description: 'Implement WebSocket-based real-time chat with message history',
-                storyPoints: 13,
-                assignee: 'Nina Patel',
-                priority: 'high',
-                status: 'in-progress'
-            },
-            {
-                id: 'story-14',
-                title: 'Performance Optimization',
-                description: 'Optimize bundle size and implement code splitting',
-                storyPoints: 5,
-                assignee: 'Ryan Mitchell',
-                priority: 'medium',
-                status: 'in-progress'
-            },
-            {
-                id: 'story-15',
-                title: 'Error Handling System',
-                description: 'Implement global error handling and logging system',
-                storyPoints: 5,
-                assignee: 'Sophie Taylor',
-                priority: 'medium',
-                status: 'in-progress'
-            },
-            {
-                id: 'story-16',
-                title: 'Accessibility Improvements',
-                description: 'Ensure WCAG 2.1 AA compliance across all components',
-                storyPoints: 8,
-                assignee: 'James Wilson',
-                priority: 'high',
-                status: 'in-progress'
-            }
-        ]
-    },
-    {
-        id: 'review',
-        title: 'Review',
-        gradient: 'purple',
-        stories: [
-            {
-                id: 'story-17',
-                title: 'Admin Dashboard',
-                description: 'Create admin panel for user and content management',
-                storyPoints: 13,
-                assignee: 'Oliver Davis',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-18',
-                title: 'Notification System',
-                description: 'Build in-app notification system with real-time updates',
-                storyPoints: 8,
-                assignee: 'Emma Roberts',
-                priority: 'medium',
-                status: 'completed'
-            },
-            {
-                id: 'story-19',
-                title: 'Data Export Feature',
-                description: 'Add ability to export data in CSV and PDF formats',
-                storyPoints: 5,
-                assignee: 'Lucas Martinez',
-                priority: 'low',
-                status: 'completed'
-            },
-            {
-                id: 'story-20',
-                title: 'Integration Tests',
-                description: 'Write integration tests for critical user flows',
-                storyPoints: 8,
-                assignee: 'Ava Thompson',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-21',
-                title: 'Security Audit',
-                description: 'Conduct security audit and fix identified vulnerabilities',
-                storyPoints: 5,
-                assignee: 'Ethan Clark',
-                priority: 'high',
-                status: 'blocked'
-            },
-            {
-                id: 'story-22',
-                title: 'Theme Customization',
-                description: 'Allow users to customize color themes and preferences',
-                storyPoints: 5,
-                assignee: 'Mia Anderson',
-                priority: 'low',
-                status: 'completed'
-            }
-        ]
-    },
-    {
-        id: 'done',
-        title: 'Done',
-        gradient: 'green',
-        stories: [
-            {
-                id: 'story-23',
-                title: 'Project Setup',
-                description: 'Initialize project with Next.js, TypeScript, and Tailwind CSS',
-                storyPoints: 3,
-                assignee: 'Daniel Kim',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-24',
-                title: 'CI/CD Pipeline',
-                description: 'Set up GitHub Actions for automated testing and deployment',
-                storyPoints: 5,
-                assignee: 'Isabella Moore',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-25',
-                title: 'Design System',
-                description: 'Create component library and design system documentation',
-                storyPoints: 8,
-                assignee: 'William White',
-                priority: 'medium',
-                status: 'completed'
-            },
-            {
-                id: 'story-26',
-                title: 'Landing Page',
-                description: 'Design and develop marketing landing page',
-                storyPoints: 8,
-                assignee: 'Charlotte Lee',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-27',
-                title: 'Environment Configuration',
-                description: 'Set up development, staging, and production environments',
-                storyPoints: 3,
-                assignee: 'Benjamin Scott',
-                priority: 'high',
-                status: 'completed'
-            },
-            {
-                id: 'story-28',
-                title: 'Code Review Guidelines',
-                description: 'Document code review process and best practices',
-                storyPoints: 2,
-                assignee: 'Amelia Young',
-                priority: 'low',
-                status: 'completed'
-            }
-        ]
-    }
+    { id: 'backlog', title: 'Backlog', gradient: 'slate', stories: [] },
+    { id: 'todo', title: 'To Do', gradient: 'blue', stories: [] },
+    { id: 'in-progress', title: 'In Progress', gradient: 'orange', stories: [] },
+    { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
+    { id: 'done', title: 'Done', gradient: 'green', stories: [] }
 ];
 
 export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?: Sprint & { id: string }, sprintId: string }) {
@@ -467,7 +189,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     const [user, setUser] = React.useState<any>(null);
     const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | undefined>(initialSprint);
     const [isLoadingSprint, setIsLoadingSprint] = React.useState(!initialSprint);
+
     const [columns, setColumns] = React.useState<Column[]>(defaultColumns);
+    const [isLoadingColumns, setIsLoadingColumns] = React.useState(true);
     const [isLoadingStories, setIsLoadingStories] = React.useState(true);
     const [editingColumnId, setEditingColumnId] = React.useState<string | null>(null);
     const [editingColumnTitle, setEditingColumnTitle] = React.useState('');
@@ -478,8 +202,11 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         description: '',
         priority: 'medium',
         storyPoints: 0,
-        status: 'not-started'
+        completedStoryPoints: 0,
+        status: 'todo'
     });
+    const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = React.useState(false);
+    const [editingStory, setEditingStory] = React.useState<Story | null>(null);
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true);
@@ -494,6 +221,45 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         };
         checkUser();
     }, [supabase]);
+
+    // Fetch columns from database
+    React.useEffect(() => {
+        async function fetchColumns() {
+            if (!sprintId) return;
+
+            setIsLoadingColumns(true);
+            try {
+                const { data: dbColumns, error } = await getColumnsBySprintId(sprintId);
+
+                if (error) {
+                    console.error('Error fetching columns:', error);
+                    toast({
+                        title: 'Error loading columns',
+                        description: error,
+                        variant: 'destructive'
+                    });
+                    return;
+                }
+
+                if (dbColumns && dbColumns.length > 0) {
+                    // Map database columns to component format
+                    const mappedColumns: Column[] = dbColumns.map((dbCol: any) => ({
+                        id: dbCol.id,
+                        title: dbCol.title,
+                        gradient: dbCol.gradient,
+                        stories: []
+                    }));
+                    setColumns(mappedColumns);
+                }
+            } catch (error) {
+                console.error('Error in fetchColumns:', error);
+            } finally {
+                setIsLoadingColumns(false);
+            }
+        }
+
+        fetchColumns();
+    }, [sprintId, toast]);
 
     React.useEffect(() => {
         async function fetchSprint() {
@@ -569,11 +335,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                             title: dbStory.title,
                             description: dbStory.description || '',
                             storyPoints: dbStory.story_points || undefined,
+                            completedStoryPoints: dbStory.completed_story_points || 0,
                             assignee: dbStory.assignee || undefined,
-                            priority: dbStory.priority as 'low' | 'medium' | 'high',
-                            status: dbStory.status === 'done' ? 'completed' :
-                                   dbStory.status === 'blocked' ? 'blocked' :
-                                   dbStory.status === 'in_progress' ? 'in-progress' : 'not-started'
+                            priority: dbStory.priority as 'low' | 'medium' | 'high' | 'critical',
+                            status: dbStory.status as Story['status'],
+                            tags: dbStory.tags || undefined,
+                            due_date: dbStory.due_date || undefined
                         };
 
                         const columnStories = storyMap.get(dbStory.column_id) || [];
@@ -609,31 +376,113 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         setEditingColumnTitle(currentTitle);
     };
 
-    const handleColumnTitleSave = () => {
+    const handleColumnTitleSave = async () => {
         if (editingColumnId && editingColumnTitle.trim()) {
+            // Update in database
+            const { error } = await updateColumn(editingColumnId, {
+                title: editingColumnTitle
+            });
+
+            if (error) {
+                toast({
+                    title: 'Error updating column',
+                    description: error,
+                    variant: 'destructive'
+                });
+                return;
+            }
+
+            // Update local state
             setColumns(prev => prev.map(col =>
                 col.id === editingColumnId ? { ...col, title: editingColumnTitle } : col
             ));
+
+            toast({
+                title: 'Column updated',
+                description: 'Column title has been saved.'
+            });
         }
         setEditingColumnId(null);
         setEditingColumnTitle('');
     };
 
-    const handleAddColumn = () => {
+    const handleAddColumn = async () => {
+        if (!sprintId) {
+            toast({
+                title: 'Error',
+                description: 'No sprint ID found.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
         const themeKeys = ['pink', 'indigo', 'teal', 'rose', 'cyan'];
         const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+        const columnId = `column-${Date.now()}`;
 
-        const newColumn: Column = {
-            id: `column-${Date.now()}`,
+        // Get next position
+        const nextPosition = columns.length;
+
+        // Create in database
+        const { data: createdColumn, error } = await createColumn({
+            id: columnId,
+            sprint_id: sprintId,
             title: 'New Column',
             gradient: randomTheme,
+            position: nextPosition
+        });
+
+        if (error || !createdColumn) {
+            toast({
+                title: 'Error creating column',
+                description: error || 'Failed to create column.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Add to local state
+        const newColumn: Column = {
+            id: createdColumn.id,
+            title: createdColumn.title,
+            gradient: createdColumn.gradient,
             stories: []
         };
         setColumns(prev => [...prev, newColumn]);
+
+        toast({
+            title: 'Column created',
+            description: 'New column has been added to the board.'
+        });
     };
 
-    const handleDeleteColumn = (columnId: string) => {
+    const handleDeleteColumn = async (columnId: string) => {
+        // Check if column has stories
+        const column = columns.find(col => col.id === columnId);
+        if (column && column.stories.length > 0) {
+            toast({
+                title: 'Cannot delete column',
+                description: 'Please move or delete all stories first.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Delete from database
+        const { success, error } = await deleteColumn(columnId);
+
+        if (!success || error) {
+            toast({
+                title: 'Error deleting column',
+                description: error || 'Failed to delete column.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Remove from local state
         setColumns(prev => prev.filter(col => col.id !== columnId));
+
         toast({
             title: 'Column deleted',
             description: 'The column has been removed from the board.'
@@ -666,9 +515,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         // Map status to database format
         const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
-            'not-started': 'todo',
-            'in-progress': 'in_progress',
-            'completed': 'done',
+            'todo': 'todo',
+            'in_progress': 'in_progress',
+            'in_review': 'in_review',
+            'done': 'done',
             'blocked': 'blocked'
         };
 
@@ -680,10 +530,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             title: newStory.title,
             description: newStory.description || '',
             story_points: newStory.storyPoints || undefined,
+            completed_story_points: newStory.completedStoryPoints || 0,
             assignee: newStory.assignee || undefined,
-            priority: (newStory.priority as 'low' | 'medium' | 'high') || 'medium',
+            priority: (newStory.priority as 'low' | 'medium' | 'high' | 'critical') || 'medium',
             status: dbStatus,
             column_id: selectedColumnId,
+            tags: newStory.tags || undefined,
+            due_date: newStory.due_date || undefined,
         });
 
         if (error || !createdStory) {
@@ -701,11 +554,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             title: createdStory.title,
             description: createdStory.description || '',
             storyPoints: createdStory.story_points || undefined,
+            completedStoryPoints: createdStory.completed_story_points || 0,
             assignee: createdStory.assignee || undefined,
-            priority: createdStory.priority as 'low' | 'medium' | 'high',
-            status: createdStory.status === 'done' ? 'completed' :
-                   createdStory.status === 'blocked' ? 'blocked' :
-                   createdStory.status === 'in_progress' ? 'in-progress' : 'not-started'
+            priority: createdStory.priority as Story['priority'],
+            status: createdStory.status as Story['status'],
+            tags: createdStory.tags || undefined,
+            due_date: createdStory.due_date || undefined
         };
 
         setColumns(prev => prev.map(col =>
@@ -720,12 +574,139 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             description: '',
             priority: 'medium',
             storyPoints: 0,
-            status: 'not-started'
+            status: 'todo'
         });
 
         toast({
             title: 'Story saved',
             description: 'Your story has been saved to the database.'
+        });
+    };
+
+    const handleEditStory = (story: Story) => {
+        setEditingStory(story);
+        setNewStory({
+            title: story.title,
+            description: story.description,
+            storyPoints: story.storyPoints,
+            completedStoryPoints: story.completedStoryPoints || 0,
+            assignee: story.assignee,
+            priority: story.priority,
+            status: story.status,
+            tags: story.tags,
+            due_date: story.due_date
+        });
+        setIsEditStoryDialogOpen(true);
+    };
+
+    const handleSaveEditStory = async () => {
+        if (!editingStory || !newStory.title?.trim()) {
+            toast({
+                title: 'Error',
+                description: 'Story title is required',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        const { error } = await updateStory(editingStory.id, {
+            title: newStory.title,
+            description: newStory.description || undefined,
+            story_points: newStory.storyPoints,
+            completed_story_points: newStory.completedStoryPoints || 0,
+            assignee: newStory.assignee,
+            priority: newStory.priority as 'low' | 'medium' | 'high' | 'critical',
+            status: newStory.status as Story['status'],
+            tags: newStory.tags,
+            due_date: newStory.due_date
+        });
+
+        if (error) {
+            toast({
+                title: 'Error',
+                description: error,
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Map status to column ID
+        const statusToColumnMap: Record<string, string> = {
+            'todo': 'todo',
+            'in_progress': 'in-progress',
+            'in_review': 'review',
+            'done': 'done',
+            'blocked': 'blocked'
+        };
+
+        const newColumnId = statusToColumnMap[newStory.status || 'todo'] || 'todo';
+
+        // Find current column of the story
+        let currentColumnId = '';
+        for (const col of columns) {
+            if (col.stories.some(s => s.id === editingStory.id)) {
+                currentColumnId = col.id;
+                break;
+            }
+        }
+
+        // Update local state with new values and potentially new column
+        const updatedStory = {
+            ...editingStory,
+            title: newStory.title || editingStory.title,
+            description: newStory.description || editingStory.description,
+            storyPoints: newStory.storyPoints ?? editingStory.storyPoints,
+            completedStoryPoints: newStory.completedStoryPoints ?? editingStory.completedStoryPoints,
+            assignee: newStory.assignee ?? editingStory.assignee,
+            priority: newStory.priority || editingStory.priority,
+            status: newStory.status || editingStory.status,
+            tags: newStory.tags ?? editingStory.tags,
+            due_date: newStory.due_date ?? editingStory.due_date
+        };
+
+        // Check if target column exists
+        const targetColumnExists = columns.some(col => col.id === newColumnId);
+
+        // Check if column needs to change
+        if (currentColumnId !== newColumnId && targetColumnExists) {
+            // Move story to new column
+            setColumns(prev => prev.map(column => {
+                if (column.id === currentColumnId) {
+                    // Remove from current column
+                    return { ...column, stories: column.stories.filter(s => s.id !== editingStory.id) };
+                }
+                if (column.id === newColumnId) {
+                    // Add to new column
+                    return { ...column, stories: [...column.stories, updatedStory] };
+                }
+                return column;
+            }));
+
+            // Update column_id in database
+            await updateStory(editingStory.id, { column_id: newColumnId });
+        } else {
+            // Just update the story in place (column doesn't exist or is the same)
+            setColumns(prev => prev.map(column => ({
+                ...column,
+                stories: column.stories.map(s =>
+                    s.id === editingStory.id ? updatedStory : s
+                )
+            })));
+        }
+
+        setIsEditStoryDialogOpen(false);
+        setEditingStory(null);
+        setNewStory({
+            title: '',
+            description: '',
+            priority: 'medium',
+            storyPoints: 0,
+            status: 'todo'
+        });
+
+        toast({
+            title: 'Story updated',
+            description: 'The story has been successfully updated.'
         });
     };
 
@@ -760,6 +741,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
+            case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
+            case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
             case 'high': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300';
             case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300';
             case 'low': return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300';
@@ -769,9 +752,11 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
     const getStatusColor = (status?: string) => {
         switch (status) {
-            case 'not-started': return 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300';
-            case 'in-progress': return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'completed': return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300';
+            case 'todo': return 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300';
+            case 'in_progress': return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
+            case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
+            case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
+            case 'done': return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300';
             case 'blocked': return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300';
             default: return 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300';
         }
@@ -779,11 +764,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
     const getStatusLabel = (status?: string) => {
         switch (status) {
-            case 'not-started': return 'Not Started';
-            case 'in-progress': return 'In Progress';
-            case 'completed': return 'Completed';
+            case 'todo': return 'To Do';
+            case 'in_progress': return 'In Progress';
+            case 'in_review': return 'In Review';
+            case 'in_review': return 'In Review';
+            case 'done': return 'Done';
             case 'blocked': return 'Blocked';
-            default: return 'Not Started';
+            default: return 'To Do';
         }
     };
 
@@ -835,24 +822,6 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         if (!storyToMove) return;
 
-        // Optimistic UI update - show change immediately
-        setColumns(prev => prev.map(col => {
-            if (col.id === sourceColumnId) {
-                return { ...col, stories: col.stories.filter(s => s.id !== storyId) };
-            }
-            if (col.id === targetColumnId) {
-                return { ...col, stories: [...col.stories, storyToMove] };
-            }
-            return col;
-        }));
-
-        setDraggedStory(null);
-        setDragOverColumnId(null);
-
-        // Persist to database
-        const targetColumn = columns.find(col => col.id === targetColumnId);
-        const newPosition = targetColumn?.stories.length || 0;
-
         // Map column ID to status
         const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
             'backlog': 'todo',
@@ -864,6 +833,26 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         };
 
         const newStatus = statusMap[targetColumnId] || 'todo';
+
+        // Optimistic UI update - show change immediately with updated status
+        const updatedStory = { ...storyToMove, status: newStatus };
+
+        setColumns(prev => prev.map(col => {
+            if (col.id === sourceColumnId) {
+                return { ...col, stories: col.stories.filter(s => s.id !== storyId) };
+            }
+            if (col.id === targetColumnId) {
+                return { ...col, stories: [...col.stories, updatedStory] };
+            }
+            return col;
+        }));
+
+        setDraggedStory(null);
+        setDragOverColumnId(null);
+
+        // Persist to database
+        const targetColumn = columns.find(col => col.id === targetColumnId);
+        const newPosition = targetColumn?.stories.length || 0;
 
         const { error } = await moveStory(storyId, {
             column_id: targetColumnId,
@@ -901,7 +890,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         // Filter by completed status
         if (!showCompletedStories) {
-            filtered = filtered.filter(s => s.status !== 'completed');
+            filtered = filtered.filter(s => s.status !== 'done');
         }
 
         // Filter by priority
@@ -913,7 +902,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         if (sortBy !== 'none') {
             filtered = [...filtered].sort((a, b) => {
                 if (sortBy === 'priority') {
-                    const priorityOrder = { high: 3, medium: 2, low: 1 };
+                    const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
                     return priorityOrder[b.priority] - priorityOrder[a.priority];
                 }
                 if (sortBy === 'points') {
@@ -1214,16 +1203,16 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                 </aside>
 
                 {/* Kanban Board */}
-                <main className="flex-1 overflow-x-auto p-6 lg:p-8">
-                    <div className="flex gap-4 min-h-[calc(100vh-8rem)]">
+                <main className="flex-1 overflow-x-auto p-4 lg:p-6">
+                    <div className="flex gap-3 min-h-[calc(100vh-7rem)]">
                         {columns.map((column) => {
                             const theme = columnThemes[column.gradient] || columnThemes['slate'];
                             const filteredStories = filterAndSortStories(column.stories);
                             return (
-                            <div key={column.id} className="flex-shrink-0 w-80 flex flex-col">
+                            <div key={column.id} className="flex-shrink-0 w-72 flex flex-col">
                             {/* Column Header */}
                             <div className={cn(
-                                "relative rounded-t-xl p-4 bg-gradient-to-br shadow-md backdrop-blur-sm",
+                                "relative rounded-t-xl p-3 bg-gradient-to-br shadow-md backdrop-blur-sm",
                                 theme.gradient
                             )}>
                                 <div className="flex items-center justify-between mb-2">
@@ -1291,7 +1280,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                             {/* Stories List */}
                             <div
                                 className={cn(
-                                    "flex-1 rounded-b-xl p-4 space-y-3 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all",
+                                    "flex-1 rounded-b-xl p-3 space-y-2 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all",
                                     theme.bgColor,
                                     dragOverColumnId === column.id && "ring-2 ring-primary ring-offset-2"
                                 )}
@@ -1301,7 +1290,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                 onDrop={(e) => handleDrop(e, column.id)}
                             >
                                 {filteredStories.length === 0 ? (
-                                    <div className="flex items-center justify-center h-32 text-zinc-400 dark:text-zinc-600 text-sm">
+                                    <div className="flex items-center justify-center h-24 text-zinc-400 dark:text-zinc-600 text-xs">
                                         {column.stories.length === 0 ? 'No stories yet' : 'No stories match filters'}
                                     </div>
                                 ) : (
@@ -1312,33 +1301,32 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                             onDragStart={(e) => handleDragStart(e, story.id, column.id)}
                                             onDragEnd={handleDragEnd}
                                             className={cn(
-                                                "group relative hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-grab active:cursor-grabbing",
+                                                "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
                                                 theme.cardBg
                                             )}
                                         >
-                                            <CardHeader className="p-4 pb-3">
+                                            <CardContent className="p-3 space-y-2">
+                                                {/* Top Section: Priority and Menu */}
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1">
-                                                        <h4 className="font-semibold text-sm text-zinc-900 dark:text-white mb-1">
-                                                            {story.title}
-                                                        </h4>
-                                                        {story.description && (
-                                                            <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">
-                                                                {story.description}
-                                                            </p>
-                                                        )}
-                                                    </div>
+                                                    <Badge variant="outline" className={cn("text-xs font-medium", getPriorityColor(story.priority))}>
+                                                        {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
+                                                    </Badge>
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                                                             >
                                                                 <MoreVertical className="h-3 w-3" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end">
+                                                            <DropdownMenuItem onClick={() => handleEditStory(story)}>
+                                                                <Edit2 className="mr-2 h-4 w-4" />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator />
                                                             <DropdownMenuItem
                                                                 onClick={() => handleDeleteStory(column.id, story.id)}
                                                                 className="text-red-600"
@@ -1349,33 +1337,84 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </div>
-                                            </CardHeader>
-                                            <CardContent className="p-4 pt-0 space-y-3">
-                                                <div className="flex items-center flex-wrap gap-2">
-                                                    <Badge variant="outline" className={cn("text-xs font-semibold", getStatusColor(story.status))}>
+
+                                                {/* Title */}
+                                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-white leading-snug">
+                                                    {story.title}
+                                                </h4>
+
+                                                {/* Status and Tags Row */}
+                                                <div className="flex items-center flex-wrap gap-1">
+                                                    {/* Status Badge */}
+                                                    <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status))}>
                                                         {getStatusLabel(story.status)}
                                                     </Badge>
-                                                    <Badge variant="outline" className={cn("text-xs", getPriorityColor(story.priority))}>
-                                                        Priority: {story.priority}
-                                                    </Badge>
-                                                    {story.storyPoints !== undefined && story.storyPoints > 0 && (
-                                                        <Badge variant="secondary" className="text-xs bg-zinc-200 dark:bg-zinc-700">
-                                                            {story.storyPoints} SP
+
+                                                    {/* Tags */}
+                                                    {story.tags && story.tags.length > 0 && story.tags.map((tag, index) => (
+                                                        <Badge key={index} variant="secondary" className="text-xs">
+                                                            {tag}
                                                         </Badge>
-                                                    )}
+                                                    ))}
                                                 </div>
-                                                {story.assignee && (
-                                                    <div className="mt-3 flex items-center gap-2">
-                                                        <Avatar className="h-6 w-6">
-                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                                {story.assignee.charAt(0).toUpperCase()}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                                                            {story.assignee}
-                                                        </span>
+
+                                                {/* Due Date */}
+                                                {story.due_date && (
+                                                    <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                                        <Calendar className="h-3 w-3" />
+                                                        <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
                                                     </div>
                                                 )}
+
+                                                {/* Progress Bar */}
+                                                {story.storyPoints !== undefined && story.storyPoints > 0 && (
+                                                    <div className="space-y-0.5">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="text-zinc-600 dark:text-zinc-400 text-xs">Progress</span>
+                                                            <span className="font-medium text-zinc-900 dark:text-white text-xs">
+                                                                {Math.round(((story.completedStoryPoints || 0) / story.storyPoints) * 100)}%
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-300"
+                                                                style={{
+                                                                    width: `${Math.min(((story.completedStoryPoints || 0) / story.storyPoints) * 100, 100)}%`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Bottom Section: Assignee and Story Points */}
+                                                <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200 dark:border-zinc-700">
+                                                    {/* Left: Assignee */}
+                                                    <div className="flex items-center gap-1.5">
+                                                        {story.assignee ? (
+                                                            <>
+                                                                <Avatar className="h-5 w-5">
+                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                        {story.assignee.charAt(0).toUpperCase()}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                                    {story.assignee}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <div className="h-5"></div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Right: Story Points */}
+                                                    <div className="flex items-center gap-2">
+                                                        {story.storyPoints !== undefined && story.storyPoints > 0 && (
+                                                            <Badge variant="secondary" className="text-xs bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0">
+                                                                {story.storyPoints} SP
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))
@@ -1386,13 +1425,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                     })}
 
                     {/* Add Column Button */}
-                    <div className="flex-shrink-0 w-80">
+                    <div className="flex-shrink-0 w-72">
                         <Button
                             variant="outline"
                             onClick={handleAddColumn}
-                            className="w-full h-32 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary hover:bg-primary/5 transition-all rounded-2xl"
+                            className="w-full h-24 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary hover:bg-primary/5 transition-all rounded-xl"
                         >
-                            <Plus className="h-6 w-6 mr-2" />
+                            <Plus className="h-5 w-5 mr-2" />
                             Add Column
                         </Button>
                     </div>
@@ -1439,6 +1478,24 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                 />
                             </div>
                             <div className="space-y-2">
+                                <label className="text-sm font-medium">Completed Story Points</label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max={newStory.storyPoints || 0}
+                                    placeholder="0"
+                                    value={newStory.completedStoryPoints || ''}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 0;
+                                        const maxValue = newStory.storyPoints || 0;
+                                        setNewStory(prev => ({ ...prev, completedStoryPoints: Math.min(value, maxValue) }));
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Priority</label>
                                 <select
                                     className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
@@ -1448,21 +1505,23 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
                                     <option value="high">High</option>
+                                    <option value="critical">Critical</option>
                                 </select>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Status</label>
-                            <select
-                                className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                                value={newStory.status || 'not-started'}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, status: e.target.value as 'not-started' | 'in-progress' | 'completed' | 'blocked' }))}
-                            >
-                                <option value="not-started">Not Started</option>
-                                <option value="in-progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="blocked">Blocked</option>
-                            </select>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Status</label>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                    value={newStory.status || 'todo'}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, status: e.target.value as Story['status'] }))}
+                                >
+                                    <option value="todo">To Do</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="in_review">In Review</option>
+                                    <option value="done">Done</option>
+                                    <option value="blocked">Blocked</option>
+                                </select>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">Assignee</label>
@@ -1472,6 +1531,25 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                 onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
                             />
                         </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Tags (comma-separated)</label>
+                            <Input
+                                placeholder="bug, feature, urgent..."
+                                value={newStory.tags?.join(', ') || ''}
+                                onChange={(e) => setNewStory(prev => ({
+                                    ...prev,
+                                    tags: e.target.value.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                                }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Due Date</label>
+                            <Input
+                                type="date"
+                                value={newStory.due_date || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, due_date: e.target.value }))}
+                            />
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsAddStoryDialogOpen(false)}>
@@ -1479,6 +1557,142 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                         </Button>
                         <Button onClick={handleAddStory}>
                             Add Story
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Story Dialog */}
+            <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Edit Story</DialogTitle>
+                        <DialogDescription>
+                            Update the story details below.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Title *</label>
+                            <Input
+                                placeholder="Enter story title"
+                                value={newStory.title || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, title: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Description</label>
+                            <Textarea
+                                placeholder="Enter story description"
+                                value={newStory.description || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, description: e.target.value }))}
+                                rows={3}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Story Points</label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={newStory.storyPoints || ''}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, storyPoints: parseInt(e.target.value) || 0 }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Completed Story Points</label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    max={newStory.storyPoints || 0}
+                                    placeholder="0"
+                                    value={newStory.completedStoryPoints || ''}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value) || 0;
+                                        const maxValue = newStory.storyPoints || 0;
+                                        setNewStory(prev => ({ ...prev, completedStoryPoints: Math.min(value, maxValue) }));
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Priority</label>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                    value={newStory.priority || 'medium'}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, priority: e.target.value as Story['priority'] }))}
+                                >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Status</label>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                    value={newStory.status || 'todo'}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, status: e.target.value as Story['status'] }))}
+                                >
+                                    <option value="todo">To Do</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="in_review">In Review</option>
+                                    <option value="done">Done</option>
+                                    <option value="blocked">Blocked</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Assignee</label>
+                            <Input
+                                placeholder="Enter assignee name"
+                                value={newStory.assignee || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Tags (comma-separated)</label>
+                            <Input
+                                placeholder="bug, feature, urgent..."
+                                value={newStory.tags?.join(', ') || ''}
+                                onChange={(e) => setNewStory(prev => ({
+                                    ...prev,
+                                    tags: e.target.value.split(',').map((t: string) => t.trim()).filter((t: string) => t)
+                                }))}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Due Date</label>
+                            <Input
+                                type="date"
+                                value={newStory.due_date || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, due_date: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => {
+                            setIsEditStoryDialogOpen(false);
+                            setEditingStory(null);
+                            setNewStory({
+                                title: '',
+                                description: '',
+                                priority: 'medium',
+                                storyPoints: 0,
+                                status: 'todo'
+                            });
+                        }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveEditStory}>
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>

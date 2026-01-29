@@ -9,6 +9,7 @@ export interface Story {
   title: string;
   description: string | null;
   story_points: number | null;
+  completed_story_points: number | null;
   assignee: string | null;
   priority: StoryPriority;
   status: StoryStatus;
@@ -27,6 +28,7 @@ export interface CreateStoryInput {
   title: string;
   description?: string;
   story_points?: number;
+  completed_story_points?: number;
   assignee?: string;
   priority?: StoryPriority;
   status?: StoryStatus;
@@ -40,6 +42,7 @@ export interface UpdateStoryInput {
   title?: string;
   description?: string;
   story_points?: number;
+  completed_story_points?: number;
   assignee?: string;
   priority?: StoryPriority;
   status?: StoryStatus;
