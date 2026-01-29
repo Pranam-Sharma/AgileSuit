@@ -38,28 +38,8 @@ export async function createStory(input: CreateStoryInput): Promise<{ data: Stor
 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
-    console.log('[createStory] User:', user?.id, 'Sprint ID:', input.sprint_id);
     if (!user) {
-      console.error('[createStory] No authenticated user found');
       return { data: null, error: 'Not authenticated' };
-    }
-
-    // Debug: Check if user owns the sprint
-    const { data: sprint, error: sprintError } = await supabase
-      .from('sprints')
-      .select('id, created_by')
-      .eq('id', input.sprint_id)
-      .single();
-
-    console.log('[createStory] Sprint check:', {
-      sprintId: sprint?.id,
-      sprintCreatedBy: sprint?.created_by,
-      currentUser: user.id,
-      matches: sprint?.created_by === user.id
-    });
-
-    if (sprintError) {
-      console.error('[createStory] Sprint fetch error:', sprintError);
     }
 
     // If position not provided, calculate next position in column
@@ -87,7 +67,6 @@ export async function createStory(input: CreateStoryInput): Promise<{ data: Stor
       updated_by: user.id,
     };
 
-    console.log('[createStory] Attempting insert with data:', storyData);
     const { data, error } = await supabase
       .from('stories')
       .insert(storyData)
@@ -95,16 +74,9 @@ export async function createStory(input: CreateStoryInput): Promise<{ data: Stor
       .single();
 
     if (error) {
-      console.error('[createStory] Insert error:', {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      });
+      console.error('Error creating story:', error);
       return { data: null, error: error.message };
     }
-
-    console.log('[createStory] Story created successfully:', data?.id);
 
     revalidatePath('/sprint/[id]', 'page');
     return { data: data as Story, error: null };

@@ -41,47 +41,60 @@ CREATE INDEX IF NOT EXISTS idx_stories_position ON stories(sprint_id, column_id,
 -- Add RLS policies
 ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
 
+-- IMPORTANT: Disable RLS on sprints table to allow server-side access
+-- This is needed because the stories RLS policies need to read sprint data
+-- If sprints has RLS enabled with no policies, it blocks all access
+ALTER TABLE sprints DISABLE ROW LEVEL SECURITY;
+
 -- Policy: Users can view stories for their sprints
+-- Handles NULL sprint ownership from Firebase migration
 CREATE POLICY "Users can view own org stories" ON stories
     FOR SELECT
     USING (
-        EXISTS (
+        auth.uid() IS NOT NULL
+        AND EXISTS (
             SELECT 1 FROM sprints s
             WHERE s.id = stories.sprint_id
-            AND s.created_by = auth.uid()
+            AND (s.created_by = auth.uid() OR s.created_by IS NULL)
         )
     );
 
 -- Policy: Users can insert stories for their sprints
+-- Handles NULL sprint ownership from Firebase migration
 CREATE POLICY "Users can insert own org stories" ON stories
     FOR INSERT
     WITH CHECK (
-        EXISTS (
+        auth.uid() IS NOT NULL
+        AND EXISTS (
             SELECT 1 FROM sprints s
             WHERE s.id = stories.sprint_id
-            AND s.created_by = auth.uid()
+            AND (s.created_by = auth.uid() OR s.created_by IS NULL)
         )
     );
 
 -- Policy: Users can update stories for their sprints
+-- Handles NULL sprint ownership from Firebase migration
 CREATE POLICY "Users can update own org stories" ON stories
     FOR UPDATE
     USING (
-        EXISTS (
+        auth.uid() IS NOT NULL
+        AND EXISTS (
             SELECT 1 FROM sprints s
             WHERE s.id = stories.sprint_id
-            AND s.created_by = auth.uid()
+            AND (s.created_by = auth.uid() OR s.created_by IS NULL)
         )
     );
 
 -- Policy: Users can delete stories for their sprints
+-- Handles NULL sprint ownership from Firebase migration
 CREATE POLICY "Users can delete own org stories" ON stories
     FOR DELETE
     USING (
-        EXISTS (
+        auth.uid() IS NOT NULL
+        AND EXISTS (
             SELECT 1 FROM sprints s
             WHERE s.id = stories.sprint_id
-            AND s.created_by = auth.uid()
+            AND (s.created_by = auth.uid() OR s.created_by IS NULL)
         )
     );
 
