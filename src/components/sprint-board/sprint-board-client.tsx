@@ -645,7 +645,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         setIsAddStoryDialogOpen(true);
     };
 
-    const handleAddStory = () => {
+    const handleAddStory = async () => {
         if (!newStory.title?.trim()) {
             toast({
                 title: 'Error',
@@ -655,14 +655,57 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             return;
         }
 
-        const story: Story = {
-            id: `story-${Date.now()}`,
+        if (!sprintId) {
+            toast({
+                title: 'Error',
+                description: 'No sprint ID found.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Map status to database format
+        const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
+            'not-started': 'todo',
+            'in-progress': 'in_progress',
+            'completed': 'done',
+            'blocked': 'blocked'
+        };
+
+        const dbStatus = statusMap[newStory.status || 'not-started'] || 'todo';
+
+        // Save to database
+        const { data: createdStory, error } = await createStory({
+            sprint_id: sprintId,
             title: newStory.title,
             description: newStory.description || '',
-            storyPoints: newStory.storyPoints || 0,
-            assignee: newStory.assignee,
-            priority: newStory.priority || 'medium',
-            status: newStory.status || 'not-started'
+            story_points: newStory.storyPoints || undefined,
+            assignee: newStory.assignee || undefined,
+            priority: (newStory.priority as 'low' | 'medium' | 'high') || 'medium',
+            status: dbStatus,
+            column_id: selectedColumnId,
+        });
+
+        if (error || !createdStory) {
+            toast({
+                title: 'Error saving story',
+                description: error || 'Failed to save story to database.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        // Add to local state with real database ID
+        const story: Story = {
+            id: createdStory.id,
+            title: createdStory.title,
+            description: createdStory.description || '',
+            storyPoints: createdStory.story_points || undefined,
+            assignee: createdStory.assignee || undefined,
+            priority: createdStory.priority as 'low' | 'medium' | 'high',
+            status: createdStory.status === 'done' ? 'completed' :
+                   createdStory.status === 'blocked' ? 'blocked' :
+                   createdStory.status === 'in_progress' ? 'in-progress' : 'not-started'
         };
 
         setColumns(prev => prev.map(col =>
@@ -681,21 +724,37 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         });
 
         toast({
-            title: 'Story added',
-            description: 'Your story has been added to the board.'
+            title: 'Story saved',
+            description: 'Your story has been saved to the database.'
         });
     };
 
-    const handleDeleteStory = (columnId: string, storyId: string) => {
+    const handleDeleteStory = async (columnId: string, storyId: string) => {
+        // Optimistically remove from UI
         setColumns(prev => prev.map(col =>
             col.id === columnId
                 ? { ...col, stories: col.stories.filter(s => s.id !== storyId) }
                 : col
         ));
 
+        // Delete from database
+        const { success, error } = await deleteStory(storyId);
+
+        if (error || !success) {
+            // Revert on error - would need to fetch the story again
+            toast({
+                title: 'Error deleting story',
+                description: error || 'Failed to delete story from database.',
+                variant: 'destructive'
+            });
+            // Refresh the board to restore the story
+            window.location.reload();
+            return;
+        }
+
         toast({
             title: 'Story deleted',
-            description: 'The story has been removed.'
+            description: 'The story has been removed from the database.'
         });
     };
 
