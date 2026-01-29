@@ -41,47 +41,47 @@ CREATE INDEX IF NOT EXISTS idx_stories_position ON stories(sprint_id, column_id,
 -- Add RLS policies
 ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can view stories for sprints in their organization
+-- Policy: Users can view stories for their sprints
 CREATE POLICY "Users can view own org stories" ON stories
     FOR SELECT
     USING (
-        sprint_id IN (
-            SELECT s.id FROM sprints s
-            JOIN profiles p ON s.org_slug = p.org_id
-            WHERE p.id = auth.uid()
+        EXISTS (
+            SELECT 1 FROM sprints s
+            WHERE s.id = stories.sprint_id
+            AND s.created_by = auth.uid()
         )
     );
 
--- Policy: Users can insert stories for sprints in their organization
+-- Policy: Users can insert stories for their sprints
 CREATE POLICY "Users can insert own org stories" ON stories
     FOR INSERT
     WITH CHECK (
-        sprint_id IN (
-            SELECT s.id FROM sprints s
-            JOIN profiles p ON s.org_slug = p.org_id
-            WHERE p.id = auth.uid()
+        EXISTS (
+            SELECT 1 FROM sprints s
+            WHERE s.id = stories.sprint_id
+            AND s.created_by = auth.uid()
         )
     );
 
--- Policy: Users can update stories for sprints in their organization
+-- Policy: Users can update stories for their sprints
 CREATE POLICY "Users can update own org stories" ON stories
     FOR UPDATE
     USING (
-        sprint_id IN (
-            SELECT s.id FROM sprints s
-            JOIN profiles p ON s.org_slug = p.org_id
-            WHERE p.id = auth.uid()
+        EXISTS (
+            SELECT 1 FROM sprints s
+            WHERE s.id = stories.sprint_id
+            AND s.created_by = auth.uid()
         )
     );
 
--- Policy: Users can delete stories for sprints in their organization
+-- Policy: Users can delete stories for their sprints
 CREATE POLICY "Users can delete own org stories" ON stories
     FOR DELETE
     USING (
-        sprint_id IN (
-            SELECT s.id FROM sprints s
-            JOIN profiles p ON s.org_slug = p.org_id
-            WHERE p.id = auth.uid()
+        EXISTS (
+            SELECT 1 FROM sprints s
+            WHERE s.id = stories.sprint_id
+            AND s.created_by = auth.uid()
         )
     );
 
