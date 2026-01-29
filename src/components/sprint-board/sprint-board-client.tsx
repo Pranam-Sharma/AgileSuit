@@ -51,7 +51,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, moveStory, createStory, updateStory, deleteStory } from '@/app/actions/stories';
-import { getColumnsBySprintId, createColumn, updateColumn, deleteColumn } from '@/app/actions/columns';
+import { getColumnsBySprintId, createColumn, updateColumn, deleteColumn, initializeDefaultColumns } from '@/app/actions/columns-rpc';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -233,11 +233,32 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
                 if (error) {
                     console.error('Error fetching columns:', error);
-                    toast({
-                        title: 'Error loading columns',
-                        description: error,
-                        variant: 'destructive'
-                    });
+
+                    // If table doesn't exist yet, initialize with default columns
+                    if (error.includes('Could not find the table')) {
+                        console.log('Table not found, using default columns and initializing...');
+                        const defaultCols: Column[] = [
+                            { id: 'backlog', title: 'Backlog', gradient: 'slate', stories: [] },
+                            { id: 'todo', title: 'To Do', gradient: 'blue', stories: [] },
+                            { id: 'in-progress', title: 'In Progress', gradient: 'orange', stories: [] },
+                            { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
+                            { id: 'done', title: 'Done', gradient: 'green', stories: [] },
+                        ];
+                        setColumns(defaultCols);
+
+                        // Try to initialize columns in database (will succeed once table is created)
+                        try {
+                            await initializeDefaultColumns(sprintId);
+                        } catch (initError) {
+                            console.log('Could not initialize columns in DB yet:', initError);
+                        }
+                    } else {
+                        toast({
+                            title: 'Error loading columns',
+                            description: error,
+                            variant: 'destructive'
+                        });
+                    }
                     return;
                 }
 
@@ -250,9 +271,46 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                         stories: []
                     }));
                     setColumns(mappedColumns);
+                } else {
+                    // No columns found, initialize default ones
+                    console.log('No columns found for sprint, initializing defaults...');
+                    const { success } = await initializeDefaultColumns(sprintId);
+
+                    if (success) {
+                        // Fetch again after initialization
+                        const { data: newColumns } = await getColumnsBySprintId(sprintId);
+                        if (newColumns) {
+                            const mappedColumns: Column[] = newColumns.map((dbCol: any) => ({
+                                id: dbCol.id,
+                                title: dbCol.title,
+                                gradient: dbCol.gradient,
+                                stories: []
+                            }));
+                            setColumns(mappedColumns);
+                        }
+                    } else {
+                        // Fallback to default columns in memory
+                        const defaultCols: Column[] = [
+                            { id: 'backlog', title: 'Backlog', gradient: 'slate', stories: [] },
+                            { id: 'todo', title: 'To Do', gradient: 'blue', stories: [] },
+                            { id: 'in-progress', title: 'In Progress', gradient: 'orange', stories: [] },
+                            { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
+                            { id: 'done', title: 'Done', gradient: 'green', stories: [] },
+                        ];
+                        setColumns(defaultCols);
+                    }
                 }
             } catch (error) {
                 console.error('Error in fetchColumns:', error);
+                // Fallback to default columns
+                const defaultCols: Column[] = [
+                    { id: 'backlog', title: 'Backlog', gradient: 'slate', stories: [] },
+                    { id: 'todo', title: 'To Do', gradient: 'blue', stories: [] },
+                    { id: 'in-progress', title: 'In Progress', gradient: 'orange', stories: [] },
+                    { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
+                    { id: 'done', title: 'Done', gradient: 'green', stories: [] },
+                ];
+                setColumns(defaultCols);
             } finally {
                 setIsLoadingColumns(false);
             }
