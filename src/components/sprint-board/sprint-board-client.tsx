@@ -209,6 +209,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     const [editingStory, setEditingStory] = React.useState<Story | null>(null);
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
+    const [dragOverStoryId, setDragOverStoryId] = React.useState<string | null>(null);
+    const [dropPosition, setDropPosition] = React.useState<'before' | 'after' | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true);
     const [showCompletedStories, setShowCompletedStories] = React.useState(true);
     const [filterPriority, setFilterPriority] = React.useState<'all' | 'high' | 'medium' | 'low'>('all');
@@ -878,21 +880,36 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
             setDragOverColumnId(null);
+            setDragOverStoryId(null);
+            setDropPosition(null);
         }
     };
 
-    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+    const handleStoryDragOver = (e: React.DragEvent<HTMLDivElement>, storyId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!draggedStory || draggedStory.storyId === storyId) return;
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+        const position = e.clientY < midpoint ? 'before' : 'after';
+
+        setDragOverStoryId(storyId);
+        setDropPosition(position);
+    };
+
+    const handleStoryDragLeave = () => {
+        setDragOverStoryId(null);
+        setDropPosition(null);
+    };
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetColumnId: string, targetStoryId?: string) => {
         e.preventDefault();
 
         if (!draggedStory) return;
 
         const { storyId, sourceColumnId } = draggedStory;
-
-        if (sourceColumnId === targetColumnId) {
-            setDraggedStory(null);
-            setDragOverColumnId(null);
-            return;
-        }
 
         // Find the story being moved
         const sourceColumn = columns.find(col => col.id === sourceColumnId);
@@ -900,6 +917,86 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
         if (!storyToMove) return;
 
+        const targetColumn = columns.find(col => col.id === targetColumnId);
+        if (!targetColumn) return;
+
+        // Calculate the new position
+        let newPosition = 0;
+
+        if (targetStoryId && dropPosition) {
+            // Dropping relative to another story
+            const targetStoryIndex = targetColumn.stories.findIndex(s => s.id === targetStoryId);
+            if (targetStoryIndex !== -1) {
+                newPosition = dropPosition === 'before' ? targetStoryIndex : targetStoryIndex + 1;
+
+                // Adjust if moving within same column and dragging down
+                if (sourceColumnId === targetColumnId) {
+                    const draggedIndex = targetColumn.stories.findIndex(s => s.id === storyId);
+                    if (draggedIndex < targetStoryIndex && dropPosition === 'after') {
+                        newPosition--;
+                    } else if (draggedIndex > targetStoryIndex && dropPosition === 'before') {
+                        // position is already correct
+                    }
+                }
+            }
+        } else {
+            // Dropping at the end of the column
+            newPosition = targetColumn.stories.length;
+        }
+
+        // Same column reordering
+        if (sourceColumnId === targetColumnId) {
+            const currentIndex = targetColumn.stories.findIndex(s => s.id === storyId);
+
+            // Don't do anything if dropping in the same position
+            if (currentIndex === newPosition || (currentIndex + 1 === newPosition)) {
+                setDraggedStory(null);
+                setDragOverColumnId(null);
+                setDragOverStoryId(null);
+                setDropPosition(null);
+                return;
+            }
+
+            // Reorder within the same column
+            const reorderedStories = [...targetColumn.stories];
+            const [removed] = reorderedStories.splice(currentIndex, 1);
+            reorderedStories.splice(newPosition > currentIndex ? newPosition - 1 : newPosition, 0, removed);
+
+            setColumns(prev => prev.map(col =>
+                col.id === targetColumnId
+                    ? { ...col, stories: reorderedStories }
+                    : col
+            ));
+
+            // Persist to database
+            const { error } = await moveStory(storyId, {
+                column_id: targetColumnId,
+                position: newPosition,
+                status: storyToMove.status
+            });
+
+            if (error) {
+                // Revert on error
+                setColumns(prev => prev.map(col =>
+                    col.id === targetColumnId
+                        ? { ...col, stories: targetColumn.stories }
+                        : col
+                ));
+                toast({
+                    title: 'Error reordering story',
+                    description: error,
+                    variant: 'destructive'
+                });
+            }
+
+            setDraggedStory(null);
+            setDragOverColumnId(null);
+            setDragOverStoryId(null);
+            setDropPosition(null);
+            return;
+        }
+
+        // Cross-column move
         // Map column ID to status
         const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
             'backlog': 'todo',
@@ -920,18 +1017,19 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                 return { ...col, stories: col.stories.filter(s => s.id !== storyId) };
             }
             if (col.id === targetColumnId) {
-                return { ...col, stories: [...col.stories, updatedStory] };
+                const newStories = [...col.stories];
+                newStories.splice(newPosition, 0, updatedStory);
+                return { ...col, stories: newStories };
             }
             return col;
         }));
 
         setDraggedStory(null);
         setDragOverColumnId(null);
+        setDragOverStoryId(null);
+        setDropPosition(null);
 
         // Persist to database
-        const targetColumn = columns.find(col => col.id === targetColumnId);
-        const newPosition = targetColumn?.stories.length || 0;
-
         const { error } = await moveStory(storyId, {
             column_id: targetColumnId,
             position: newPosition,
@@ -1390,23 +1488,32 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                     </div>
                                 ) : (
                                     filteredStories.map((story, index) => (
-                                        <Card
-                                            key={story.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, story.id, column.id)}
-                                            onDragEnd={handleDragEnd}
-                                            onClick={() => handleEditStory(story)}
-                                            style={{
-                                                animationDelay: `${index * 50}ms`
-                                            }}
-                                            className={cn(
-                                                "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
-                                                "hover:scale-[1.02] hover:border-primary/50 hover:ring-1 hover:ring-primary/20",
-                                                "animate-fadeInUp",
-                                                draggedStory?.storyId === story.id && "opacity-40 scale-95 rotate-2",
-                                                theme.cardBg
+                                        <div key={story.id} className="relative">
+                                            {/* Drop indicator before story */}
+                                            {dragOverStoryId === story.id && dropPosition === 'before' && (
+                                                <div className="h-0.5 bg-primary rounded-full mb-2 animate-pulse shadow-lg shadow-primary/50" />
                                             )}
-                                        >
+
+                                            <Card
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, story.id, column.id)}
+                                                onDragEnd={handleDragEnd}
+                                                onDragOver={(e) => handleStoryDragOver(e, story.id)}
+                                                onDragLeave={handleStoryDragLeave}
+                                                onDrop={(e) => handleDrop(e, column.id, story.id)}
+                                                onClick={() => handleEditStory(story)}
+                                                style={{
+                                                    animationDelay: `${index * 50}ms`
+                                                }}
+                                                className={cn(
+                                                    "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
+                                                    "hover:scale-[1.02] hover:border-primary/50 hover:ring-1 hover:ring-primary/20",
+                                                    "animate-fadeInUp",
+                                                    draggedStory?.storyId === story.id && "opacity-40 scale-95 rotate-2",
+                                                    dragOverStoryId === story.id && "ring-2 ring-primary/50",
+                                                    theme.cardBg
+                                                )}
+                                            >
                                             {/* Drag Handle */}
                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-zinc-300 dark:via-zinc-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity">
@@ -1525,6 +1632,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                                                 </div>
                                             </CardContent>
                                         </Card>
+
+                                            {/* Drop indicator after story */}
+                                            {dragOverStoryId === story.id && dropPosition === 'after' && (
+                                                <div className="h-0.5 bg-primary rounded-full mt-2 animate-pulse shadow-lg shadow-primary/50" />
+                                            )}
+                                        </div>
                                     ))
                                 )}
                             </div>
