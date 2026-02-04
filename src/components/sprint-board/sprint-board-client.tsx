@@ -835,14 +835,27 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, storyId: string, columnId: string) => {
         setDraggedStory({ storyId, sourceColumnId: columnId });
         e.dataTransfer.effectAllowed = 'move';
+
+        // Create a custom drag image
         if (e.currentTarget instanceof HTMLElement) {
-            e.currentTarget.style.opacity = '0.4';
+            const dragImage = e.currentTarget.cloneNode(true) as HTMLElement;
+            dragImage.style.position = 'absolute';
+            dragImage.style.top = '-1000px';
+            dragImage.style.opacity = '0.8';
+            dragImage.style.transform = 'rotate(3deg)';
+            dragImage.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.3)';
+            document.body.appendChild(dragImage);
+            e.dataTransfer.setDragImage(dragImage, 0, 0);
+            setTimeout(() => document.body.removeChild(dragImage), 0);
+
+            // Add dragging state to the original element
+            e.currentTarget.classList.add('opacity-40', 'scale-95');
         }
     };
 
     const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
         if (e.currentTarget instanceof HTMLElement) {
-            e.currentTarget.style.opacity = '1';
+            e.currentTarget.classList.remove('opacity-40', 'scale-95');
         }
         setDraggedStory(null);
         setDragOverColumnId(null);
@@ -857,8 +870,15 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         setDragOverColumnId(columnId);
     };
 
-    const handleDragLeave = () => {
-        setDragOverColumnId(null);
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        // Only clear if actually leaving the column (not entering a child)
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+
+        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+            setDragOverColumnId(null);
+        }
     };
 
     const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
@@ -1338,32 +1358,62 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                             {/* Stories List */}
                             <div
                                 className={cn(
-                                    "flex-1 rounded-b-xl p-3 space-y-2 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all",
+                                    "flex-1 rounded-b-xl p-3 space-y-2 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all duration-200",
                                     theme.bgColor,
-                                    dragOverColumnId === column.id && "ring-2 ring-primary ring-offset-2"
+                                    dragOverColumnId === column.id && "ring-2 ring-primary/50 ring-offset-2 bg-primary/5 border-primary/30"
                                 )}
                                 onDragOver={handleDragOver}
                                 onDragEnter={() => handleDragEnter(column.id)}
                                 onDragLeave={handleDragLeave}
                                 onDrop={(e) => handleDrop(e, column.id)}
                             >
+                                {/* Drop Zone Indicator */}
+                                {dragOverColumnId === column.id && draggedStory && (
+                                    <div className="mb-2 p-4 border-2 border-dashed border-primary/50 rounded-lg bg-primary/10 flex items-center justify-center animate-pulse">
+                                        <span className="text-xs font-medium text-primary">Drop story here</span>
+                                    </div>
+                                )}
+
                                 {filteredStories.length === 0 ? (
-                                    <div className="flex items-center justify-center h-24 text-zinc-400 dark:text-zinc-600 text-xs">
-                                        {column.stories.length === 0 ? 'No stories yet' : 'No stories match filters'}
+                                    <div className={cn(
+                                        "flex flex-col items-center justify-center h-24 text-zinc-400 dark:text-zinc-600 text-xs",
+                                        dragOverColumnId === column.id && "text-primary"
+                                    )}>
+                                        {dragOverColumnId === column.id ? (
+                                            <>
+                                                <GripVertical className="h-6 w-6 mb-1 animate-bounce" />
+                                                <span>Drop here</span>
+                                            </>
+                                        ) : (
+                                            <span>{column.stories.length === 0 ? 'No stories yet' : 'No stories match filters'}</span>
+                                        )}
                                     </div>
                                 ) : (
-                                    filteredStories.map((story) => (
+                                    filteredStories.map((story, index) => (
                                         <Card
                                             key={story.id}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, story.id, column.id)}
                                             onDragEnd={handleDragEnd}
+                                            onClick={() => handleEditStory(story)}
+                                            style={{
+                                                animationDelay: `${index * 50}ms`
+                                            }}
                                             className={cn(
                                                 "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
+                                                "hover:scale-[1.02] hover:border-primary/50 hover:ring-1 hover:ring-primary/20",
+                                                "animate-fadeInUp",
+                                                draggedStory?.storyId === story.id && "opacity-40 scale-95 rotate-2",
                                                 theme.cardBg
                                             )}
                                         >
-                                            <CardContent className="p-3 space-y-2">
+                                            {/* Drag Handle */}
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-zinc-300 dark:via-zinc-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity">
+                                                <GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                                            </div>
+
+                                            <CardContent className="p-3 pl-7 space-y-2">
                                                 {/* Top Section: Priority and Menu */}
                                                 <div className="flex items-start justify-between gap-2">
                                                     <Badge variant="outline" className={cn("text-xs font-medium", getPriorityColor(story.priority))}>
