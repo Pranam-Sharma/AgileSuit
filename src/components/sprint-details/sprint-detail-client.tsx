@@ -38,6 +38,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
+const getStatusBadgeStyle = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return 'bg-green-500/20 text-white border-green-300/30';
+    case 'completed':
+      return 'bg-blue-500/20 text-white border-blue-300/30';
+    case 'archived':
+      return 'bg-slate-500/20 text-white border-slate-300/30';
+    case 'planning':
+    default:
+      return 'bg-white/20 text-white border-white/30';
+  }
+};
+
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'completed':
+      return 'Completed';
+    case 'archived':
+      return 'Archived';
+    case 'planning':
+    default:
+      return 'Planning';
+  }
+};
+
 function UserNav({ user }: { user: any }) {
   const router = useRouter();
   const supabase = createClient();
@@ -200,9 +228,14 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
           <div className="relative z-10 px-6 lg:px-12 py-8 lg:py-10">
             <div className="max-w-7xl mx-auto">
               <div className="space-y-3">
-                <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-3 py-1 text-xs font-semibold">
-                  Sprint #{sprint.sprintNumber}
-                </Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-3 py-1 text-xs font-semibold">
+                    Sprint #{sprint.sprintNumber}
+                  </Badge>
+                  <Badge className={cn("backdrop-blur-sm px-3 py-1 text-xs font-semibold border", getStatusBadgeStyle(sprint.status))}>
+                    {getStatusLabel(sprint.status)}
+                  </Badge>
+                </div>
                 <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight">
                   {sprint.sprintName}
                 </h1>

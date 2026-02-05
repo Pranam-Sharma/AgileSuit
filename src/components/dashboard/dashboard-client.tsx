@@ -86,6 +86,7 @@ function UserNav({ user }: { user: User }) {
 type Filters = {
   department: string[];
   team: string[];
+  status: string[];
 };
 
 export function DashboardClient() {
@@ -100,6 +101,7 @@ export function DashboardClient() {
   const [filters, setFilters] = React.useState<Filters>({
     department: [],
     team: [],
+    status: [],
   });
 
   const supabase = createClient();
@@ -163,8 +165,9 @@ export function DashboardClient() {
     return sprints.filter(sprint => {
       const departmentMatch = filters.department.length === 0 || filters.department.includes(sprint.department);
       const teamMatch = filters.team.length === 0 || filters.team.includes(sprint.team);
+      const statusMatch = filters.status.length === 0 || filters.status.includes(sprint.status || 'planning');
 
-      if (!departmentMatch || !teamMatch) {
+      if (!departmentMatch || !teamMatch || !statusMatch) {
         return false;
       }
       if (searchQuery === '') return true;
@@ -278,9 +281,9 @@ export function DashboardClient() {
                     <Button variant="outline" className="h-9">
                       <ListFilter className="mr-2 h-4 w-4" />
                       Filter
-                      {(filters.department.length > 0 || filters.team.length > 0) && (
+                      {(filters.department.length > 0 || filters.team.length > 0 || filters.status.length > 0) && (
                         <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center bg-zinc-900 text-white rounded-full">
-                          {filters.department.length + filters.team.length}
+                          {filters.department.length + filters.team.length + filters.status.length}
                         </Badge>
                       )}
                     </Button>
@@ -288,6 +291,18 @@ export function DashboardClient() {
                   <DropdownMenuContent className="w-56" align="end">
                     <DropdownMenuLabel>Filter Sprints</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500">Status</div>
+                    {['planning', 'active', 'completed', 'archived'].map(status => (
+                      <DropdownMenuCheckboxItem
+                        key={status}
+                        checked={filters.status.includes(status)}
+                        onCheckedChange={() => handleFilterChange('status', status)}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500">Department</div>
                     {allDepartments.map(d => (
                       <DropdownMenuCheckboxItem key={d} checked={filters.department.includes(d)} onCheckedChange={() => handleFilterChange('department', d)}>{d}</DropdownMenuCheckboxItem>
                     ))}

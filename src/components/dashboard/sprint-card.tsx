@@ -29,6 +29,34 @@ type SprintCardProps = {
   onDelete: (sprintId: string) => void;
 };
 
+const getStatusBadgeStyle = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-900';
+    case 'completed':
+      return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-900';
+    case 'archived':
+      return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-950 dark:text-slate-400 dark:border-slate-900';
+    case 'planning':
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400 dark:border-gray-900';
+  }
+};
+
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'completed':
+      return 'Completed';
+    case 'archived':
+      return 'Archived';
+    case 'planning':
+    default:
+      return 'Planning';
+  }
+};
+
 export function SprintCard({ sprint, onDelete }: SprintCardProps) {
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -105,6 +133,15 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
 
         <CardContent className="relative flex-grow p-3 pl-5 pt-2 space-y-3 z-10">
           <div className="flex flex-wrap gap-1.5">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "px-2 py-0.5 text-[10px] font-semibold border",
+                getStatusBadgeStyle(sprint.status)
+              )}
+            >
+              {getStatusLabel(sprint.status)}
+            </Badge>
             <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-semibold bg-zinc-100/80 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 hover:bg-white hover:border-primary/20 transition-colors">
               {sprint.department}
             </Badge>
