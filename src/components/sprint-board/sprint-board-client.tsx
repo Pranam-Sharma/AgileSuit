@@ -550,6 +550,17 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     };
 
     const handleOpenAddStory = (columnId: string) => {
+        // Clear any previously selected story
+        setEditingStory(null);
+        // Reset the form to initial empty state
+        setNewStory({
+            title: '',
+            description: '',
+            priority: 'medium',
+            storyPoints: 0,
+            completedStoryPoints: 0,
+            status: 'todo'
+        });
         setSelectedColumnId(columnId);
         setIsAddStoryDialogOpen(true);
     };
