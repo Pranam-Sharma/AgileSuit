@@ -20,7 +20,8 @@ import {
   Clock,
   Smile,
   Play,
-  Archive
+  Archive,
+  Edit2
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
@@ -39,6 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { EditSprintDialog } from '../dashboard/edit-sprint-dialog';
 
 const getStatusBadgeStyle = (status?: string) => {
   switch (status) {
@@ -125,6 +127,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
   const [isLoadingSprint, setIsLoadingSprint] = React.useState(!initialSprint);
   const [activeTab, setActiveTab] = React.useState('sprint-summary');
   const [isTransitioning, setIsTransitioning] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     const checkUser = async () => {
@@ -257,6 +260,10 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
     }
   };
 
+  const handleUpdateSprint = (updatedSprint: Sprint & { id: string }) => {
+    setSprint(updatedSprint);
+  };
+
   if (isUserLoading || isLoadingSprint || !user || !sprint) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -330,6 +337,15 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
 
                 {/* Lifecycle Control Buttons */}
                 <div className="flex flex-wrap items-center gap-3 pt-4">
+                  <Button
+                    onClick={() => setIsEditDialogOpen(true)}
+                    variant="outline"
+                    className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm"
+                  >
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Edit Sprint
+                  </Button>
+
                   {sprint.status === 'planning' && (
                     <Button
                       onClick={handleStartSprint}
@@ -841,6 +857,14 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
           </div>
         </div>
       </main>
+
+      {/* Edit Sprint Dialog */}
+      <EditSprintDialog
+        sprint={sprint}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onUpdate={handleUpdateSprint}
+      />
     </div>
   );
 }

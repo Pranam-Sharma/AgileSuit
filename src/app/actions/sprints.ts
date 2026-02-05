@@ -510,3 +510,82 @@ export async function archiveSprintAction(sprintId: string) {
     revalidatePath(`/sprint/${sprintId}`);
     return { success: true };
 }
+
+export type UpdateSprintData = {
+    sprintNumber?: string;
+    sprintName?: string;
+    projectName?: string;
+    department?: string;
+    team?: string;
+    facilitatorName?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+};
+
+export async function updateSprintAction(sprintId: string, data: UpdateSprintData) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // Build update object with only provided fields
+    const updateData: any = {
+        updated_at: new Date().toISOString(),
+    };
+
+    if (data.sprintNumber !== undefined) updateData.sprint_number = data.sprintNumber;
+    if (data.sprintName !== undefined) updateData.name = data.sprintName;
+    if (data.projectName !== undefined) updateData.project_name = data.projectName;
+    if (data.department !== undefined) updateData.department = data.department;
+    if (data.team !== undefined) updateData.team = data.team;
+    if (data.facilitatorName !== undefined) updateData.facilitator_name = data.facilitatorName;
+    if (data.startDate !== undefined) updateData.start_date = data.startDate;
+    if (data.endDate !== undefined) updateData.end_date = data.endDate;
+
+    // Update Sprint using Admin Client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update(updateData)
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error updating sprint:', error);
+        throw new Error('Failed to update sprint');
+    }
+
+    // Sync dates with sprint_planning if dates were updated
+    if (data.startDate !== undefined || data.endDate !== undefined) {
+        await supabaseAdmin
+            .from('sprint_planning')
+            .update({
+                start_date: data.startDate,
+                end_date: data.endDate,
+                updated_by: user.id,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('sprint_id', sprintId);
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}`);
+    revalidatePath(`/sprint/${sprintId}/board`);
+    revalidatePath(`/sprint/${sprintId}/planning`);
+    return { success: true };
+}
