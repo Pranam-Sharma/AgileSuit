@@ -264,6 +264,55 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
     setSprint(updatedSprint);
   };
 
+  const getSprintDuration = () => {
+    if (!sprint?.startDate || !sprint?.endDate) return null;
+    const start = new Date(sprint.startDate);
+    const end = new Date(sprint.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const weeks = Math.floor(diffDays / 7);
+    const days = diffDays % 7;
+
+    if (weeks === 0) return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    if (days === 0) return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+    return `${weeks}w ${days}d`;
+  };
+
+  const getDaysRemaining = () => {
+    if (!sprint?.endDate || sprint?.status !== 'active') return null;
+    const end = new Date(sprint.endDate);
+    const today = new Date();
+    const diffTime = end.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const isOverdue = () => {
+    const daysRemaining = getDaysRemaining();
+    return daysRemaining !== null && daysRemaining < 0;
+  };
+
+  const isUnusualDuration = () => {
+    if (!sprint?.startDate || !sprint?.endDate) return false;
+    const start = new Date(sprint.startDate);
+    const end = new Date(sprint.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays < 7 || diffDays > 28;
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const duration = getSprintDuration();
+  const daysRemaining = getDaysRemaining();
+  const overdue = isOverdue();
+  const unusualDuration = isUnusualDuration();
+
   if (isUserLoading || isLoadingSprint || !user || !sprint) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -334,6 +383,38 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                     <span className="text-white text-sm font-medium">{sprint.facilitatorName || 'Unassigned'}</span>
                   </div>
                 </div>
+
+                {/* Sprint Dates and Duration */}
+                {(sprint.startDate || sprint.endDate) && (
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
+                      <CalendarDays className="h-4 w-4 text-white/80" />
+                      <span className="text-white text-sm font-medium">
+                        {formatDate(sprint.startDate) || 'TBD'} - {formatDate(sprint.endDate) || 'TBD'}
+                      </span>
+                    </div>
+                    {duration && (
+                      <div className={cn(
+                        "px-3 py-1.5 rounded-lg backdrop-blur-sm border text-sm font-semibold",
+                        unusualDuration
+                          ? "bg-amber-500/20 border-amber-400/30 text-amber-100"
+                          : "bg-white/10 border-white/20 text-white"
+                      )}>
+                        {duration}
+                      </div>
+                    )}
+                    {overdue && (
+                      <div className="px-3 py-1.5 rounded-lg bg-red-500/20 border border-red-400/30 backdrop-blur-sm text-sm font-semibold text-red-100">
+                        Overdue by {Math.abs(daysRemaining!)} day{Math.abs(daysRemaining!) !== 1 ? 's' : ''}
+                      </div>
+                    )}
+                    {!overdue && daysRemaining !== null && daysRemaining >= 0 && (
+                      <div className="px-3 py-1.5 rounded-lg bg-blue-500/20 border border-blue-400/30 backdrop-blur-sm text-sm font-semibold text-blue-100">
+                        {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Lifecycle Control Buttons */}
                 <div className="flex flex-wrap items-center gap-3 pt-4">

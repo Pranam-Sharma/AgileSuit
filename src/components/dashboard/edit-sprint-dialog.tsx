@@ -40,7 +40,18 @@ const editSprintSchema = z.object({
   facilitatorName: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-});
+}).refine(
+  (data) => {
+    if (data.startDate && data.endDate) {
+      return new Date(data.startDate) < new Date(data.endDate);
+    }
+    return true;
+  },
+  {
+    message: 'End date must be after start date.',
+    path: ['endDate'],
+  }
+);
 
 type EditSprintData = z.infer<typeof editSprintSchema>;
 
@@ -55,6 +66,15 @@ export function EditSprintDialog({ sprint, open, onOpenChange, onUpdate }: EditS
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
 
+  const getSprintDuration = (start?: string, end?: string) => {
+    if (!start || !end) return null;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const form = useForm<EditSprintData>({
     resolver: zodResolver(editSprintSchema),
     defaultValues: {
@@ -68,6 +88,11 @@ export function EditSprintDialog({ sprint, open, onOpenChange, onUpdate }: EditS
       endDate: sprint.endDate || '',
     },
   });
+
+  const startDate = form.watch('startDate');
+  const endDate = form.watch('endDate');
+  const sprintDuration = getSprintDuration(startDate, endDate);
+  const isUnusualDuration = sprintDuration !== null && (sprintDuration < 7 || sprintDuration > 28);
 
   // Reset form when sprint changes
   React.useEffect(() => {
@@ -275,6 +300,28 @@ export function EditSprintDialog({ sprint, open, onOpenChange, onUpdate }: EditS
                 )}
               />
             </div>
+
+            {/* Duration Warning */}
+            {sprintDuration !== null && (
+              <div className={cn(
+                "p-3 rounded-lg text-sm",
+                isUnusualDuration
+                  ? "bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                  : "bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+              )}>
+                <p className="font-medium">
+                  Sprint Duration: {sprintDuration} day{sprintDuration !== 1 ? 's' : ''}
+                  {sprintDuration >= 7 && ` (${Math.floor(sprintDuration / 7)} week${Math.floor(sprintDuration / 7) !== 1 ? 's' : ''})`}
+                </p>
+                {isUnusualDuration && (
+                  <p className="text-xs mt-1">
+                    {sprintDuration < 7
+                      ? 'This sprint is shorter than typical 1-2 week sprints.'
+                      : 'This sprint is longer than typical 2-4 week sprints.'}
+                  </p>
+                )}
+              </div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>

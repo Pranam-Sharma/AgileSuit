@@ -68,6 +68,49 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const getSprintDuration = () => {
+    if (!sprint.startDate || !sprint.endDate) return null;
+    const start = new Date(sprint.startDate);
+    const end = new Date(sprint.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const weeks = Math.floor(diffDays / 7);
+    const days = diffDays % 7;
+
+    if (weeks === 0) return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+    if (days === 0) return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+    return `${weeks}w ${days}d`;
+  };
+
+  const getDaysRemaining = () => {
+    if (!sprint.endDate || sprint.status !== 'active') return null;
+    const end = new Date(sprint.endDate);
+    const today = new Date();
+    const diffTime = end.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const isOverdue = () => {
+    const daysRemaining = getDaysRemaining();
+    return daysRemaining !== null && daysRemaining < 0;
+  };
+
+  const isUnusualDuration = () => {
+    if (!sprint.startDate || !sprint.endDate) return false;
+    const start = new Date(sprint.startDate);
+    const end = new Date(sprint.endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays < 7 || diffDays > 28;
+  };
+
+  const duration = getSprintDuration();
+  const daysRemaining = getDaysRemaining();
+  const overdue = isOverdue();
+  const unusualDuration = isUnusualDuration();
+
   const handleCardClick = () => {
     router.push(`/sprint/${sprint.id}`);
   };
@@ -151,11 +194,35 @@ export function SprintCard({ sprint, onDelete }: SprintCardProps) {
           </div>
 
           {(sprint.startDate || sprint.endDate) && (
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
-              <Calendar className="h-3 w-3 text-zinc-400" />
-              <span>
-                {formatDate(sprint.startDate) || 'TBD'} - {formatDate(sprint.endDate) || 'TBD'}
-              </span>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+                <Calendar className="h-3 w-3 text-zinc-400" />
+                <span>
+                  {formatDate(sprint.startDate) || 'TBD'} - {formatDate(sprint.endDate) || 'TBD'}
+                </span>
+              </div>
+              {duration && (
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-[10px] font-medium px-2 py-0.5 rounded",
+                    unusualDuration
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  )}>
+                    {duration}
+                  </span>
+                  {overdue && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400">
+                      Overdue by {Math.abs(daysRemaining!)} day{Math.abs(daysRemaining!) !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {!overdue && daysRemaining !== null && daysRemaining >= 0 && (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+                      {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
