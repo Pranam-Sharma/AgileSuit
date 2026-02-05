@@ -140,6 +140,7 @@ export async function getSprintsAction() {
         completedPoints: s.completed_points,
         startDate: s.start_date,
         endDate: s.end_date,
+        status: s.status || 'planning',
         userId: s.created_by,
         isFacilitator: false // default
     }));
@@ -273,7 +274,239 @@ export async function getSprintAction(sprintId: string) {
         completedPoints: sprint.completed_points,
         startDate: sprint.start_date,
         endDate: sprint.end_date,
+        status: sprint.status,
         userId: sprint.created_by,
         isFacilitator: false // default
     };
+}
+
+// Sprint Status Management Actions
+
+type SprintStatus = 'planning' | 'active' | 'completed' | 'archived';
+
+export async function updateSprintStatusAction(sprintId: string, newStatus: SprintStatus) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // Update Sprint Status using Admin Client
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update({
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error updating sprint status:', error);
+        throw new Error('Failed to update sprint status');
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}`);
+    revalidatePath(`/sprint/${sprintId}/board`);
+    return { success: true };
+}
+
+export async function startSprintAction(sprintId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // Fetch sprint to validate
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { data: sprint, error: fetchError } = await supabaseAdmin
+        .from('sprints')
+        .select('*')
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id)
+        .single();
+
+    if (fetchError || !sprint) {
+        throw new Error('Sprint not found');
+    }
+
+    // Validate status transition
+    if (sprint.status !== 'planning') {
+        throw new Error('Can only start sprints in planning status');
+    }
+
+    // Validate dates are set
+    if (!sprint.start_date || !sprint.end_date) {
+        throw new Error('Sprint must have start and end dates before starting');
+    }
+
+    // Update to active status
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update({
+            status: 'active',
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error starting sprint:', error);
+        throw new Error('Failed to start sprint');
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}`);
+    revalidatePath(`/sprint/${sprintId}/board`);
+    return { success: true };
+}
+
+export async function completeSprintAction(sprintId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // Fetch sprint to validate
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { data: sprint, error: fetchError } = await supabaseAdmin
+        .from('sprints')
+        .select('*')
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id)
+        .single();
+
+    if (fetchError || !sprint) {
+        throw new Error('Sprint not found');
+    }
+
+    // Validate status transition
+    if (sprint.status !== 'active') {
+        throw new Error('Can only complete sprints in active status');
+    }
+
+    // Update to completed status
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update({
+            status: 'completed',
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error completing sprint:', error);
+        throw new Error('Failed to complete sprint');
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}`);
+    revalidatePath(`/sprint/${sprintId}/board`);
+    return { success: true };
+}
+
+export async function archiveSprintAction(sprintId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    // Get User's Organization
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) {
+        throw new Error('User is not part of an organization');
+    }
+
+    // Fetch sprint to validate
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    const { data: sprint, error: fetchError } = await supabaseAdmin
+        .from('sprints')
+        .select('*')
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id)
+        .single();
+
+    if (fetchError || !sprint) {
+        throw new Error('Sprint not found');
+    }
+
+    // Validate status transition
+    if (sprint.status !== 'completed') {
+        throw new Error('Can only archive sprints in completed status');
+    }
+
+    // Update to archived status
+    const { error } = await supabaseAdmin
+        .from('sprints')
+        .update({
+            status: 'archived',
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', sprintId)
+        .eq('org_slug', profile.org_id);
+
+    if (error) {
+        console.error('Error archiving sprint:', error);
+        throw new Error('Failed to archive sprint');
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath(`/sprint/${sprintId}`);
+    return { success: true };
 }

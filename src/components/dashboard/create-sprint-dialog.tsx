@@ -45,6 +45,7 @@ const sprintSchema = z.object({
   userId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  status: z.enum(['planning', 'active', 'completed', 'archived']).default('planning'),
 }).refine(
   (data) => {
     if (data.isFacilitator) return true;
