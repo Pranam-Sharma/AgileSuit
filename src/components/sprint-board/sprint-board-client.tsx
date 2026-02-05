@@ -27,7 +27,8 @@ import {
     Calendar,
     ChevronRight,
     PanelRightClose,
-    PanelRightOpen
+    PanelRightOpen,
+    AlertCircle
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/logo';
@@ -1398,6 +1399,25 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
                 {/* Kanban Board */}
                 <main className="flex-1 overflow-x-auto p-4 lg:p-6">
+                    {/* Warning Banner for Completed/Archived Sprints */}
+                    {(sprint.status === 'completed' || sprint.status === 'archived') && (
+                        <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <h3 className="font-semibold text-amber-900 dark:text-amber-400">
+                                        {sprint.status === 'completed' ? 'Sprint Completed' : 'Sprint Archived'}
+                                    </h3>
+                                    <p className="text-sm text-amber-700 dark:text-amber-500 mt-1">
+                                        {sprint.status === 'completed'
+                                            ? 'This sprint has been completed. Story editing is disabled. You can still view the board.'
+                                            : 'This sprint has been archived and is read-only. You can view stories but cannot make changes.'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 min-h-[calc(100vh-7rem)]">
                         {columns.map((column) => {
                             const theme = columnThemes[column.gradient] || columnThemes['slate'];

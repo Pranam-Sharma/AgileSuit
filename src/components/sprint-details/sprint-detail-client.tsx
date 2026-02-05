@@ -18,7 +18,9 @@ import {
   TrendingUp,
   AlertCircle,
   Clock,
-  Smile
+  Smile,
+  Play,
+  Archive
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
@@ -122,6 +124,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
   const [sprint, setSprint] = React.useState<(Sprint & { id: string }) | undefined>(initialSprint);
   const [isLoadingSprint, setIsLoadingSprint] = React.useState(!initialSprint);
   const [activeTab, setActiveTab] = React.useState('sprint-summary');
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
 
   React.useEffect(() => {
     const checkUser = async () => {
@@ -182,6 +185,77 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
     }
   }, [sprintId, sprint, initialSprint, toast]);
 
+  const handleStartSprint = async () => {
+    if (!sprint) return;
+
+    setIsTransitioning(true);
+    try {
+      const { startSprintAction } = await import('@/app/actions/sprints');
+      await startSprintAction(sprint.id);
+
+      setSprint(prev => prev ? { ...prev, status: 'active' } : prev);
+      toast({
+        title: 'Sprint Started',
+        description: `${sprint.sprintName} is now active!`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to start sprint',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
+
+  const handleCompleteSprint = async () => {
+    if (!sprint) return;
+
+    setIsTransitioning(true);
+    try {
+      const { completeSprintAction } = await import('@/app/actions/sprints');
+      await completeSprintAction(sprint.id);
+
+      setSprint(prev => prev ? { ...prev, status: 'completed' } : prev);
+      toast({
+        title: 'Sprint Completed',
+        description: `${sprint.sprintName} has been marked as completed.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to complete sprint',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
+
+  const handleArchiveSprint = async () => {
+    if (!sprint) return;
+
+    setIsTransitioning(true);
+    try {
+      const { archiveSprintAction } = await import('@/app/actions/sprints');
+      await archiveSprintAction(sprint.id);
+
+      setSprint(prev => prev ? { ...prev, status: 'archived' } : prev);
+      toast({
+        title: 'Sprint Archived',
+        description: `${sprint.sprintName} has been archived.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to archive sprint',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsTransitioning(false);
+    }
+  };
 
   if (isUserLoading || isLoadingSprint || !user || !sprint) {
     return (
@@ -252,6 +326,60 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                     <CalendarDays className="h-4 w-4 text-white/80" />
                     <span className="text-white text-sm font-medium">{sprint.facilitatorName || 'Unassigned'}</span>
                   </div>
+                </div>
+
+                {/* Lifecycle Control Buttons */}
+                <div className="flex flex-wrap items-center gap-3 pt-4">
+                  {sprint.status === 'planning' && (
+                    <Button
+                      onClick={handleStartSprint}
+                      disabled={isTransitioning}
+                      className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm"
+                    >
+                      {isTransitioning ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="mr-2 h-4 w-4" />
+                      )}
+                      Start Sprint
+                    </Button>
+                  )}
+
+                  {sprint.status === 'active' && (
+                    <Button
+                      onClick={handleCompleteSprint}
+                      disabled={isTransitioning}
+                      className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm"
+                    >
+                      {isTransitioning ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                      )}
+                      Complete Sprint
+                    </Button>
+                  )}
+
+                  {sprint.status === 'completed' && (
+                    <Button
+                      onClick={handleArchiveSprint}
+                      disabled={isTransitioning}
+                      className="bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm"
+                    >
+                      {isTransitioning ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Archive className="mr-2 h-4 w-4" />
+                      )}
+                      Archive Sprint
+                    </Button>
+                  )}
+
+                  {sprint.status === 'archived' && (
+                    <Badge className="bg-white/10 text-white/70 border-white/20">
+                      This sprint has been archived
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
