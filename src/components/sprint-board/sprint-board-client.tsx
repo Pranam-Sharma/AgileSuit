@@ -365,7 +365,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     // Fetch stories from database
     React.useEffect(() => {
         async function fetchStories() {
-            if (!sprintId) return;
+            if (!sprintId || isLoadingColumns) return;
 
             setIsLoadingStories(true);
             try {
@@ -386,6 +386,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                     const storyMap = new Map<string, Story[]>();
 
                     // Initialize all columns with empty arrays
+                    // We use the functional update pattern's previous value to ensure we have latest columns
+                    // But here we need to know the column IDs to initialize the map
+                    // Since we waited for isLoadingColumns, 'columns' should be up to date
                     columns.forEach(col => {
                         storyMap.set(col.id, []);
                     });
@@ -405,9 +408,25 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                             due_date: dbStory.due_date || undefined
                         };
 
-                        const columnStories = storyMap.get(dbStory.column_id) || [];
-                        columnStories.push(story);
-                        storyMap.set(dbStory.column_id, columnStories);
+                        // Use the column_id directly from the story
+                        const columnStories = storyMap.get(dbStory.column_id);
+                        if (columnStories) {
+                            columnStories.push(story);
+                        } else {
+                            // If the column doesn't exist in our current view (e.g. was deleted), 
+                            // we could potentially add it to a "Lost & Found" or just ignore/log it.
+                            // For now, let's try to map it if we can find the column, or create a new entry if feasible?
+                            // Actually, if we initialize map from columns, we only show stories for those columns.
+                            // If we want to show ALL stories, we should initialize map dynamically?
+                            // Let's stick to showing stories for known columns.
+                            // However, if we mistakenly used default columns, we might miss stories.
+                            // But since we wait for isLoadingColumns, we should have the real columns from DB.
+
+                            // Let's double check if we can add it to the map anyway so we don't lose it if column ID matches
+                            const newColStories = storyMap.get(dbStory.column_id) || [];
+                            newColStories.push(story);
+                            storyMap.set(dbStory.column_id, newColStories);
+                        }
                     });
 
                     // Update columns with fetched stories
@@ -431,7 +450,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         }
 
         fetchStories();
-    }, [sprintId, toast]);
+    }, [sprintId, toast, isLoadingColumns]);
 
     const handleColumnTitleClick = (columnId: string, currentTitle: string) => {
         setEditingColumnId(columnId);
@@ -552,9 +571,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     };
 
     const handleOpenAddStory = (columnId: string) => {
-        // Clear any previously selected story
         setEditingStory(null);
-        // Reset the form to initial empty state
         setNewStory({
             title: '',
             description: '',
@@ -564,11 +581,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             status: 'todo'
         });
         setSelectedColumnId(columnId);
-        setIsAddStoryDialogOpen(true);
+        setStoryDialogMode('create');
+        setIsStoryDialogOpen(true);
     };
 
-    const handleAddStory = async () => {
-        if (!newStory.title?.trim()) {
+    const handleAddStory = async (storyData: Partial<Story>) => {
+        if (!storyData.title?.trim()) {
             toast({
                 title: 'Error',
                 description: 'Please enter a story title.',

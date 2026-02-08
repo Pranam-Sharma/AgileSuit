@@ -199,7 +199,7 @@ export async function initializeDefaultColumns(sprintId: string): Promise<{ succ
     ];
 
     const columnsToInsert = defaultColumns.map(col => ({
-      id: `${col.id}`,
+      id: `${sprintId}-${col.id}`,
       sprint_id: sprintId,
       title: col.title,
       gradient: col.gradient,
