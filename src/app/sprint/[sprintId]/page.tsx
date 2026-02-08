@@ -35,6 +35,9 @@ export default async function SprintDetailPage({ params }: { params: Promise<{ s
             facilitatorName: sprint.facilitator_name,
             plannedPoints: sprint.planned_points,
             completedPoints: sprint.completed_points,
+            startDate: sprint.start_date,
+            endDate: sprint.end_date,
+            status: sprint.status || 'planning',
             isFacilitator: false, // Default, client can verify with user comparison
             userId: sprint.created_by
         };

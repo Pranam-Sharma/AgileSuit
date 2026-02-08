@@ -274,7 +274,7 @@ export async function getSprintAction(sprintId: string) {
         completedPoints: sprint.completed_points,
         startDate: sprint.start_date,
         endDate: sprint.end_date,
-        status: sprint.status,
+        status: sprint.status || 'planning',
         userId: sprint.created_by,
         isFacilitator: false // default
     };

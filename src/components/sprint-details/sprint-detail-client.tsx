@@ -160,6 +160,9 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
             facilitatorName: fetchedSprint.facilitator_name,
             plannedPoints: fetchedSprint.planned_points,
             completedPoints: fetchedSprint.completed_points,
+            startDate: fetchedSprint.start_date,
+            endDate: fetchedSprint.end_date,
+            status: fetchedSprint.status || 'planning',
             isFacilitator: false,
             userId: fetchedSprint.created_by
           };
@@ -571,369 +574,369 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
           {/* Sprint Analytics Dashboard - Full Width */}
           <div className="w-full mt-12 px-6 lg:px-12">
             <div className="space-y-8 pt-8">
-            {/* Section Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">Sprint Analytics</h2>
-                <p className="text-zinc-600 dark:text-zinc-400 mt-1">Real-time insights and metrics</p>
+              {/* Section Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold text-zinc-900 dark:text-white">Sprint Analytics</h2>
+                  <p className="text-zinc-600 dark:text-zinc-400 mt-1">Real-time insights and metrics</p>
+                </div>
               </div>
-            </div>
 
-            {/* Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              {/* Planned Points */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Planned Points</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-black text-blue-900 dark:text-blue-100">{sprint.plannedPoints || 0}</div>
-                </CardContent>
-                <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-blue-200/30 dark:bg-blue-800/20 blur-2xl" />
-              </Card>
+              {/* Metrics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                {/* Planned Points */}
+                <Card className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Planned Points</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-black text-blue-900 dark:text-blue-100">{sprint.plannedPoints || 0}</div>
+                  </CardContent>
+                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-blue-200/30 dark:bg-blue-800/20 blur-2xl" />
+                </Card>
 
-              {/* Completed */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider">Completed</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-black text-green-900 dark:text-green-100">{sprint.completedPoints || 0}</div>
-                </CardContent>
-                <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-green-200/30 dark:bg-green-800/20 blur-2xl" />
-              </Card>
+                {/* Completed */}
+                <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/20 border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider">Completed</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-black text-green-900 dark:text-green-100">{sprint.completedPoints || 0}</div>
+                  </CardContent>
+                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-green-200/30 dark:bg-green-800/20 blur-2xl" />
+                </Card>
 
-              {/* Velocity */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Velocity</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-black text-purple-900 dark:text-purple-100">12.5 <span className="text-xl">SP</span></div>
-                </CardContent>
-                <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-purple-200/30 dark:bg-purple-800/20 blur-2xl" />
-              </Card>
+                {/* Velocity */}
+                <Card className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/20 border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-xs font-semibold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Velocity</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-black text-purple-900 dark:text-purple-100">12.5 <span className="text-xl">SP</span></div>
+                  </CardContent>
+                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-purple-200/30 dark:bg-purple-800/20 blur-2xl" />
+                </Card>
 
-              {/* Goals Achieved */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 border-0 shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Goals Achieved</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-black text-orange-900 dark:text-orange-100">0%</div>
-                </CardContent>
-                <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-orange-200/30 dark:bg-orange-800/20 blur-2xl" />
-              </Card>
+                {/* Goals Achieved */}
+                <Card className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/30 dark:to-orange-900/20 border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardDescription className="text-xs font-semibold text-orange-700 dark:text-orange-400 uppercase tracking-wider">Goals Achieved</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-4xl font-black text-orange-900 dark:text-orange-100">0%</div>
+                  </CardContent>
+                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-orange-200/30 dark:bg-orange-800/20 blur-2xl" />
+                </Card>
 
-              {/* Burndown Chart Preview */}
-              <Card className="relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/20 dark:from-primary/20 dark:to-primary/10 border-0 shadow-lg">
-                <CardHeader className="pb-2">
-                  <CardDescription className="text-xs font-semibold text-primary uppercase tracking-wider">Burndown</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="h-20 rounded-lg overflow-hidden">
-                    <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
-                      <path d="M 0 10 L 30 15 L 60 25 L 100 45" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-primary drop-shadow-lg" />
-                      <path d="M 0 10 L 30 15 L 60 25 L 100 45 L 100 50 L 0 50 Z" fill="url(#miniGradient)" />
-                      <defs>
-                        <linearGradient id="miniGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="currentColor" stopOpacity="0.4" className="text-primary" />
-                          <stop offset="100%" stopColor="currentColor" stopOpacity="0.1" className="text-primary" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </div>
-                </CardContent>
-                <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-2xl" />
-              </Card>
-            </div>
-
-            {/* Tab Navigation */}
-            <div className="relative">
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { id: 'sprint-summary', label: 'Sprint Summary' },
-                  { id: 'ai-insights', label: 'AI Insights' },
-                  { id: 'project-timeline', label: 'Project Timeline' },
-                  { id: 'daily-huddle', label: 'Daily Huddle' },
-                  { id: 'sprint-charts', label: 'Sprint Charts' },
-                  { id: 'daily-burndown', label: 'Daily Burndown' },
-                  { id: 'individual-metrics', label: 'Individual Metrics' },
-                  { id: 'team-mood', label: 'Team Mood Trend' },
-                ].map((tab) => (
-                  <Button
-                    key={tab.id}
-                    variant={activeTab === tab.id ? 'default' : 'ghost'}
-                    size="lg"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      'font-semibold transition-all duration-200 rounded-xl',
-                      activeTab === tab.id
-                        ? 'bg-primary text-white shadow-lg scale-105'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                    )}
-                  >
-                    {tab.label}
-                  </Button>
-                ))}
+                {/* Burndown Chart Preview */}
+                <Card className="relative overflow-hidden bg-gradient-to-br from-primary/10 to-primary/20 dark:from-primary/20 dark:to-primary/10 border-0 shadow-lg">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="text-xs font-semibold text-primary uppercase tracking-wider">Burndown</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    <div className="h-20 rounded-lg overflow-hidden">
+                      <svg viewBox="0 0 100 50" className="w-full h-full" preserveAspectRatio="none">
+                        <path d="M 0 10 L 30 15 L 60 25 L 100 45" stroke="currentColor" strokeWidth="2.5" fill="none" className="text-primary drop-shadow-lg" />
+                        <path d="M 0 10 L 30 15 L 60 25 L 100 45 L 100 50 L 0 50 Z" fill="url(#miniGradient)" />
+                        <defs>
+                          <linearGradient id="miniGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="currentColor" stopOpacity="0.4" className="text-primary" />
+                            <stop offset="100%" stopColor="currentColor" stopOpacity="0.1" className="text-primary" />
+                          </linearGradient>
+                        </defs>
+                      </svg>
+                    </div>
+                  </CardContent>
+                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/20 blur-2xl" />
+                </Card>
               </div>
-              <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent mt-6" />
-            </div>
 
-            {/* Tab Content */}
-            {activeTab === 'sprint-summary' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6">
-                {/* Left Column */}
-                <div className="space-y-8">
-                  {/* Sprint Goals */}
-                  <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10">
-                          <Target className="h-6 w-6 text-primary" />
-                        </div>
-                        Sprint Goals
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700 hover:border-red-300 dark:hover:border-red-700 transition-all">
-                        <div className="mt-1 p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
-                          <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        </div>
-                        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                          Complete migration of APIC platform to DSDK 3.0.0
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Tab Navigation */}
+              <div className="relative">
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { id: 'sprint-summary', label: 'Sprint Summary' },
+                    { id: 'ai-insights', label: 'AI Insights' },
+                    { id: 'project-timeline', label: 'Project Timeline' },
+                    { id: 'daily-huddle', label: 'Daily Huddle' },
+                    { id: 'sprint-charts', label: 'Sprint Charts' },
+                    { id: 'daily-burndown', label: 'Daily Burndown' },
+                    { id: 'individual-metrics', label: 'Individual Metrics' },
+                    { id: 'team-mood', label: 'Team Mood Trend' },
+                  ].map((tab) => (
+                    <Button
+                      key={tab.id}
+                      variant={activeTab === tab.id ? 'default' : 'ghost'}
+                      size="lg"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={cn(
+                        'font-semibold transition-all duration-200 rounded-xl',
+                        activeTab === tab.id
+                          ? 'bg-primary text-white shadow-lg scale-105'
+                          : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      )}
+                    >
+                      {tab.label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="h-px bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent mt-6" />
+              </div>
 
-                  {/* Open Stories */}
-                  <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
+              {/* Tab Content */}
+              {activeTab === 'sprint-summary' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6">
+                  {/* Left Column */}
+                  <div className="space-y-8">
+                    {/* Sprint Goals */}
+                    <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
+                      <CardHeader className="pb-4">
                         <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-blue-500/10">
-                            <ClipboardList className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                          <div className="p-2 rounded-xl bg-primary/10">
+                            <Target className="h-6 w-6 text-primary" />
                           </div>
-                          Open Stories
+                          Sprint Goals
                         </CardTitle>
-                        <Badge variant="outline" className="text-xs font-semibold">2 Active</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200 dark:border-orange-800">
-                        <div className="flex items-center gap-3">
-                          <div className="h-3 w-3 rounded-full bg-orange-500 animate-pulse" />
-                          <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sprint 46-1</span>
-                        </div>
-                        <Badge className="bg-orange-500 text-white hover:bg-orange-600 text-xs font-bold">To Do</Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10 border border-blue-200 dark:border-blue-800">
-                        <div className="flex items-center gap-3">
-                          <div className="h-3 w-3 rounded-full bg-blue-500 animate-pulse" />
-                          <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sprint 46-2</span>
-                        </div>
-                        <Badge className="bg-blue-500 text-white hover:bg-blue-600 text-xs font-bold">In Progress</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* AI Insights */}
-                  <Card className="relative overflow-hidden bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/30 dark:via-orange-950/20 dark:to-red-900/20 border-2 border-red-200 dark:border-red-800 shadow-xl">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-200/30 dark:bg-red-800/20 rounded-full blur-3xl" />
-                    <CardHeader className="pb-4 relative">
-                      <CardTitle className="text-2xl font-bold text-red-900 dark:text-red-100 flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-red-500/20">
-                          <Zap className="h-6 w-6 text-red-600 dark:text-red-400" />
-                        </div>
-                        AI Insights
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <p className="text-base font-medium text-red-900 dark:text-red-200 leading-relaxed">
-                        The sprint is on track: 15 points remaining. API deprecation requires additional attention.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-8">
-                  {/* Burndown Chart */}
-                  <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-primary/10">
-                          <TrendingUp className="h-6 w-6 text-primary" />
-                        </div>
-                        Burndown Chart
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-72 rounded-2xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-900/50 p-6 border border-zinc-200 dark:border-zinc-700">
-                        <svg viewBox="0 0 300 200" className="w-full h-full" preserveAspectRatio="none">
-                          {/* Grid */}
-                          {[0, 50, 100, 150, 200].map((y) => (
-                            <line key={y} x1="0" y1={y} x2="300" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-zinc-300 dark:text-zinc-600" strokeDasharray="4 4" />
-                          ))}
-
-                          {/* Burndown line */}
-                          <path d="M 0 50 L 100 80 L 200 120 L 300 150" stroke="currentColor" strokeWidth="4" fill="none" className="text-primary drop-shadow-lg" strokeLinecap="round" />
-                          <path d="M 0 50 L 100 80 L 200 120 L 300 150 L 300 200 L 0 200 Z" fill="url(#burndownGradient2)" />
-
-                          {/* Data points */}
-                          <circle cx="0" cy="50" r="5" fill="currentColor" className="text-primary" />
-                          <circle cx="100" cy="80" r="5" fill="currentColor" className="text-primary" />
-                          <circle cx="200" cy="120" r="5" fill="currentColor" className="text-primary" />
-                          <circle cx="300" cy="150" r="5" fill="currentColor" className="text-primary" />
-
-                          <defs>
-                            <linearGradient id="burndownGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
-                              <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" className="text-primary" />
-                              <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" className="text-primary" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between text-sm font-medium text-zinc-600 dark:text-zinc-400 px-2">
-                        <span>Sep 10</span>
-                        <span>Sep 19</span>
-                        <span>Sep 24</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Velocity Chart */}
-                  <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-purple-500/10">
-                          <Zap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        Velocity Chart
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-64 flex items-end justify-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
-                        {[
-                          { label: 'Sprint 1', value: 30, color: 'from-blue-500 to-blue-600' },
-                          { label: 'Sprint 2', value: 35, color: 'from-primary to-orange-600' },
-                          { label: 'Sprint 3', value: 28, color: 'from-purple-500 to-purple-600' }
-                        ].map((sprint, idx) => (
-                          <div key={idx} className="flex flex-col items-center gap-3 flex-1 group">
-                            <div className={`relative w-full bg-gradient-to-t ${sprint.color} rounded-t-xl flex items-end justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg`} style={{ height: `${sprint.value * 3}px` }}>
-                              <span className="text-white font-bold text-lg mb-2 drop-shadow-md">{sprint.value}</span>
-                              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-t-xl transition-all" />
-                            </div>
-                            <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{sprint.label}</span>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-800/30 border border-zinc-200 dark:border-zinc-700 hover:border-red-300 dark:hover:border-red-700 transition-all">
+                          <div className="mt-1 p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
+                            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                            Complete migration of APIC platform to DSDK 3.0.0
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  {/* Mood */}
-                  <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-green-950/30 dark:via-emerald-950/20 dark:to-green-900/20 border-2 border-green-200 dark:border-green-800 shadow-xl">
-                    <div className="absolute bottom-0 right-0 w-40 h-40 bg-green-200/30 dark:bg-green-800/20 rounded-full blur-3xl" />
-                    <CardHeader className="pb-4 relative">
-                      <CardTitle className="text-2xl font-bold text-green-900 dark:text-green-100 flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-green-500/20">
-                          <Smile className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    {/* Open Stories */}
+                    <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-blue-500/10">
+                              <ClipboardList className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            Open Stories
+                          </CardTitle>
+                          <Badge variant="outline" className="text-xs font-semibold">2 Active</Badge>
                         </div>
-                        Team Mood
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-2xl bg-green-500/20">
-                          <Smile className="h-12 w-12 text-green-600 dark:text-green-400" />
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200 dark:border-orange-800">
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 rounded-full bg-orange-500 animate-pulse" />
+                            <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sprint 46-1</span>
+                          </div>
+                          <Badge className="bg-orange-500 text-white hover:bg-orange-600 text-xs font-bold">To Do</Badge>
                         </div>
-                        <span className="text-4xl font-black text-green-900 dark:text-green-100">Positive</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/10 border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-3">
+                            <div className="h-3 w-3 rounded-full bg-blue-500 animate-pulse" />
+                            <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Sprint 46-2</span>
+                          </div>
+                          <Badge className="bg-blue-500 text-white hover:bg-blue-600 text-xs font-bold">In Progress</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                  {/* Risks / Blockers */}
-                  <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-orange-500/10">
-                          <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        Risks / Blockers
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 border-2 border-orange-200 dark:border-orange-800">
-                        <div className="mt-1 p-1.5 rounded-lg bg-orange-500/20">
-                          <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                        </div>
-                        <p className="text-base font-medium text-orange-900 dark:text-orange-200">
-                          Legacy support could cause delays
+                    {/* AI Insights */}
+                    <Card className="relative overflow-hidden bg-gradient-to-br from-red-50 via-orange-50 to-red-100 dark:from-red-950/30 dark:via-orange-950/20 dark:to-red-900/20 border-2 border-red-200 dark:border-red-800 shadow-xl">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-red-200/30 dark:bg-red-800/20 rounded-full blur-3xl" />
+                      <CardHeader className="pb-4 relative">
+                        <CardTitle className="text-2xl font-bold text-red-900 dark:text-red-100 flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-red-500/20">
+                            <Zap className="h-6 w-6 text-red-600 dark:text-red-400" />
+                          </div>
+                          AI Insights
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="relative">
+                        <p className="text-base font-medium text-red-900 dark:text-red-200 leading-relaxed">
+                          The sprint is on track: 15 points remaining. API deprecation requires additional attention.
                         </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-8">
+                    {/* Burndown Chart */}
+                    <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-primary/10">
+                            <TrendingUp className="h-6 w-6 text-primary" />
+                          </div>
+                          Burndown Chart
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-72 rounded-2xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-900/50 p-6 border border-zinc-200 dark:border-zinc-700">
+                          <svg viewBox="0 0 300 200" className="w-full h-full" preserveAspectRatio="none">
+                            {/* Grid */}
+                            {[0, 50, 100, 150, 200].map((y) => (
+                              <line key={y} x1="0" y1={y} x2="300" y2={y} stroke="currentColor" strokeWidth="0.5" className="text-zinc-300 dark:text-zinc-600" strokeDasharray="4 4" />
+                            ))}
+
+                            {/* Burndown line */}
+                            <path d="M 0 50 L 100 80 L 200 120 L 300 150" stroke="currentColor" strokeWidth="4" fill="none" className="text-primary drop-shadow-lg" strokeLinecap="round" />
+                            <path d="M 0 50 L 100 80 L 200 120 L 300 150 L 300 200 L 0 200 Z" fill="url(#burndownGradient2)" />
+
+                            {/* Data points */}
+                            <circle cx="0" cy="50" r="5" fill="currentColor" className="text-primary" />
+                            <circle cx="100" cy="80" r="5" fill="currentColor" className="text-primary" />
+                            <circle cx="200" cy="120" r="5" fill="currentColor" className="text-primary" />
+                            <circle cx="300" cy="150" r="5" fill="currentColor" className="text-primary" />
+
+                            <defs>
+                              <linearGradient id="burndownGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" className="text-primary" />
+                                <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" className="text-primary" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between text-sm font-medium text-zinc-600 dark:text-zinc-400 px-2">
+                          <span>Sep 10</span>
+                          <span>Sep 19</span>
+                          <span>Sep 24</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Velocity Chart */}
+                    <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-purple-500/10">
+                            <Zap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          Velocity Chart
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64 flex items-end justify-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800/50 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-700">
+                          {[
+                            { label: 'Sprint 1', value: 30, color: 'from-blue-500 to-blue-600' },
+                            { label: 'Sprint 2', value: 35, color: 'from-primary to-orange-600' },
+                            { label: 'Sprint 3', value: 28, color: 'from-purple-500 to-purple-600' }
+                          ].map((sprint, idx) => (
+                            <div key={idx} className="flex flex-col items-center gap-3 flex-1 group">
+                              <div className={`relative w-full bg-gradient-to-t ${sprint.color} rounded-t-xl flex items-end justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg`} style={{ height: `${sprint.value * 3}px` }}>
+                                <span className="text-white font-bold text-lg mb-2 drop-shadow-md">{sprint.value}</span>
+                                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 rounded-t-xl transition-all" />
+                              </div>
+                              <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{sprint.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Mood */}
+                    <Card className="relative overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-green-950/30 dark:via-emerald-950/20 dark:to-green-900/20 border-2 border-green-200 dark:border-green-800 shadow-xl">
+                      <div className="absolute bottom-0 right-0 w-40 h-40 bg-green-200/30 dark:bg-green-800/20 rounded-full blur-3xl" />
+                      <CardHeader className="pb-4 relative">
+                        <CardTitle className="text-2xl font-bold text-green-900 dark:text-green-100 flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-green-500/20">
+                            <Smile className="h-6 w-6 text-green-600 dark:text-green-400" />
+                          </div>
+                          Team Mood
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="relative">
+                        <div className="flex items-center gap-4">
+                          <div className="p-3 rounded-2xl bg-green-500/20">
+                            <Smile className="h-12 w-12 text-green-600 dark:text-green-400" />
+                          </div>
+                          <span className="text-4xl font-black text-green-900 dark:text-green-100">Positive</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Risks / Blockers */}
+                    <Card className="bg-white dark:bg-zinc-900 border-0 shadow-xl">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-orange-500/10">
+                            <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          Risks / Blockers
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/10 border-2 border-orange-200 dark:border-orange-800">
+                          <div className="mt-1 p-1.5 rounded-lg bg-orange-500/20">
+                            <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          <p className="text-base font-medium text-orange-900 dark:text-orange-200">
+                            Legacy support could cause delays
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* AI Insights Tab Content */}
-            {activeTab === 'ai-insights' && (
-              <Card className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 border border-red-200 dark:border-red-900">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-red-900 dark:text-red-400 flex items-center gap-2">
-                    <Zap className="h-6 w-6" />
-                    AI Insights
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-red-800 dark:text-red-300">
-                    The sprint is on track: 15.75 points remaining. API deprecation.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                    <div className="p-4 bg-white/50 dark:bg-zinc-900/50 rounded-lg border border-red-200 dark:border-red-900">
-                      <h4 className="font-semibold text-red-900 dark:text-red-400 mb-2">Key Observations</h4>
-                      <ul className="space-y-2 text-sm text-red-800 dark:text-red-300">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <span>Sprint velocity is stable</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <span>API deprecation needs attention</span>
-                        </li>
-                      </ul>
+              {/* AI Insights Tab Content */}
+              {activeTab === 'ai-insights' && (
+                <Card className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20 border border-red-200 dark:border-red-900">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-red-900 dark:text-red-400 flex items-center gap-2">
+                      <Zap className="h-6 w-6" />
+                      AI Insights
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-red-800 dark:text-red-300">
+                      The sprint is on track: 15.75 points remaining. API deprecation.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                      <div className="p-4 bg-white/50 dark:bg-zinc-900/50 rounded-lg border border-red-200 dark:border-red-900">
+                        <h4 className="font-semibold text-red-900 dark:text-red-400 mb-2">Key Observations</h4>
+                        <ul className="space-y-2 text-sm text-red-800 dark:text-red-300">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>Sprint velocity is stable</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>API deprecation needs attention</span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-white/50 dark:bg-zinc-900/50 rounded-lg border border-red-200 dark:border-red-900">
+                        <h4 className="font-semibold text-red-900 dark:text-red-400 mb-2">Recommendations</h4>
+                        <ul className="space-y-2 text-sm text-red-800 dark:text-red-300">
+                          <li className="flex items-start gap-2">
+                            <TrendingUp className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>Allocate additional resources for API migration</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <span>Consider extending timeline if blockers persist</span>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
-                    <div className="p-4 bg-white/50 dark:bg-zinc-900/50 rounded-lg border border-red-200 dark:border-red-900">
-                      <h4 className="font-semibold text-red-900 dark:text-red-400 mb-2">Recommendations</h4>
-                      <ul className="space-y-2 text-sm text-red-800 dark:text-red-300">
-                        <li className="flex items-start gap-2">
-                          <TrendingUp className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <span>Allocate additional resources for API migration</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Clock className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <span>Consider extending timeline if blockers persist</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Other tabs can show placeholder content */}
-            {activeTab !== 'sprint-summary' && activeTab !== 'ai-insights' && (
-              <Card className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                <CardContent className="py-12">
-                  <div className="text-center text-zinc-500">
-                    <p className="text-lg font-medium">Coming Soon</p>
-                    <p className="text-sm mt-2">This feature is under development</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              {/* Other tabs can show placeholder content */}
+              {activeTab !== 'sprint-summary' && activeTab !== 'ai-insights' && (
+                <Card className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                  <CardContent className="py-12">
+                    <div className="text-center text-zinc-500">
+                      <p className="text-lg font-medium">Coming Soon</p>
+                      <p className="text-sm mt-2">This feature is under development</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
