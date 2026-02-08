@@ -336,6 +336,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                 if (fetchedSprint) {
                     const mappedSprint = {
                         id: fetchedSprint.id,
+                        status: fetchedSprint.status || 'planning',
                         sprintNumber: fetchedSprint.sprint_number,
                         sprintName: fetchedSprint.name,
                         projectName: fetchedSprint.project_name,
@@ -1423,278 +1424,278 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                             const theme = columnThemes[column.gradient] || columnThemes['slate'];
                             const filteredStories = filterAndSortStories(column.stories);
                             return (
-                            <div key={column.id} className="flex-shrink-0 w-72 flex flex-col">
-                            {/* Column Header */}
-                            <div className={cn(
-                                "relative rounded-t-xl p-3 bg-gradient-to-br shadow-md backdrop-blur-sm",
-                                theme.gradient
-                            )}>
-                                <div className="flex items-center justify-between mb-2">
-                                    {editingColumnId === column.id ? (
-                                        <Input
-                                            value={editingColumnTitle}
-                                            onChange={(e) => setEditingColumnTitle(e.target.value)}
-                                            onBlur={handleColumnTitleSave}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handleColumnTitleSave();
-                                                if (e.key === 'Escape') {
-                                                    setEditingColumnId(null);
-                                                    setEditingColumnTitle('');
-                                                }
-                                            }}
-                                            autoFocus
-                                            className="h-8 bg-white/20 border-white/30 text-white placeholder:text-white/70 font-bold"
-                                        />
-                                    ) : (
-                                        <button
-                                            onClick={() => handleColumnTitleClick(column.id, column.title)}
-                                            className="text-lg font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
-                                        >
-                                            {column.title}
-                                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
-                                        </button>
-                                    )}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleColumnTitleClick(column.id, column.title)}>
-                                                <Edit2 className="mr-2 h-4 w-4" />
-                                                Edit Name
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() => handleDeleteColumn(column.id)}
-                                                className="text-red-600"
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete Column
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                                        {filteredStories.length} {filteredStories.length === 1 ? 'story' : 'stories'}
-                                    </Badge>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleOpenAddStory(column.id)}
-                                        className="h-7 text-white hover:bg-white/20"
-                                    >
-                                        <Plus className="h-4 w-4 mr-1" />
-                                        Add
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {/* Stories List */}
-                            <div
-                                className={cn(
-                                    "flex-1 rounded-b-xl p-3 space-y-2 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all duration-200",
-                                    theme.bgColor,
-                                    dragOverColumnId === column.id && "ring-2 ring-primary/50 ring-offset-2 bg-primary/5 border-primary/30"
-                                )}
-                                onDragOver={handleDragOver}
-                                onDragEnter={() => handleDragEnter(column.id)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, column.id)}
-                            >
-                                {/* Drop Zone Indicator */}
-                                {dragOverColumnId === column.id && draggedStory && (
-                                    <div className="mb-2 p-4 border-2 border-dashed border-primary/50 rounded-lg bg-primary/10 flex items-center justify-center animate-pulse">
-                                        <span className="text-xs font-medium text-primary">Drop story here</span>
-                                    </div>
-                                )}
-
-                                {filteredStories.length === 0 ? (
+                                <div key={column.id} className="flex-shrink-0 w-72 flex flex-col">
+                                    {/* Column Header */}
                                     <div className={cn(
-                                        "flex flex-col items-center justify-center h-24 text-zinc-400 dark:text-zinc-600 text-xs",
-                                        dragOverColumnId === column.id && "text-primary"
+                                        "relative rounded-t-xl p-3 bg-gradient-to-br shadow-md backdrop-blur-sm",
+                                        theme.gradient
                                     )}>
-                                        {dragOverColumnId === column.id ? (
-                                            <>
-                                                <GripVertical className="h-6 w-6 mb-1 animate-bounce" />
-                                                <span>Drop here</span>
-                                            </>
+                                        <div className="flex items-center justify-between mb-2">
+                                            {editingColumnId === column.id ? (
+                                                <Input
+                                                    value={editingColumnTitle}
+                                                    onChange={(e) => setEditingColumnTitle(e.target.value)}
+                                                    onBlur={handleColumnTitleSave}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleColumnTitleSave();
+                                                        if (e.key === 'Escape') {
+                                                            setEditingColumnId(null);
+                                                            setEditingColumnTitle('');
+                                                        }
+                                                    }}
+                                                    autoFocus
+                                                    className="h-8 bg-white/20 border-white/30 text-white placeholder:text-white/70 font-bold"
+                                                />
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleColumnTitleClick(column.id, column.title)}
+                                                    className="text-lg font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
+                                                >
+                                                    {column.title}
+                                                    <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                                                </button>
+                                            )}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
+                                                        <MoreVertical className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handleColumnTitleClick(column.id, column.title)}>
+                                                        <Edit2 className="mr-2 h-4 w-4" />
+                                                        Edit Name
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleDeleteColumn(column.id)}
+                                                        className="text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Delete Column
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <Badge variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                                                {filteredStories.length} {filteredStories.length === 1 ? 'story' : 'stories'}
+                                            </Badge>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleOpenAddStory(column.id)}
+                                                className="h-7 text-white hover:bg-white/20"
+                                            >
+                                                <Plus className="h-4 w-4 mr-1" />
+                                                Add
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Stories List */}
+                                    <div
+                                        className={cn(
+                                            "flex-1 rounded-b-xl p-3 space-y-2 overflow-y-auto border-x border-b border-zinc-200/50 dark:border-zinc-700/50 backdrop-blur-sm transition-all duration-200",
+                                            theme.bgColor,
+                                            dragOverColumnId === column.id && "ring-2 ring-primary/50 ring-offset-2 bg-primary/5 border-primary/30"
+                                        )}
+                                        onDragOver={handleDragOver}
+                                        onDragEnter={() => handleDragEnter(column.id)}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={(e) => handleDrop(e, column.id)}
+                                    >
+                                        {/* Drop Zone Indicator */}
+                                        {dragOverColumnId === column.id && draggedStory && (
+                                            <div className="mb-2 p-4 border-2 border-dashed border-primary/50 rounded-lg bg-primary/10 flex items-center justify-center animate-pulse">
+                                                <span className="text-xs font-medium text-primary">Drop story here</span>
+                                            </div>
+                                        )}
+
+                                        {filteredStories.length === 0 ? (
+                                            <div className={cn(
+                                                "flex flex-col items-center justify-center h-24 text-zinc-400 dark:text-zinc-600 text-xs",
+                                                dragOverColumnId === column.id && "text-primary"
+                                            )}>
+                                                {dragOverColumnId === column.id ? (
+                                                    <>
+                                                        <GripVertical className="h-6 w-6 mb-1 animate-bounce" />
+                                                        <span>Drop here</span>
+                                                    </>
+                                                ) : (
+                                                    <span>{column.stories.length === 0 ? 'No stories yet' : 'No stories match filters'}</span>
+                                                )}
+                                            </div>
                                         ) : (
-                                            <span>{column.stories.length === 0 ? 'No stories yet' : 'No stories match filters'}</span>
+                                            filteredStories.map((story, index) => (
+                                                <div key={`${column.id}-${story.id}`} className="relative">
+                                                    {/* Drop indicator before story */}
+                                                    {dragOverStoryId === story.id && dropPosition === 'before' && (
+                                                        <div className="h-0.5 bg-primary rounded-full mb-2 animate-pulse shadow-lg shadow-primary/50" />
+                                                    )}
+
+                                                    <Card
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, story.id, column.id)}
+                                                        onDragEnd={handleDragEnd}
+                                                        onDragOver={(e) => handleStoryDragOver(e, story.id)}
+                                                        onDragLeave={handleStoryDragLeave}
+                                                        onDrop={(e) => handleDrop(e, column.id, story.id)}
+                                                        onClick={() => handleEditStory(story)}
+                                                        style={{
+                                                            animationDelay: `${index * 50}ms`
+                                                        }}
+                                                        className={cn(
+                                                            "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
+                                                            "hover:scale-[1.02] hover:border-primary/50 hover:ring-1 hover:ring-primary/20",
+                                                            "animate-fadeInUp",
+                                                            draggedStory?.storyId === story.id && "opacity-40 scale-95 rotate-2",
+                                                            dragOverStoryId === story.id && "ring-2 ring-primary/50",
+                                                            theme.cardBg
+                                                        )}
+                                                    >
+                                                        {/* Drag Handle */}
+                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-zinc-300 dark:via-zinc-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity">
+                                                            <GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                                                        </div>
+
+                                                        <CardContent className="p-3 pl-7 space-y-2">
+                                                            {/* Top Section: Priority and Menu */}
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <Badge variant="outline" className={cn("text-xs font-medium", getPriorityColor(story.priority))}>
+                                                                    {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
+                                                                </Badge>
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        >
+                                                                            <MoreVertical className="h-3 w-3" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuItem onClick={() => handleEditStory(story)}>
+                                                                            <Edit2 className="mr-2 h-4 w-4" />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleDeleteStory(column.id, story.id)}
+                                                                            className="text-red-600"
+                                                                        >
+                                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                                            Delete
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
+
+                                                            {/* Title */}
+                                                            <h4 className="font-semibold text-sm text-zinc-900 dark:text-white leading-snug">
+                                                                {story.title}
+                                                            </h4>
+
+                                                            {/* Status and Tags Row */}
+                                                            <div className="flex items-center flex-wrap gap-1">
+                                                                {/* Status Badge */}
+                                                                <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status))}>
+                                                                    {getStatusLabel(story.status)}
+                                                                </Badge>
+
+                                                                {/* Tags */}
+                                                                {story.tags && story.tags.length > 0 && story.tags.map((tag, index) => (
+                                                                    <Badge key={index} variant="secondary" className="text-xs">
+                                                                        {tag}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Due Date */}
+                                                            {story.due_date && (
+                                                                <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                                                    <Calendar className="h-3 w-3" />
+                                                                    <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Progress Bar */}
+                                                            {story.storyPoints !== undefined && story.storyPoints > 0 && (
+                                                                <div className="space-y-0.5">
+                                                                    <div className="flex items-center justify-between text-xs">
+                                                                        <span className="text-zinc-600 dark:text-zinc-400 text-xs">Progress</span>
+                                                                        <span className="font-medium text-zinc-900 dark:text-white text-xs">
+                                                                            {Math.round(((story.completedStoryPoints || 0) / story.storyPoints) * 100)}%
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            className="h-full bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-300"
+                                                                            style={{
+                                                                                width: `${Math.min(((story.completedStoryPoints || 0) / story.storyPoints) * 100, 100)}%`
+                                                                            }}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Bottom Section: Assignee and Story Points */}
+                                                            <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200 dark:border-zinc-700">
+                                                                {/* Left: Assignee */}
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {story.assignee ? (
+                                                                        <>
+                                                                            <Avatar className="h-5 w-5">
+                                                                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                                    {story.assignee.charAt(0).toUpperCase()}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                                                {story.assignee}
+                                                                            </span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <div className="h-5"></div>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Right: Story Points */}
+                                                                <div className="flex items-center gap-2">
+                                                                    {story.storyPoints !== undefined && story.storyPoints > 0 && (
+                                                                        <Badge variant="secondary" className="text-xs bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0">
+                                                                            {story.storyPoints} SP
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+
+                                                    {/* Drop indicator after story */}
+                                                    {dragOverStoryId === story.id && dropPosition === 'after' && (
+                                                        <div className="h-0.5 bg-primary rounded-full mt-2 animate-pulse shadow-lg shadow-primary/50" />
+                                                    )}
+                                                </div>
+                                            ))
                                         )}
                                     </div>
-                                ) : (
-                                    filteredStories.map((story, index) => (
-                                        <div key={`${column.id}-${story.id}`} className="relative">
-                                            {/* Drop indicator before story */}
-                                            {dragOverStoryId === story.id && dropPosition === 'before' && (
-                                                <div className="h-0.5 bg-primary rounded-full mb-2 animate-pulse shadow-lg shadow-primary/50" />
-                                            )}
+                                </div>
+                            );
+                        })}
 
-                                            <Card
-                                                draggable
-                                                onDragStart={(e) => handleDragStart(e, story.id, column.id)}
-                                                onDragEnd={handleDragEnd}
-                                                onDragOver={(e) => handleStoryDragOver(e, story.id)}
-                                                onDragLeave={handleStoryDragLeave}
-                                                onDrop={(e) => handleDrop(e, column.id, story.id)}
-                                                onClick={() => handleEditStory(story)}
-                                                style={{
-                                                    animationDelay: `${index * 50}ms`
-                                                }}
-                                                className={cn(
-                                                    "group relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-grab active:cursor-grabbing",
-                                                    "hover:scale-[1.02] hover:border-primary/50 hover:ring-1 hover:ring-primary/20",
-                                                    "animate-fadeInUp",
-                                                    draggedStory?.storyId === story.id && "opacity-40 scale-95 rotate-2",
-                                                    dragOverStoryId === story.id && "ring-2 ring-primary/50",
-                                                    theme.cardBg
-                                                )}
-                                            >
-                                            {/* Drag Handle */}
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-transparent via-zinc-300 dark:via-zinc-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-60 transition-opacity">
-                                                <GripVertical className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-                                            </div>
-
-                                            <CardContent className="p-3 pl-7 space-y-2">
-                                                {/* Top Section: Priority and Menu */}
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <Badge variant="outline" className={cn("text-xs font-medium", getPriorityColor(story.priority))}>
-                                                        {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
-                                                    </Badge>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            >
-                                                                <MoreVertical className="h-3 w-3" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => handleEditStory(story)}>
-                                                                <Edit2 className="mr-2 h-4 w-4" />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                onClick={() => handleDeleteStory(column.id, story.id)}
-                                                                className="text-red-600"
-                                                            >
-                                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                                Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-
-                                                {/* Title */}
-                                                <h4 className="font-semibold text-sm text-zinc-900 dark:text-white leading-snug">
-                                                    {story.title}
-                                                </h4>
-
-                                                {/* Status and Tags Row */}
-                                                <div className="flex items-center flex-wrap gap-1">
-                                                    {/* Status Badge */}
-                                                    <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status))}>
-                                                        {getStatusLabel(story.status)}
-                                                    </Badge>
-
-                                                    {/* Tags */}
-                                                    {story.tags && story.tags.length > 0 && story.tags.map((tag, index) => (
-                                                        <Badge key={index} variant="secondary" className="text-xs">
-                                                            {tag}
-                                                        </Badge>
-                                                    ))}
-                                                </div>
-
-                                                {/* Due Date */}
-                                                {story.due_date && (
-                                                    <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                                        <Calendar className="h-3 w-3" />
-                                                        <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
-                                                    </div>
-                                                )}
-
-                                                {/* Progress Bar */}
-                                                {story.storyPoints !== undefined && story.storyPoints > 0 && (
-                                                    <div className="space-y-0.5">
-                                                        <div className="flex items-center justify-between text-xs">
-                                                            <span className="text-zinc-600 dark:text-zinc-400 text-xs">Progress</span>
-                                                            <span className="font-medium text-zinc-900 dark:text-white text-xs">
-                                                                {Math.round(((story.completedStoryPoints || 0) / story.storyPoints) * 100)}%
-                                                            </span>
-                                                        </div>
-                                                        <div className="h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-300"
-                                                                style={{
-                                                                    width: `${Math.min(((story.completedStoryPoints || 0) / story.storyPoints) * 100, 100)}%`
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Bottom Section: Assignee and Story Points */}
-                                                <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200 dark:border-zinc-700">
-                                                    {/* Left: Assignee */}
-                                                    <div className="flex items-center gap-1.5">
-                                                        {story.assignee ? (
-                                                            <>
-                                                                <Avatar className="h-5 w-5">
-                                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                                        {story.assignee.charAt(0).toUpperCase()}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                                                                    {story.assignee}
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <div className="h-5"></div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Right: Story Points */}
-                                                    <div className="flex items-center gap-2">
-                                                        {story.storyPoints !== undefined && story.storyPoints > 0 && (
-                                                            <Badge variant="secondary" className="text-xs bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0">
-                                                                {story.storyPoints} SP
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-
-                                            {/* Drop indicator after story */}
-                                            {dragOverStoryId === story.id && dropPosition === 'after' && (
-                                                <div className="h-0.5 bg-primary rounded-full mt-2 animate-pulse shadow-lg shadow-primary/50" />
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                        {/* Add Column Button */}
+                        <div className="flex-shrink-0 w-72">
+                            <Button
+                                variant="outline"
+                                onClick={handleAddColumn}
+                                className="w-full h-24 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary hover:bg-primary/5 transition-all rounded-xl"
+                            >
+                                <Plus className="h-5 w-5 mr-2" />
+                                Add Column
+                            </Button>
                         </div>
-                        );
-                    })}
-
-                    {/* Add Column Button */}
-                    <div className="flex-shrink-0 w-72">
-                        <Button
-                            variant="outline"
-                            onClick={handleAddColumn}
-                            className="w-full h-24 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary hover:bg-primary/5 transition-all rounded-xl"
-                        >
-                            <Plus className="h-5 w-5 mr-2" />
-                            Add Column
-                        </Button>
                     </div>
-                </div>
                 </main>
             </div>
 

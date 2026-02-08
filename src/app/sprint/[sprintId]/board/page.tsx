@@ -19,6 +19,7 @@ export default async function SprintBoardPage({ params }: { params: Promise<{ sp
             // Map snake_case DB fields to camelCase
             mappedSprint = {
                 id: sprint.id,
+                status: sprint.status || 'planning',
                 sprintNumber: sprint.sprint_number,
                 sprintName: sprint.name,
                 projectName: sprint.project_name,
