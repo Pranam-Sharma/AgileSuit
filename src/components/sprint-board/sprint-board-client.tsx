@@ -618,7 +618,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
         // Save to database
         const { data: createdStory, error } = await createStory({
             sprint_id: sprintId,
-            title: newStory.title,
+            title: newStory.title || '',
             description: newStory.description || '',
             story_points: newStory.storyPoints || undefined,
             completed_story_points: newStory.completedStoryPoints || 0,
