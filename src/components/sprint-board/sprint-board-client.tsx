@@ -582,8 +582,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
             status: 'todo'
         });
         setSelectedColumnId(columnId);
-        setStoryDialogMode('create');
-        setIsStoryDialogOpen(true);
+        setIsAddStoryDialogOpen(true);
     };
 
     const handleAddStory = async (storyData: Partial<Story>) => {
