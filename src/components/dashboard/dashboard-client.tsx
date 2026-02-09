@@ -21,6 +21,7 @@ import {
 import { useUserRole } from '@/hooks/use-user-role';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,45 +44,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-function UserNav({ user }: { user: User }) {
-  const router = useRouter();
-  const supabase = createClient();
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.replace('/login');
-  };
-
-  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : 'U';
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-          <Avatar className="h-9 w-9 border border-zinc-200 dark:border-zinc-800">
-            <AvatarImage src={user.user_metadata?.avatar_url || ''} alt={user.user_metadata?.full_name || ''} />
-            <AvatarFallback className='bg-primary/10 text-primary font-medium'>{userInitial}</AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <div className="flex flex-col space-y-1 p-2">
-          <p className="text-sm font-medium leading-none">
-            {user.user_metadata?.full_name || 'User'}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">
-            {user.email}
-          </p>
-        </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+import { UserNav } from './user-nav';
 
 type Filters = {
   department: string[];
@@ -185,9 +148,7 @@ export function DashboardClient() {
 
   if (isUserLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
+      <LoadingScreen message="Loading Dashboard..." />
     );
   }
 

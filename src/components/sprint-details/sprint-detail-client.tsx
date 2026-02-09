@@ -23,6 +23,7 @@ import {
   Archive,
   Edit2
 } from 'lucide-react';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '../logo';
 import { Button } from '@/components/ui/button';
@@ -318,9 +319,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
 
   if (isUserLoading || isLoadingSprint || !user || !sprint) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
+      <LoadingScreen message="Loading Sprint Details..." />
     );
   }
 

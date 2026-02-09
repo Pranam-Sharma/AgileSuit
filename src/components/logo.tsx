@@ -12,27 +12,23 @@ export function Logo({ className, variant = 'default' }: { className?: string, v
   return (
     <Link
       href={href}
-      className={cn('flex items-center gap-2', className)}
+      className={cn('flex items-center gap-0', className)}
       aria-label="AgileSuit Home"
     >
-      <div className={cn(
-        "p-2 rounded-lg",
-        variant === 'white'
-          ? "bg-white"
-          : "bg-gradient-to-br from-primary to-orange-600"
-      )}>
-        <Package className={cn(
-          "h-6 w-6",
-          variant === 'white' ? "text-primary" : "text-white"
-        )} />
+      <div className="relative h-16 w-auto">
+        <img
+          src="/images/AgileSuitLogo.jpg"
+          alt="AgileSuit Logo"
+          className="h-full w-auto object-contain"
+        />
       </div>
-      <span className={cn(
-        "text-2xl font-bold tracking-tight font-headline",
-        variant === 'white' ? "text-white" : "text-foreground",
-        className
-      )}>
-        AgileSuit
-      </span>
+      <div className="relative h-10 w-auto -ml-3">
+        <img
+          src="/images/AgileSuitLogoText.jpg"
+          alt="AgileSuit"
+          className="h-full w-auto object-contain"
+        />
+      </div>
     </Link>
   );
 }

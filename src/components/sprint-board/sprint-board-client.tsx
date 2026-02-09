@@ -30,6 +30,7 @@ import {
     PanelRightOpen,
     AlertCircle
 } from 'lucide-react';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
@@ -1172,12 +1173,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
 
     if (isLoadingSprint || isLoadingStories) {
         return (
-            <div className="flex flex-col justify-center items-center h-screen bg-zinc-50 dark:bg-zinc-950">
-                <Loader2 className="animate-spin h-10 w-10 text-primary mb-4" />
-                <p className="text-sm text-zinc-500">
-                    {isLoadingSprint ? 'Loading sprint...' : 'Loading stories...'}
-                </p>
-            </div>
+            <LoadingScreen message={isLoadingSprint ? 'Loading Sprint...' : 'Loading Board...'} />
         );
     }
 
