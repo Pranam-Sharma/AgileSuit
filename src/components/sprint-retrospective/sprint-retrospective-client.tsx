@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Plus, MoreHorizontal, ThumbsUp, Trash2, X, Smile, Frown, StopCircle, PlayCircle, Heart, Shield } from 'lucide-react';
+import { ChevronLeft, Plus, MoreHorizontal, ThumbsUp, Trash2, X, Smile, Frown, StopCircle, PlayCircle, Heart, Shield, Timer, Clock, Settings, Volume2, VolumeX, Pause, Play } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { createClient } from '@/lib/supabase/client';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
@@ -176,6 +177,14 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
     // Inline Edit State
     const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
     const [editingContent, setEditingContent] = React.useState('');
+
+    // Timer State
+    const [timerDuration, setTimerDuration] = React.useState(5 * 60); // 5 minutes default
+    const [timerRemaining, setTimerRemaining] = React.useState(5 * 60);
+    const [isTimerRunning, setIsTimerRunning] = React.useState(false);
+    const [showTimerSettings, setShowTimerSettings] = React.useState(false);
+    const [isSoundEnabled, setIsSoundEnabled] = React.useState(true);
+    const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Find column for an item
     const findColumn = (uniqueId: string) => {
@@ -410,7 +419,103 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
         setEditingContent('');
     };
 
-    // Fetch Initial Data
+    // Timer Functions
+    const triggerCelebration = () => {
+        // Fire confetti
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+        const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+        const interval = setInterval(() => {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+            const particleCount = 50 * (timeLeft / duration);
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4']
+            });
+            confetti({
+                ...defaults,
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4']
+            });
+        }, 250);
+
+        // Play celebration sound immediately using Web Audio API
+        if (isSoundEnabled) {
+            try {
+                const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+                // Play a celebratory arpeggio instantly
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+                notes.forEach((freq, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'triangle'; // Brighter, more celebratory sound
+                    gain.gain.setValueAtTime(0.4, audioCtx.currentTime + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.4);
+                    osc.start(audioCtx.currentTime + i * 0.1);
+                    osc.stop(audioCtx.currentTime + i * 0.1 + 0.4);
+                });
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+    };
+
+    const startTimer = () => {
+        if (timerRemaining <= 0) {
+            setTimerRemaining(timerDuration);
+        }
+        setIsTimerRunning(true);
+    };
+
+    const pauseTimer = () => {
+        setIsTimerRunning(false);
+    };
+
+    const resetTimer = () => {
+        setIsTimerRunning(false);
+        setTimerRemaining(timerDuration);
+    };
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Timer countdown effect
+    React.useEffect(() => {
+        if (isTimerRunning && timerRemaining > 0) {
+            timerIntervalRef.current = setInterval(() => {
+                setTimerRemaining(prev => {
+                    if (prev <= 1) {
+                        setIsTimerRunning(false);
+                        triggerCelebration();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => {
+            if (timerIntervalRef.current) {
+                clearInterval(timerIntervalRef.current);
+            }
+        };
+    }, [isTimerRunning]);
+
+
     React.useEffect(() => {
         const init = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -722,7 +827,125 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex -space-x-3 mr-4">
+                    {/* Timer Button with Popup */}
+                    <div className="relative">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setShowTimerSettings(!showTimerSettings)}
+                            className={`h-9 px-3 rounded-full flex items-center gap-2 ${isTimerRunning ? 'bg-gradient-to-r from-violet-500/20 to-purple-500/20 hover:from-violet-500/30 hover:to-purple-500/30' : 'bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                        >
+                            <Timer className={`h-4 w-4 ${isTimerRunning ? 'text-violet-600 dark:text-violet-400 animate-pulse' : 'text-zinc-500'}`} />
+                            <span className={`text-sm font-bold tabular-nums ${timerRemaining === 0 ? 'text-green-500' : isTimerRunning ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-600 dark:text-zinc-300'}`}>
+                                {formatTime(timerRemaining)}
+                            </span>
+                            {isTimerRunning && (
+                                <div className="w-12 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-1000"
+                                        style={{ width: `${(timerRemaining / timerDuration) * 100}%` }}
+                                    />
+                                </div>
+                            )}
+                        </Button>
+
+                        {/* Timer Popup */}
+                        {showTimerSettings && (
+                            <div className="absolute right-0 top-11 z-50 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-4 w-72">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">⏱️ Writing Timer</h4>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowTimerSettings(false)}
+                                        className="h-6 w-6 p-0 rounded-full"
+                                    >
+                                        <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+
+                                {/* Timer Display */}
+                                <div className="text-center mb-4">
+                                    <span className={`text-4xl font-bold tabular-nums ${timerRemaining === 0 ? 'text-green-500 animate-pulse' : isTimerRunning ? 'text-violet-600 dark:text-violet-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                                        {formatTime(timerRemaining)}
+                                    </span>
+                                    <div className="text-xs text-zinc-400 mt-1">
+                                        {timerRemaining === 0 ? '🎉 Time\'s Up!' : isTimerRunning ? 'Writing in progress...' : 'Ready to start'}
+                                    </div>
+                                    {/* Progress Bar */}
+                                    <div className="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-3">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-1000"
+                                            style={{ width: `${(timerRemaining / timerDuration) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Controls */}
+                                <div className="flex items-center justify-center gap-2 mb-4">
+                                    {isTimerRunning ? (
+                                        <Button
+                                            size="sm"
+                                            onClick={pauseTimer}
+                                            className="h-10 px-6 rounded-full bg-amber-500 hover:bg-amber-600 text-white"
+                                        >
+                                            <Pause className="h-4 w-4 mr-2" /> Pause
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={startTimer}
+                                            className="h-10 px-6 rounded-full bg-green-500 hover:bg-green-600 text-white"
+                                        >
+                                            <Play className="h-4 w-4 mr-2" /> Start
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={resetTimer}
+                                        className="h-10 px-4 rounded-full"
+                                    >
+                                        <StopCircle className="h-4 w-4 mr-1" /> Reset
+                                    </Button>
+                                </div>
+
+                                {/* Duration Options */}
+                                <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3">
+                                    <Label className="text-xs text-zinc-500 mb-2 block">Duration</Label>
+                                    <div className="flex gap-1">
+                                        {[1, 3, 5, 10, 15].map((mins) => (
+                                            <Button
+                                                key={mins}
+                                                size="sm"
+                                                variant={timerDuration === mins * 60 ? 'default' : 'outline'}
+                                                className="flex-1 text-xs h-8"
+                                                onClick={() => {
+                                                    setTimerDuration(mins * 60);
+                                                    setTimerRemaining(mins * 60);
+                                                }}
+                                            >
+                                                {mins}m
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Sound Toggle */}
+                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                                    <div className="flex items-center gap-2">
+                                        {isSoundEnabled ? <Volume2 className="h-4 w-4 text-blue-500" /> : <VolumeX className="h-4 w-4 text-zinc-400" />}
+                                        <span className="text-xs text-zinc-500">Sound on completion</span>
+                                    </div>
+                                    <Switch
+                                        checked={isSoundEnabled}
+                                        onCheckedChange={setIsSoundEnabled}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex -space-x-3 mr-2">
                         {onlineUsers.slice(0, 5).map((u, i) => (
                             <Avatar key={i} className="h-9 w-9 border-2 border-white dark:border-zinc-900 ring-1 ring-zinc-200 dark:ring-zinc-800 transition-transform hover:scale-110 hover:z-10 bg-white dark:bg-zinc-800">
                                 <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
