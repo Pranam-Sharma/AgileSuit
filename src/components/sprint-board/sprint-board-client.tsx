@@ -1828,7 +1828,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                         <Button variant="outline" onClick={() => setIsAddStoryDialogOpen(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={handleAddStory}>
+                        <Button onClick={() => handleAddStory(newStory)}>
                             Add Story
                         </Button>
                     </DialogFooter>
