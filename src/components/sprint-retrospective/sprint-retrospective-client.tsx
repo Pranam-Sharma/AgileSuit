@@ -47,7 +47,8 @@ import {
     addRetrospectiveCommentAction,
     getRetrospectiveCommentsAction,
     deleteRetrospectiveCommentAction,
-    updateRetrospectiveItemPositionAction
+    updateRetrospectiveItemPositionAction,
+    updateRetrospectiveItemContentAction
 } from '@/app/actions/retrospective';
 import {
     Sheet,
@@ -171,6 +172,10 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
     const [dragOverItemId, setDragOverItemId] = React.useState<string | null>(null);
     const [dropPosition, setDropPosition] = React.useState<'before' | 'after' | null>(null);
+
+    // Inline Edit State
+    const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
+    const [editingContent, setEditingContent] = React.useState('');
 
     // Find column for an item
     const findColumn = (uniqueId: string) => {
@@ -365,6 +370,45 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
     };
 
 
+    // Inline Edit Handlers
+    const handleStartEdit = (item: Item) => {
+        setEditingItemId(item.id);
+        setEditingContent(item.content);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingItemId || !editingContent.trim()) {
+            setEditingItemId(null);
+            setEditingContent('');
+            return;
+        }
+
+        // Optimistic update
+        setItems(prev => prev.map(i =>
+            i.id === editingItemId ? { ...i, content: editingContent.trim() } : i
+        ));
+
+        const itemIdToUpdate = editingItemId;
+        const contentToSave = editingContent.trim();
+
+        setEditingItemId(null);
+        setEditingContent('');
+
+        try {
+            await updateRetrospectiveItemContentAction(itemIdToUpdate, contentToSave);
+        } catch (error) {
+            console.error('Save edit failed', error);
+            toast({ title: 'Error saving changes', variant: 'destructive' });
+            // Refetch on error
+            const { items: freshItems } = await getRetrospectiveDataAction(sprintId);
+            if (freshItems) setItems(freshItems);
+        }
+    };
+
+    const handleCancelEdit = () => {
+        setEditingItemId(null);
+        setEditingContent('');
+    };
 
     // Fetch Initial Data
     React.useEffect(() => {
@@ -750,11 +794,48 @@ export function SprintRetrospectiveClient({ sprintId }: { sprintId: string }) {
                                             )}
 
                                             <div
-                                                className={`bg-white dark:bg-zinc-950 p-4 rounded-lg shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 hover:shadow-lg transition-all duration-200 ${isDragged ? 'opacity-40 scale-95 rotate-2' : ''} ${dragOverItemId === item.id ? 'ring-2 ring-primary/50' : ''} cursor-grab active:cursor-grabbing`}
+                                                onDoubleClick={() => editingItemId !== item.id && handleStartEdit(item)}
+                                                className={`bg-white dark:bg-zinc-950 p-4 rounded-lg shadow-sm border border-zinc-200/60 dark:border-zinc-800/60 hover:shadow-lg transition-all duration-200 ${isDragged ? 'opacity-40 scale-95 rotate-2' : ''} ${dragOverItemId === item.id ? 'ring-2 ring-primary/50' : ''} ${editingItemId === item.id ? 'ring-2 ring-primary' : 'cursor-grab active:cursor-grabbing'}`}
                                             >
                                                 <div className={`absolute left-0 top-3 bottom-3 w-1 rounded-r-full ${HEADER_COLOR_MAP[column.color]?.replace('bg-', 'bg-') || 'bg-zinc-500'} opacity-60`}></div>
 
-                                                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-3 whitespace-pre-wrap pl-2 leading-relaxed tracking-wide font-[IP]">{item.content}</p>
+                                                {editingItemId === item.id ? (
+                                                    <div className="pl-2 mb-3">
+                                                        <textarea
+                                                            autoFocus
+                                                            value={editingContent}
+                                                            onChange={(e) => {
+                                                                setEditingContent(e.target.value);
+                                                                // Auto-resize
+                                                                e.target.style.height = 'auto';
+                                                                e.target.style.height = e.target.scrollHeight + 'px';
+                                                            }}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    handleSaveEdit();
+                                                                }
+                                                                if (e.key === 'Escape') {
+                                                                    handleCancelEdit();
+                                                                }
+                                                            }}
+                                                            onBlur={handleSaveEdit}
+                                                            ref={(el) => {
+                                                                if (el) {
+                                                                    el.style.height = 'auto';
+                                                                    el.style.height = el.scrollHeight + 'px';
+                                                                }
+                                                            }}
+                                                            className="w-full text-sm font-medium text-zinc-700 dark:text-zinc-200 bg-transparent border-none outline-none resize-none whitespace-pre-wrap leading-relaxed tracking-wide font-[IP]"
+                                                            placeholder="Enter your feedback..."
+                                                        />
+                                                        <div className="flex gap-2 mt-2">
+                                                            <span className="text-[10px] text-zinc-400">Press Enter to save, Esc to cancel</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200 mb-3 whitespace-pre-wrap pl-2 leading-relaxed tracking-wide font-[IP]">{item.content}</p>
+                                                )}
 
                                                 <div className="flex items-center justify-between pl-2">
                                                     <div className="flex items-center gap-2">
