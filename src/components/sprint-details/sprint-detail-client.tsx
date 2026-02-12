@@ -222,7 +222,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                     </div>
 
                     {/* Tags + Sprint Goal */}
-                    <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm border border-slate-200/60 p-4 relative z-10">
+                    <div className="flex items-center gap-4 bg-white rounded-xl shadow-md border border-slate-200/60 p-4 relative z-10">
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#1e40af] text-white shadow-sm">
                             <span className="bg-white/20 rounded-full p-0.5"><TrendingUp className="h-2.5 w-2.5" /></span> Azure
                         </span>
@@ -246,7 +246,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                         <div className="xl:pr-[25.5%]">
                             <div className="flex items-stretch h-[130px]">
                                 {/* Planned */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative flex flex-col justify-between" style={{ backgroundColor: '#e6f0ff', zIndex: 1 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-md border border-white/60 relative flex flex-col justify-between" style={{ backgroundColor: '#e6f0ff', zIndex: 1 }}>
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 rounded-md bg-blue-100"><ListTodo className="h-4 w-4 text-blue-900 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-700">Planned</span>
@@ -256,7 +256,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Completed */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#e0fce9', zIndex: 2 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-md border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#e0fce9', zIndex: 2 }}>
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 rounded-md bg-green-100"><CheckCircle2 className="h-4 w-4 text-green-900 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-700">Completed</span>
@@ -271,7 +271,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Remaining */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#fff5db', zIndex: 3 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-md border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#fff5db', zIndex: 3 }}>
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 rounded-md bg-amber-100"><Clock className="h-4 w-4 text-orange-800 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-700">Remaining</span>
@@ -286,7 +286,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Velocity */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#eaeff0', zIndex: 4 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-md border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#eaeff0', zIndex: 4 }}>
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 rounded-md bg-slate-200"><TrendingUp className="h-4 w-4 text-slate-900 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-700">Velocity</span>
@@ -299,7 +299,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* 53% Blocked / On Track */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#ffe8e8', zIndex: 5 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-md border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#ffe8e8', zIndex: 5 }}>
                                     <div className="flex items-center gap-2">
                                         <div className="relative h-6 w-6 shrink-0 flex items-center justify-center">
                                             <div className="absolute inset-0 rounded-full border-[3px] border-red-200" />
@@ -320,7 +320,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
 
                         {/* Analytics - absolutely positioned on xl+ so it doesn't stretch row height */}
                         <div className="mt-4 xl:mt-0 xl:absolute xl:top-0 xl:right-0 xl:w-[24.5%] xl:z-10">
-                            <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col">
+                            <div className="bg-white rounded-2xl shadow-md p-5 flex flex-col">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[15px] font-bold text-slate-800">Analytics</span>
                                     <button className="text-[12px] font-semibold text-slate-500 hover:text-slate-800 transition-colors"
@@ -357,47 +357,63 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                         {/* Left Side: Blockers + Activity (6 cols) */}
                         <div className="col-span-12 xl:col-span-6 flex flex-col gap-3">
                             {/* Blockers & Dependencies */}
-                            <div className="bg-white rounded-2xl shadow-sm">
-                                <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+                                <div className="flex items-center justify-between px-5 py-4">
                                     <div className="flex items-center gap-2">
                                         <div className="p-1.5 bg-red-100 rounded-full"><AlertCircle className="h-4 w-4 text-red-800 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-800">Blockers & Dependencies</span>
                                     </div>
                                     <button className="text-[12px] font-medium text-slate-400 hover:text-slate-600">View all &gt;</button>
                                 </div>
-                                <div className="grid grid-cols-[1fr_120px_100px] gap-2 px-5 pb-2">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reason</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">↓ Owner</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">Blocked since</span>
+                                <div className="w-full">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-slate-50/80 border-y border-slate-100">
+                                                <th className="text-left py-2.5 pl-5 pr-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                                    <div className="flex items-center gap-1.5"><ListTodo className="h-3 w-3" /> Reason</div>
+                                                </th>
+                                                <th className="text-left py-2.5 px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[140px]">Owner</th>
+                                                <th className="text-right py-2.5 pl-2 pr-5 text-[10px] font-bold text-slate-400 uppercase tracking-wider w-[120px]">Blocked since</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {MOCK_BLOCKERS.map((b) => (
+                                                <tr key={b.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="py-3 pl-5 pr-2 align-top">
+                                                        <div className="flex items-start gap-3">
+                                                            <Avatar className="h-8 w-8 mt-0.5">
+                                                                <AvatarFallback className="bg-slate-200 text-[10px] text-slate-600">{b.initial}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="text-[13px] font-bold text-slate-800 leading-snug group-hover:text-blue-700 transition-colors">{b.reason}</p>
+                                                                <p className="text-[11px] text-slate-400 mt-0.5">{b.subtext}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2 align-top">
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            <Avatar className="h-5 w-5">
+                                                                <AvatarFallback className="text-[8px] bg-slate-800 text-white">{b.ownerInitials}</AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="text-[11px] font-semibold text-slate-700">{b.ownerName}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 pl-2 pr-5 align-top">
+                                                        <div className="flex items-center justify-end gap-1.5 mt-1">
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-slate-300 group-hover:bg-red-500 transition-colors" />
+                                                            <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-600 transition-colors">{b.blockedSince}</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                {MOCK_BLOCKERS.map((b) => (
-                                    <div key={b.id} className="grid grid-cols-[1fr_120px_100px] gap-2 items-center px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
-                                        <div className="flex items-start gap-3">
-                                            <Avatar className="h-8 w-8 mt-0.5">
-                                                <AvatarFallback className="bg-slate-200 text-[10px] text-slate-600">{b.initial}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="text-[13px] font-bold text-slate-800 leading-snug">{b.reason}</p>
-                                                <p className="text-[11px] text-slate-400 mt-0.5">{b.subtext}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 justify-center">
-                                            <Avatar className="h-5 w-5">
-                                                <AvatarFallback className="text-[8px] bg-slate-800 text-white">{b.ownerInitials}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-[11px] font-semibold text-slate-700">{b.ownerName}</span>
-                                        </div>
-                                        <div className="text-right flex items-center justify-end gap-1.5">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                                            <span className="text-[11px] font-medium text-slate-400">{b.blockedSince}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                                <div className="h-4" />
+                                <div className="h-2" />
                             </div>
 
                             {/* Activity Grid */}
-                            <div className="bg-white rounded-2xl shadow-sm p-5">
+                            <div className="bg-white rounded-2xl shadow-md p-5">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[15px] font-bold text-slate-800">Activity</span>
                                     <button className="text-[12px] font-medium text-slate-400 hover:text-slate-600">View all &gt;</button>
@@ -470,7 +486,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                             {/* Row 1: Burndown + Velocity */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {/* Sprint Burndown */}
-                                <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col">
+                                <div className="bg-white rounded-2xl shadow-md p-5 flex flex-col">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
                                             <div className="p-1 rounded bg-slate-100"><TrendingUp className="h-3 w-3 text-slate-900 stroke-[2.5]" /></div>
@@ -501,30 +517,41 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Velocity Trend */}
-                                <div className="bg-white rounded-2xl shadow-sm p-4 xl:mt-[130px]">
-                                    <div className="flex items-center justify-between mb-2">
+                                <div className="bg-white rounded-2xl shadow-md p-5 xl:mt-[130px]">
+                                    <div className="flex items-center justify-between mb-4">
                                         <span className="text-[15px] font-bold text-slate-800">Velocity Trend</span>
                                         <MoreHorizontal className="h-4 w-4 text-slate-400" />
                                     </div>
-                                    <div className="space-y-2">
-                                        {MOCK_VELOCITY.map((v, i) => (
-                                            <div key={i} className="flex items-center gap-3 text-[12px]">
-                                                <div className="flex items-center gap-2 w-[100px] shrink-0">
-                                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: v.color }} />
-                                                    <span className="font-medium text-slate-600">{v.name}</span>
+                                    <div className="bg-slate-50/80 rounded-xl border border-slate-100/80 p-4">
+                                        <div className="space-y-4">
+                                            {MOCK_VELOCITY.map((v, i) => (
+                                                <div key={i} className="flex items-center text-[12px]">
+                                                    <div className="flex items-center gap-2.5 w-[90px] shrink-0">
+                                                        <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: v.color }} />
+                                                        <span className="font-semibold text-slate-700 truncate" title={v.name}>{v.name}</span>
+                                                    </div>
+
+                                                    {/* Vertical Separator */}
+                                                    <div className="h-3 w-[1px] bg-slate-300 mx-3 shrink-0"></div>
+
+                                                    <div className="flex-1 h-2 bg-slate-200/60 rounded-full overflow-hidden shadow-inner">
+                                                        <div className="h-full rounded-full transition-all" style={{ width: `${(v.sp / 15) * 100}%`, backgroundColor: v.color }} />
+                                                    </div>
+
+                                                    <div className="w-[50px] text-right shrink-0">
+                                                        <span className="text-slate-400 mr-1.5 font-light">—</span>
+                                                        <span className="font-bold text-slate-700">{v.sp}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-0.5">sp</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 h-2 bg-slate-50 rounded-full overflow-hidden">
-                                                    <div className="h-full rounded-full transition-all" style={{ width: `${(v.sp / 15) * 100}%`, backgroundColor: v.color, opacity: 0.6 }} />
-                                                </div>
-                                                <span className="text-slate-400 font-mono w-[50px] text-right">— {v.sp} sp</span>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Feed (Full Width) */}
-                            <div className="bg-white rounded-2xl shadow-sm p-5">
+                            <div className="bg-white rounded-2xl shadow-md p-5">
                                 <div className="flex items-center justify-end mb-4">
                                     <button className="text-[12px] font-medium text-slate-400 hover:text-slate-600">View all &gt;</button>
                                 </div>
