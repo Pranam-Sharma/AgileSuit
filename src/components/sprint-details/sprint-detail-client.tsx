@@ -52,6 +52,16 @@ const MOCK_BLOCKERS = [
         ownerName: 'Rahul Sharma',
         ownerInitials: 'RS',
         blockedSince: '2 days ago',
+        initial: 'U',
+    },
+    {
+        id: 2,
+        reason: 'Payment Gateway sandbox credentials invalid',
+        subtext: 'Awaiting new API keys from the finance team',
+        ownerName: 'Mike Chen',
+        ownerInitials: 'MC',
+        blockedSince: '1 day ago',
+        initial: 'P',
     },
 ];
 
@@ -159,7 +169,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
         <div className="min-h-screen bg-[#f0f1f5]" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
 
             {/* ╔══ TOP NAV BAR ══════════════════════════════════════╗ */}
-            <header className="flex items-center justify-between px-8 py-5">
+            <header className="flex items-center justify-between px-8 py-2 bg-white/60 backdrop-blur-sm sticky top-0 z-50 border-b border-white/20">
                 <div className="flex items-center gap-3">
                     <Logo className="h-8 w-8" />
                     <span className="text-xl font-bold text-slate-900 tracking-tight">AgileSuit</span>
@@ -175,27 +185,28 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                 </div>
             </header>
 
-            <main className="px-8 pb-10 max-w-[1500px] mx-auto">
+            <main className="px-8 pt-4 pb-10 max-w-[1500px] mx-auto">
 
-                {/* ╔══ SPRINT HEADER ══════════════════════════════════╗ */}
-                <div className="mb-1">
+                {/* ╔══ SPRINT HEADER CARD ═════════════════════════════╗ */}
+                <div className="mb-4">
                     {/* Title row */}
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between relative z-10 mb-5">
                         <div>
                             <div className="flex items-center gap-3 mb-1">
-                                <h1 className="text-[28px] font-bold text-slate-900 leading-tight tracking-tight">
+                                <h1 className="text-[26px] font-bold text-slate-800 leading-tight tracking-tight">
                                     {sprint.sprintName}{sprint.projectName ? ` - ${sprint.projectName}` : ''}
                                 </h1>
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-700 text-white shadow-sm">
                                     {sprint.status === 'active' ? 'Active' : sprint.status?.charAt(0).toUpperCase() + sprint.status?.slice(1)}
                                 </span>
                             </div>
-                            <p className="text-[13px] text-slate-400 font-medium">
+                            <p className="text-[13px] text-slate-500 font-medium ml-0.5">
                                 {sprint.startDate
                                     ? `${new Date(sprint.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(sprint.endDate!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} (14 days)`
                                     : 'Dates TBD'}
                             </p>
                         </div>
+
                         <div className="flex items-center gap-3 pt-1">
                             <button className="h-9 px-4 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
                                 onClick={() => handleAction('complete')}>
@@ -209,53 +220,50 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                             </button>
                         </div>
                     </div>
+
+                    {/* Tags + Sprint Goal */}
+                    <div className="flex items-center gap-4 bg-white rounded-xl shadow-sm border border-slate-200/60 p-4 relative z-10">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#1e40af] text-white shadow-sm">
+                            <span className="bg-white/20 rounded-full p-0.5"><TrendingUp className="h-2.5 w-2.5" /></span> Azure
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#3b82f6] text-white shadow-sm">
+                            <span className="bg-white/20 rounded-full p-0.5"><Plus className="h-2.5 w-2.5" /></span> Backend
+                        </span>
+                        <p className="text-[14px] text-slate-600">
+                            <strong className="text-slate-800 font-semibold">Sprint Goal:</strong> Migrate legacy API systems to the new microservices architecture for improved scalability and performance.
+                        </p>
+                    </div>
                 </div>
 
-                {/* Tags + Sprint Goal */}
-                <div className="flex items-center gap-4 mb-6 mt-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#1e40af] text-white">
-                        <span className="bg-white/20 rounded-full p-0.5"><TrendingUp className="h-2.5 w-2.5" /></span> Azure
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#3b82f6] text-white">
-                        <span className="bg-white/20 rounded-full p-0.5"><Plus className="h-2.5 w-2.5" /></span> Backend
-                    </span>
-                    <p className="text-[13px] text-slate-500">
-                        <strong className="text-slate-800">Sprint Goal:</strong> Migrate legacy API systems to the new microservices architecture for improved scalability and performance.
-                    </p>
-                </div>
 
-                {/* Green dot indicator */}
-                <div className="flex justify-center mb-4">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                </div>
 
                 {/* ╔══ MAIN CONTENT GRID ══════════════════╗ */}
                 <div className="flex flex-col gap-3">
 
                     {/* ═══ TOP ROW: KPIs + Analytics (Line Chart) ═══ */}
-                    <div className="grid grid-cols-12 gap-6">
-                        {/* KPIs (9 cols) */}
-                        <div className="col-span-12 xl:col-span-9">
-                            <div className="flex items-stretch h-[105px]">
+                    <div className="relative">
+                        {/* KPIs - normal flow, determines row height */}
+                        <div className="xl:pr-[25.5%]">
+                            <div className="flex items-stretch h-[130px]">
                                 {/* Planned */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative flex flex-col justify-between" style={{ backgroundColor: '#f0f4ff', zIndex: 5 }}>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="p-1 rounded bg-blue-100/60"><ListTodo className="h-3.5 w-3.5 text-blue-600" /></div>
-                                        <span className="text-[12px] font-semibold text-slate-500">Planned</span>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative flex flex-col justify-between" style={{ backgroundColor: '#e6f0ff', zIndex: 1 }}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-md bg-blue-100"><ListTodo className="h-4 w-4 text-blue-900 stroke-[2.5]" /></div>
+                                        <span className="text-[15px] font-bold text-slate-700">Planned</span>
                                     </div>
                                     <div className="text-[26px] font-bold text-slate-900 leading-none mt-1">{total} <span className="text-[13px] font-semibold text-slate-400">sp</span></div>
                                     <div className="text-[11px] text-slate-400 font-medium mb-0.5">{total} sp</div>
                                 </div>
 
                                 {/* Completed */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#effff4', zIndex: 4 }}>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="p-1 rounded bg-green-100/60"><CheckCircle2 className="h-3.5 w-3.5 text-green-600" /></div>
-                                        <span className="text-[12px] font-semibold text-slate-500">Completed</span>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#e0fce9', zIndex: 2 }}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-md bg-green-100"><CheckCircle2 className="h-4 w-4 text-green-900 stroke-[2.5]" /></div>
+                                        <span className="text-[15px] font-bold text-slate-700">Completed</span>
                                     </div>
                                     <div className="text-[26px] font-bold text-slate-900 leading-none mt-1">{done} <span className="text-[13px] font-semibold text-slate-400">sp</span></div>
                                     <div className="w-full">
-                                        <Progress value={pct} className="h-1 bg-slate-100 w-full" indicatorClassName="bg-green-500" />
+                                        <Progress value={pct} className="h-2 bg-slate-100 w-full" indicatorClassName="bg-green-500" />
                                         <div className="mt-1.5 flex items-center gap-1 text-[11px] leading-none">
                                             <span className="text-green-600 font-bold">2³</span> <span className="text-slate-400">47%</span>
                                         </div>
@@ -263,14 +271,14 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Remaining */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#fffbf0', zIndex: 3 }}>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="p-1 rounded bg-amber-100/60"><Clock className="h-3.5 w-3.5 text-amber-500" /></div>
-                                        <span className="text-[12px] font-semibold text-slate-500">Remaining</span>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#fff5db', zIndex: 3 }}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-md bg-amber-100"><Clock className="h-4 w-4 text-orange-800 stroke-[2.5]" /></div>
+                                        <span className="text-[15px] font-bold text-slate-700">Remaining</span>
                                     </div>
                                     <div className="text-[26px] font-bold text-slate-900 leading-none mt-1">{remaining} <span className="text-[13px] font-semibold text-slate-400">sp</span></div>
                                     <div className="w-full">
-                                        <Progress value={100 - pct} className="h-1 bg-slate-100 w-full" indicatorClassName="bg-amber-400" />
+                                        <Progress value={100 - pct} className="h-2 bg-slate-100 w-full" indicatorClassName="bg-amber-400" />
                                         <div className="mt-1.5 flex items-center gap-1 text-[11px] leading-none">
                                             <span className="text-amber-500 font-bold">1</span> <span className="text-slate-400">13%</span>
                                         </div>
@@ -278,32 +286,29 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Velocity */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#f4f7f5', zIndex: 2 }}>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="p-1 rounded bg-green-100/60"><CheckCircle2 className="h-3.5 w-3.5 text-green-600" /></div>
-                                        <span className="text-[12px] font-semibold text-slate-500">Velocity</span>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#eaeff0', zIndex: 4 }}>
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-md bg-slate-200"><TrendingUp className="h-4 w-4 text-slate-900 stroke-[2.5]" /></div>
+                                        <span className="text-[15px] font-bold text-slate-700">Velocity</span>
                                     </div>
                                     <div className="text-[26px] font-bold text-slate-900 leading-none mt-1">7.5 <span className="text-[13px] font-semibold text-slate-400">sp</span></div>
                                     <div className="w-full">
-                                        <Progress value={75} className="h-1 bg-slate-100 w-full" indicatorClassName="bg-slate-700" />
+                                        <Progress value={75} className="h-2 bg-slate-100 w-full" indicatorClassName="bg-slate-700" />
                                         <div className="mt-1.5 text-[11px] text-slate-400 leading-none">Avg: 9.2 sp</div>
                                     </div>
                                 </div>
 
                                 {/* 53% Blocked / On Track */}
-                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#fff5f5', zIndex: 1 }}>
+                                <div className="flex-1 rounded-xl px-4 py-2.5 shadow-sm border border-white/60 relative -ml-3 flex flex-col justify-between" style={{ backgroundColor: '#ffe8e8', zIndex: 5 }}>
                                     <div className="flex items-center gap-2">
-                                        <div className="relative h-6 w-6 shrink-0">
-                                            <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
-                                                <circle cx="18" cy="18" r="14" fill="none" stroke="#fee2e2" strokeWidth="3" />
-                                                <circle cx="18" cy="18" r="14" fill="none" stroke="#ef4444" strokeWidth="3"
-                                                    strokeDasharray="46.6 100" strokeLinecap="round" />
-                                            </svg>
-                                            <Play className="h-2 w-2 text-red-500 fill-red-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                        <div className="relative h-6 w-6 shrink-0 flex items-center justify-center">
+                                            <div className="absolute inset-0 rounded-full border-[3px] border-red-200" />
+                                            <div className="absolute inset-0 rounded-full border-[3px] border-red-700 border-l-transparent border-b-transparent -rotate-45" />
+                                            <Play className="h-3 w-3 text-red-900 fill-red-900 ml-0.5" />
                                         </div>
-                                        <span className="text-[22px] font-bold text-slate-900">53%</span>
+                                        <span className="text-[26px] font-bold text-slate-900 leading-none">53%</span>
                                     </div>
-                                    <div className="text-[11px] font-semibold text-red-500 flex items-center justify-between">
+                                    <div className="text-[11px] font-semibold text-red-700 flex items-center justify-between">
                                         Blocked <ChevronRight className="h-3 w-3 text-slate-400" />
                                     </div>
                                     <button className="w-full h-7 rounded-md bg-green-700 hover:bg-green-800 transition-colors text-white text-[11px] font-bold flex items-center justify-center gap-1 shadow-sm">
@@ -313,8 +318,8 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                             </div>
                         </div>
 
-                        {/* Analytics (3 cols) */}
-                        <div className="col-span-12 xl:col-span-3">
+                        {/* Analytics - absolutely positioned on xl+ so it doesn't stretch row height */}
+                        <div className="mt-4 xl:mt-0 xl:absolute xl:top-0 xl:right-0 xl:w-[24.5%] xl:z-10">
                             <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-[15px] font-bold text-slate-800">Analytics</span>
@@ -323,8 +328,8 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                         View Board &gt;
                                     </button>
                                 </div>
-                                <div className="h-[120px]">
-                                    <ResponsiveContainer width="100%" height={120}>
+                                <div className="h-[170px]">
+                                    <ResponsiveContainer width="100%" height={170}>
                                         <AreaChart data={MOCK_ANALYTICS} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
                                             <defs>
                                                 <linearGradient id="gAnalytics" x1="0" y1="0" x2="0" y2="1">
@@ -347,15 +352,15 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                     </div>
 
                     {/* ═══ BOTTOM ROW: Content ═══ */}
-                    <div className="grid grid-cols-12 gap-6">
+                    <div className="grid grid-cols-12 gap-3">
 
                         {/* Left Side: Blockers + Activity (6 cols) */}
-                        <div className="col-span-12 xl:col-span-6 flex flex-col gap-6">
+                        <div className="col-span-12 xl:col-span-6 flex flex-col gap-3">
                             {/* Blockers & Dependencies */}
                             <div className="bg-white rounded-2xl shadow-sm">
                                 <div className="flex items-center justify-between px-5 pt-5 pb-3">
                                     <div className="flex items-center gap-2">
-                                        <div className="p-1 bg-red-100 rounded-full"><AlertCircle className="h-4 w-4 text-red-600" /></div>
+                                        <div className="p-1.5 bg-red-100 rounded-full"><AlertCircle className="h-4 w-4 text-red-800 stroke-[2.5]" /></div>
                                         <span className="text-[15px] font-bold text-slate-800">Blockers & Dependencies</span>
                                     </div>
                                     <button className="text-[12px] font-medium text-slate-400 hover:text-slate-600">View all &gt;</button>
@@ -369,7 +374,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                     <div key={b.id} className="grid grid-cols-[1fr_120px_100px] gap-2 items-center px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
                                         <div className="flex items-start gap-3">
                                             <Avatar className="h-8 w-8 mt-0.5">
-                                                <AvatarFallback className="bg-slate-200 text-[10px] text-slate-600">U</AvatarFallback>
+                                                <AvatarFallback className="bg-slate-200 text-[10px] text-slate-600">{b.initial}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="text-[13px] font-bold text-slate-800 leading-snug">{b.reason}</p>
@@ -399,10 +404,10 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
                                     {/* Planning */}
-                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#e0e7ff] to-[#dbeafe] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-start gap-3"
+                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#e0e7ff] to-[#dbeafe] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-3 min-h-[100px]"
                                         onClick={() => router.push(`/sprint/${sprintId}/planning`)}>
                                         <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                            <Calendar className="h-5 w-5 text-indigo-600" />
+                                            <Calendar className="h-5 w-5 text-indigo-900 stroke-[2]" />
                                         </div>
                                         <div>
                                             <p className="text-[14px] font-bold text-slate-800 leading-snug">Planning</p>
@@ -411,7 +416,7 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                     </div>
 
                                     {/* Sprint Board */}
-                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-blue-900 via-indigo-900 to-rose-900 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-start gap-3 relative overflow-hidden group"
+                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-blue-900 via-indigo-900 to-rose-900 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-3 relative overflow-hidden group min-h-[100px]"
                                         onClick={() => router.push(`/sprint/${sprintId}/board`)}>
                                         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light pointer-events-none"></div>
                                         <div className="h-10 w-10 bg-white/20 rounded-xl flex items-center justify-center shadow-sm backdrop-blur-sm shrink-0 z-10">
@@ -424,10 +429,10 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                     </div>
 
                                     {/* Retrospective */}
-                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-green-200 via-lime-200 to-yellow-200 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-start gap-3"
+                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-green-200 via-lime-200 to-yellow-200 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-3 min-h-[100px]"
                                         onClick={() => router.push(`/sprint/${sprintId}/retrospective`)}>
                                         <div className="h-10 w-10 bg-white/60 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                            <MessageSquare className="h-5 w-5 text-green-800" />
+                                            <MessageSquare className="h-5 w-5 text-green-950 stroke-[2]" />
                                         </div>
                                         <div>
                                             <p className="text-[14px] font-bold text-green-950 leading-snug">Retrospective</p>
@@ -436,9 +441,9 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                     </div>
 
                                     {/* Reports */}
-                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#ffedd5] to-[#fcd34d] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-start gap-3">
+                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#ffedd5] to-[#fcd34d] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-3 min-h-[100px]">
                                         <div className="h-10 w-10 bg-white/60 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                            <FileText className="h-5 w-5 text-orange-600" />
+                                            <FileText className="h-5 w-5 text-orange-900 stroke-[2]" />
                                         </div>
                                         <div>
                                             <p className="text-[14px] font-bold text-orange-950 leading-snug">Reports</p>
@@ -447,9 +452,9 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                     </div>
 
                                     {/* Adviin */}
-                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#f1f5f9] to-[#cbd5e1] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-start gap-3">
+                                    <div className="rounded-2xl p-4 bg-gradient-to-br from-[#f1f5f9] to-[#cbd5e1] cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-3 min-h-[100px]">
                                         <div className="h-10 w-10 bg-white/60 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                                            <Settings className="h-5 w-5 text-slate-600" />
+                                            <Settings className="h-5 w-5 text-slate-950 stroke-[2]" />
                                         </div>
                                         <div>
                                             <p className="text-[14px] font-bold text-slate-800 leading-snug">Adviin</p>
@@ -461,20 +466,20 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                         </div>
 
                         {/* Right Wrapper: Burndown + Velocity + Feed (6 cols) */}
-                        <div className="col-span-12 xl:col-span-6 flex flex-col gap-6">
+                        <div className="col-span-12 xl:col-span-6 flex flex-col gap-3">
                             {/* Row 1: Burndown + Velocity */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {/* Sprint Burndown */}
                                 <div className="bg-white rounded-2xl shadow-sm p-5 flex flex-col">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="p-1 rounded bg-slate-100"><TrendingUp className="h-3 w-3 text-slate-500" /></div>
+                                            <div className="p-1 rounded bg-slate-100"><TrendingUp className="h-3 w-3 text-slate-900 stroke-[2.5]" /></div>
                                             <span className="text-[15px] font-bold text-slate-800">Sprint Burndown</span>
                                         </div>
                                         <MoreHorizontal className="h-4 w-4 text-slate-400" />
                                     </div>
-                                    <div className="h-[160px]">
-                                        <ResponsiveContainer width="100%" height={160}>
+                                    <div className="h-[250px]">
+                                        <ResponsiveContainer width="100%" height={250}>
                                             <AreaChart data={MOCK_BURNDOWN} margin={{ top: 5, right: 10, bottom: 0, left: -20 }}>
                                                 <defs>
                                                     <linearGradient id="gBurndown" x1="0" y1="0" x2="0" y2="1">
@@ -496,12 +501,12 @@ export function SprintDetailClient({ sprint: initialSprint, sprintId }: SprintDe
                                 </div>
 
                                 {/* Velocity Trend */}
-                                <div className="bg-white rounded-2xl shadow-sm p-5">
-                                    <div className="flex items-center justify-between mb-4">
+                                <div className="bg-white rounded-2xl shadow-sm p-4 xl:mt-[130px]">
+                                    <div className="flex items-center justify-between mb-2">
                                         <span className="text-[15px] font-bold text-slate-800">Velocity Trend</span>
                                         <MoreHorizontal className="h-4 w-4 text-slate-400" />
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         {MOCK_VELOCITY.map((v, i) => (
                                             <div key={i} className="flex items-center gap-3 text-[12px]">
                                                 <div className="flex items-center gap-2 w-[100px] shrink-0">
