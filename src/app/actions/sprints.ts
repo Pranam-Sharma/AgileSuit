@@ -282,7 +282,7 @@ export async function getSprintAction(sprintId: string) {
 
 // Sprint Status Management Actions
 
-type SprintStatus = 'planning' | 'active' | 'completed' | 'archived';
+type SprintStatus = 'not_started' | 'planning' | 'preparing' | 'active' | 'retrospective' | 'closed' | 'cancelled';
 
 export async function updateSprintStatusAction(sprintId: string, newStatus: SprintStatus) {
     const supabase = await createClient();
@@ -311,7 +311,6 @@ export async function updateSprintStatusAction(sprintId: string, newStatus: Spri
         .from('sprints')
         .update({
             status: newStatus,
-            updated_at: new Date().toISOString(),
         })
         .eq('id', sprintId)
         .eq('org_slug', profile.org_id);
@@ -376,7 +375,6 @@ export async function startSprintAction(sprintId: string) {
         .from('sprints')
         .update({
             status: 'active',
-            updated_at: new Date().toISOString(),
         })
         .eq('id', sprintId)
         .eq('org_slug', profile.org_id);
@@ -436,7 +434,6 @@ export async function completeSprintAction(sprintId: string) {
         .from('sprints')
         .update({
             status: 'completed',
-            updated_at: new Date().toISOString(),
         })
         .eq('id', sprintId)
         .eq('org_slug', profile.org_id);
@@ -496,7 +493,6 @@ export async function archiveSprintAction(sprintId: string) {
         .from('sprints')
         .update({
             status: 'archived',
-            updated_at: new Date().toISOString(),
         })
         .eq('id', sprintId)
         .eq('org_slug', profile.org_id);
@@ -542,9 +538,7 @@ export async function updateSprintAction(sprintId: string, data: UpdateSprintDat
     }
 
     // Build update object with only provided fields
-    const updateData: any = {
-        updated_at: new Date().toISOString(),
-    };
+    const updateData: any = {};
 
     if (data.sprintNumber !== undefined) updateData.sprint_number = data.sprintNumber;
     if (data.sprintName !== undefined) updateData.name = data.sprintName;

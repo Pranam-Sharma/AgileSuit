@@ -2,24 +2,21 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
-  Loader2,
-  LogOut,
-  ListFilter,
   Search,
-  Shield,
-  LayoutDashboard,
   Plus,
-  Sparkles,
-  Zap,
-  CheckCircle2,
-  Target,
-  TrendingUp,
-  CalendarDays,
-  Clock
+  ChevronDown,
+  Bell,
+  Smartphone,
+  Filter,
+  LayoutGrid,
+  List
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useUserRole } from '@/hooks/use-user-role';
 import { Logo } from '../logo';
+import { Sidebar } from './sidebar';
 import { Button } from '@/components/ui/button';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import {
@@ -37,7 +34,6 @@ import { SprintCard } from './sprint-card';
 import { Input } from '../ui/input';
 import { getSprints } from '@/lib/sprints-client';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 import { type User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +57,19 @@ export function DashboardClient() {
   const [sprints, setSprints] = React.useState<(Sprint & { id: string })[]>([]);
   const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+
+  // Persist View Mode
+  React.useEffect(() => {
+    const savedView = localStorage.getItem('sprint_dashboard_view');
+    if (savedView === 'grid' || savedView === 'list') {
+      setViewMode(savedView);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem('sprint_dashboard_view', viewMode);
+  }, [viewMode]);
   const [filters, setFilters] = React.useState<Filters>({
     department: [],
     team: [],
@@ -110,11 +119,7 @@ export function DashboardClient() {
     setSprints((prevSprints) => prevSprints.filter(sprint => sprint.id !== sprintId));
   };
 
-  const activeSprintsCount = sprints.length; // Simply count for now
-  const completionRate = 84; // Static for demo as per previous design request
-
-  const allDepartments = React.useMemo(() => Array.from(new Set(sprints.map(s => s.department))), [sprints]);
-  const allTeams = React.useMemo(() => Array.from(new Set(sprints.map(s => s.team))), [sprints]);
+  const activeSprintsCount = sprints.length;
 
   const handleFilterChange = (category: keyof Filters, value: string) => {
     setFilters(prev => {
@@ -152,9 +157,6 @@ export function DashboardClient() {
     );
   }
 
-  const firstName = user.user_metadata?.full_name?.split(' ')[0] || 'User';
-
-  // Helper function for time-based greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -163,145 +165,233 @@ export function DashboardClient() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-zinc-50/50 dark:bg-zinc-950/50 font-sans">
+    <div className="min-h-screen w-full bg-[#f8fafc] font-sans selection:bg-rose-100 text-slate-900 overflow-x-hidden">
+      {/* Static Branded Mesh Background */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-[#8b2635]/20 to-[#6d1d2b]/20 blur-[130px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#a63d40]/15 to-[#8b2635]/15 blur-[160px]" />
+        <div className="absolute top-[20%] right-[10%] w-[35%] h-[35%] rounded-full bg-[#8b2635]/10 blur-[120px]" />
+        <div className="absolute bottom-[20%] left-[10%] w-[45%] h-[45%] rounded-full bg-[#6d1d2b]/15 blur-[140px]" />
 
-      {/* Clean White Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 sm:px-8">
-        <Logo />
+        {/* Subtle Noise Texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05] mix-blend-overlay" />
+      </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative group hidden sm:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 group-focus-within:text-primary transition-colors" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              className="pl-9 w-64 bg-zinc-100 dark:bg-zinc-900 border-transparent focus-visible:bg-white dark:focus-visible:bg-black focus-visible:ring-primary/20 transition-all rounded-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
-          <UserNav user={user} />
-        </div>
-      </header>
+      <div className="flex relative z-10">
+        {/* Sleek Glass Sidebar */}
+        <Sidebar />
 
-      <main className="flex-1">
+        {/* Main Integrated Canvas */}
+        <main className="flex-1 ml-72 min-h-screen p-8 lg:p-12">
+          <div className="max-w-[1400px] mx-auto space-y-10">
 
-        {/* Hero Section with Gradient */}
-        <div className="relative bg-gradient-to-br from-orange-300 via-orange-400 via-30% to-red-400 to-90% pt-8 pb-12 px-6 sm:px-8 shadow-xl">
-          {/* Background Texture/Pattern */}
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
-
-          {/* Abstract Shapes - Enhanced gradient effect */}
-          <div className="absolute top-0 right-0 p-12 opacity-20 pointer-events-none">
-            <div className="h-64 w-64 rounded-full bg-yellow-200 blur-3xl opacity-30 -mr-20 -mt-20" />
-          </div>
-          <div className="absolute bottom-0 left-0 p-12 opacity-20 pointer-events-none">
-            <div className="h-48 w-48 rounded-full bg-pink-200 blur-3xl opacity-30 -ml-20 -mb-20" />
-          </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-            <div className="h-96 w-96 rounded-full bg-orange-200 blur-3xl opacity-20" />
-          </div>
-
-          <div className="max-w-7xl mx-auto relative z-10">
-            {/* Greeting & Header Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="space-y-1 relative">
-                <Badge variant="outline" className="text-white border-white/20 bg-white/10 backdrop-blur-sm mb-2 hover:bg-white/20 transition-colors cursor-default">
-                  <Sparkles className="h-3 w-3 mr-1 text-yellow-200" />
-                  Workspace Overview
-                </Badge>
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm">
-                  {getGreeting()}, {firstName}
-                </h1>
-                <p className="text-white/90 font-medium flex items-center gap-2 text-lg">
-                  Your workspace is moving fast today.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Overlapping Content Container */}
-        <div className="px-6 sm:px-8 max-w-7xl mx-auto -mt-8 relative z-20">
-          <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl p-6 md:p-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-
-            {/* Sprint Section Header */}
-            <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">Your Sprints</h3>
-                </div>
-                <p className="text-muted-foreground text-sm">Manage and track your active agile cycles.</p>
+            {/* Minimalist Top Header */}
+            <header className="flex items-center justify-between gap-8 h-12">
+              <div className="flex-1 max-w-xl relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-rose-600 transition-colors" />
+                <Input
+                  type="text"
+                  placeholder="Search sprints, projects, or teams..."
+                  className="w-full pl-11 bg-white/40 backdrop-blur-xl border-white/60 shadow-sm focus-visible:bg-white focus-visible:ring-rose-500/20 transition-all rounded-2xl h-11 text-[14px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
 
-              <div className="flex gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-9">
-                      <ListFilter className="mr-2 h-4 w-4" />
-                      Filter
-                      {(filters.department.length > 0 || filters.team.length > 0 || filters.status.length > 0) && (
-                        <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center bg-zinc-900 text-white rounded-full">
-                          {filters.department.length + filters.team.length + filters.status.length}
-                        </Badge>
-                      )}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 p-1 bg-white/40 backdrop-blur-xl rounded-2xl border border-white/60 shadow-sm">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-500 hover:bg-white/80">
+                    <Smartphone className="h-5 w-5" />
+                  </Button>
+                  <div className="relative">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-500 hover:bg-white/80">
+                      <Bell className="h-5 w-5" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel>Filter Sprints</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500">Status</div>
-                    {['planning', 'active', 'completed', 'archived'].map(status => (
-                      <DropdownMenuCheckboxItem
-                        key={status}
-                        checked={filters.status.includes(status)}
-                        onCheckedChange={() => handleFilterChange('status', status)}
-                      >
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <div className="px-2 py-1.5 text-xs font-semibold text-zinc-500">Department</div>
-                    {allDepartments.map(d => (
-                      <DropdownMenuCheckboxItem key={d} checked={filters.department.includes(d)} onCheckedChange={() => handleFilterChange('department', d)}>{d}</DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-rose-600 border-2 border-white" />
+                  </div>
+                </div>
+                <div className="h-9 w-px bg-slate-200 mx-2" />
+                <UserNav user={user} />
               </div>
-            </div>
+            </header>
 
-            {/* Sprints Grid */}
-            {isSprintsLoading ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-[240px] bg-zinc-100 dark:bg-zinc-800 rounded-2xl animate-pulse" />)}
+            {/* Dashboard Hero Row */}
+            <section className="flex flex-col md:flex-row justify-between items-end gap-6 pt-4">
+              <div>
+                <p className="text-rose-700 font-bold tracking-widest text-[11px] mb-2 uppercase">{getGreeting()}</p>
+                <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight flex items-center gap-4">
+                  Sprints
+                  <Badge className="bg-rose-600/10 text-rose-700 border-0 rounded-full px-4 py-1 text-sm font-bold shadow-none">
+                    {activeSprintsCount} Active
+                  </Badge>
+                </h1>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {/* Create New Sprint Card - Always First */}
+
+              <div className="flex items-center gap-3">
                 <CreateSprintDialog
                   onCreateSprint={handleCreateSprint}
                   trigger={
-                    <div className="group border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center p-6 h-full min-h-[220px] hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer">
-                      <div className="h-14 w-14 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <Plus className="h-6 w-6 text-zinc-400 group-hover:text-primary transition-colors" />
-                      </div>
-                      <p className="font-semibold text-zinc-600 dark:text-zinc-400 group-hover:text-primary transition-colors">Create New Sprint</p>
-                      <p className="text-xs text-muted-foreground mt-2 text-center max-w-[150px]">Start a new cycle for your team</p>
-                    </div>
+                    <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-900/10 rounded-2xl px-7 h-14 font-bold border-0 transition-all active:scale-95 flex items-center gap-2">
+                      <Plus className="h-5 w-5" />
+                      New Sprint
+                    </Button>
                   }
                 />
-
-                {filteredSprints.length > 0 && filteredSprints.map((sprint) => (
-                  <SprintCard key={sprint.id} sprint={sprint} onDelete={handleDeleteSprint} />
-                ))}
               </div>
-            )}
-          </div>
-        </div>
+            </section>
 
-      </main>
+            {/* View Controls & Tabs */}
+            <section className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-2">
+              <div className="flex items-center gap-1.5 p-1.5 bg-white/40 backdrop-blur-xl rounded-[20px] border border-white/60 shadow-sm w-fit">
+                {['All', 'Active', 'Upcoming', 'Completed', 'Archived'].map((tab) => {
+                  const isActive = filters.status.length === 0 && tab === 'All' || filters.status.includes(tab.toLowerCase());
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        if (tab === 'All') {
+                          setFilters(prev => ({ ...prev, status: [] }));
+                        } else {
+                          setFilters(prev => ({ ...prev, status: [tab.toLowerCase()] }));
+                        }
+                      }}
+                      className={cn(
+                        "px-6 py-2.5 rounded-2xl text-[14px] font-bold transition-all duration-300",
+                        isActive
+                          ? "bg-white text-rose-700 shadow-sm border border-slate-100"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/40"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2 p-1.5 bg-white/40 backdrop-blur-xl rounded-[20px] border border-white/60 shadow-sm">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-10 w-10 rounded-xl transition-all duration-300",
+                    viewMode === 'grid' ? "bg-white shadow-sm text-rose-700" : "text-slate-400 hover:bg-white/60"
+                  )}
+                  onClick={() => setViewMode('grid')}
+                >
+                  <LayoutGrid className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-10 w-10 rounded-xl transition-all duration-300",
+                    viewMode === 'list' ? "bg-white shadow-sm text-rose-700" : "text-slate-400 hover:bg-white/60"
+                  )}
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-5 w-5" />
+                </Button>
+                <div className="w-px h-6 bg-slate-200 mx-1" />
+                <Button variant="ghost" className="h-10 px-4 rounded-xl text-slate-500 hover:bg-white/60 font-bold text-sm flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </div>
+            </section>
+
+            {/* Sprints Canvas Grid/List */}
+            <section className="pt-2 pb-20">
+              <LayoutGroup>
+                {isSprintsLoading ? (
+                  <motion.div
+                    layout
+                    className={cn(
+                      viewMode === 'grid'
+                        ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                        : "flex flex-col gap-4"
+                    )}
+                  >
+                    {[1, 2, 3, 4].map(i => (
+                      <motion.div
+                        layout
+                        key={i}
+                        className={cn(
+                          "bg-white/30 border border-white/50 animate-pulse",
+                          viewMode === 'grid' ? "h-[220px] rounded-[32px]" : "h-20 rounded-2xl"
+                        )}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    layout
+                    className={cn(
+                      viewMode === 'grid'
+                        ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                        : "flex flex-col gap-4"
+                    )}
+                  >
+                    {/* Integrated Create New Sprint - Conditional Layout */}
+                    <motion.div
+                      layout
+                      layoutId="create-sprint-button"
+                    >
+                      <CreateSprintDialog
+                        onCreateSprint={handleCreateSprint}
+                        trigger={
+                          viewMode === 'grid' ? (
+                            <div className="group border-2 border-dashed border-slate-300/40 rounded-[32px] flex flex-col items-center justify-center p-8 h-full min-h-[220px] hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm">
+                              <div className="h-14 w-14 rounded-[20px] bg-white shadow-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-90">
+                                <Plus className="h-7 w-7 text-rose-600" />
+                              </div>
+                              <div className="text-center">
+                                <p className="font-extrabold text-slate-800 text-lg tracking-tight mb-1">Create New Sprint</p>
+                                <p className="text-slate-400 text-xs font-medium">Launch a fresh cycle</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="group border-2 border-dashed border-slate-300/40 rounded-2xl flex items-center gap-4 p-4 hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm h-20">
+                              <div className="h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center group-hover:rotate-90 transition-transform duration-500">
+                                <Plus className="h-5 w-5 text-rose-600" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 text-sm tracking-tight">Add New Sprint</p>
+                                <p className="text-slate-400 text-[10px] font-medium">Quickly launch a new cycle</p>
+                              </div>
+                            </div>
+                          )
+                        }
+                      />
+                    </motion.div>
+
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {filteredSprints.length > 0 && filteredSprints.map((sprint) => (
+                        <motion.div
+                          layout
+                          key={sprint.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          transition={{
+                            layout: { type: "spring", stiffness: 350, damping: 35 },
+                            opacity: { duration: 0.2 }
+                          }}
+                        >
+                          <SprintCard
+                            sprint={sprint}
+                            onDelete={handleDeleteSprint}
+                            variant={viewMode}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </LayoutGroup>
+            </section>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
