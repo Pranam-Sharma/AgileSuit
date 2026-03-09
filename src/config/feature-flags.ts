@@ -1,0 +1,6 @@
+export const FEATURE_FLAGS = {
+    ENABLE_AI_ESTIMATIONS: process.env.NEXT_PUBLIC_ENABLE_AI_ESTIMATIONS === 'true' || false,
+    ENABLE_ADVANCED_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ADVANCED_ANALYTICS === 'true' || false,
+    ENABLE_SLACK_INTEGRATION: process.env.NEXT_PUBLIC_ENABLE_SLACK_INTEGRATION === 'true' || false,
+    ENABLE_JIRA_IMPORT: process.env.NEXT_PUBLIC_ENABLE_JIRA_IMPORT === 'true' || false,
+};
