@@ -1,6 +1,6 @@
 
 import { NextResponse, type NextRequest } from 'next/server'
-import { updateSession } from '@/auth/supabase/middleware'
+import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
     // Basic Auth for Staging (or any environment where ENABLE_BASIC_AUTH is set)

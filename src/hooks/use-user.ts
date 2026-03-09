@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { useAuth } from '@/auth/firebase/provider';
+import { useAuth } from '@/firebase/provider';
 
 export function useUser() {
   const auth = useAuth();

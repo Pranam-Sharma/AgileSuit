@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { createClient } from '@/auth/supabase/client';
-import { RbacContext, RoleLevel } from '@/auth/rbac';
+import { createClient } from '@/lib/supabase/client';
+import { RbacContext, RoleLevel } from '@/lib/rbac';
 
 export function useRBAC() {
     const [rbacContext, setRbacContext] = React.useState<RbacContext | null>(null);
