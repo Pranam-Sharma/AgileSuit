@@ -1,0 +1,358 @@
+
+'use client';
+
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, PlusCircle } from 'lucide-react';
+import { cn } from '@/utils/cn';
+// import { useUser } from '@/hooks/use-user'; // Removed
+// import { createSprint } from '@/services/sprints-client'; // Removed
+// import { useFirestore } from '@/auth/firebase/provider'; // Removed
+
+const sprintSchema = z.object({
+  sprintNumber: z.string().min(1, 'Sprint number is required.'),
+  sprintName: z.string().min(1, 'Sprint name is required.'),
+  projectName: z.string().min(1, 'Project name is required.'),
+  department: z.string().min(1, 'Department is required.'),
+  team: z.string().min(1, 'Team is required.'),
+  isFacilitator: z.boolean().default(false),
+  facilitatorName: z.string().optional(),
+  plannedPoints: z.coerce.number().optional(),
+  completedPoints: z.coerce.number().optional(),
+  userId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  status: z.enum(['not_started', 'planning', 'preparing', 'active', 'retrospective', 'closed', 'cancelled', 'completed', 'archived']).default('planning'),
+}).refine(
+  (data) => {
+    if (data.isFacilitator) return true;
+    return !!data.facilitatorName;
+  },
+  {
+    message: 'Facilitator name is required if you are not the facilitator.',
+    path: ['facilitatorName'],
+  }
+).refine(
+  (data) => {
+    if (data.startDate && data.endDate) {
+      return new Date(data.startDate) < new Date(data.endDate);
+    }
+    return true;
+  },
+  {
+    message: 'End date must be after start date.',
+    path: ['endDate'],
+  }
+);
+
+export type Sprint = z.infer<typeof sprintSchema>;
+
+type CreateSprintDialogProps = {
+  onCreateSprint?: (sprint: Sprint & { id: string }) => void;
+  onSprintCreated?: (sprint: any) => void;
+  triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  trigger?: React.ReactNode;
+  children?: React.ReactNode;
+};
+
+export function CreateSprintDialog({ onCreateSprint, onSprintCreated, triggerVariant = "default", trigger, children }: CreateSprintDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { toast } = useToast();
+  // const { user } = useUser(); // Removed
+  // const firestore = useFirestore(); // Removed
+
+  const form = useForm<Sprint>({
+    resolver: zodResolver(sprintSchema),
+    defaultValues: {
+      sprintNumber: '',
+      sprintName: '',
+      projectName: '',
+      department: '',
+      team: '',
+      isFacilitator: false,
+      facilitatorName: '',
+      plannedPoints: 0,
+      completedPoints: 0,
+      startDate: '',
+      endDate: '',
+    },
+  });
+
+  const isFacilitator = form.watch('isFacilitator');
+  const startDate = form.watch('startDate');
+  const endDate = form.watch('endDate');
+
+  const getSprintDuration = () => {
+    if (!startDate || !endDate) return null;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const sprintDuration = getSprintDuration();
+  const isUnusualDuration = sprintDuration !== null && (sprintDuration < 7 || sprintDuration > 28);
+
+  async function onSubmit(values: Sprint) {
+    setIsLoading(true);
+
+    let finalValues = { ...values };
+    if (values.isFacilitator) {
+      // For now, we'll just use "Me" or let the server handle it if we fetched user name
+      // ideally we pass the user name from the parent or fetch it
+      finalValues.facilitatorName = 'Me';
+    }
+
+    try {
+      const { createSprintAction } = await import('@/backend/actions/sprints.actions');
+      const { sprint } = await createSprintAction(finalValues);
+
+      if (onCreateSprint) onCreateSprint({ ...values, id: sprint.id });
+      if (onSprintCreated) onSprintCreated({ ...values, id: sprint.id });
+
+      toast({
+        title: 'Sprint Created!',
+        description: `Sprint "${values.sprintName}" has been successfully created.`,
+      });
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      toast({
+        title: 'Error Creating Sprint',
+        description: error.message || 'An unknown error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button variant={triggerVariant}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            <span>Create Sprint</span>
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-xl bg-background/95 backdrop-blur-sm shadow-2xl shadow-blue-500/10 border-0">
+        <DialogHeader>
+          <DialogTitle>Create New Sprint</DialogTitle>
+          <DialogDescription>
+            Fill in the details below to start a new sprint.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="sprintNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sprint Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 24.01" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sprintName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Sprint Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Q1 Planning" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="projectName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Project Phoenix" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Engineering" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="team"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Team</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Frontend" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Duration Warning */}
+            {sprintDuration !== null && (
+              <div className={cn(
+                "p-3 rounded-lg text-sm",
+                isUnusualDuration
+                  ? "bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800"
+                  : "bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+              )}>
+                <p className="font-medium">
+                  Sprint Duration: {sprintDuration} day{sprintDuration !== 1 ? 's' : ''}
+                  {sprintDuration >= 7 && ` (${Math.floor(sprintDuration / 7)} week${Math.floor(sprintDuration / 7) !== 1 ? 's' : ''})`}
+                </p>
+                {isUnusualDuration && (
+                  <p className="text-xs mt-1">
+                    {sprintDuration < 7
+                      ? 'This sprint is shorter than typical 1-2 week sprints.'
+                      : 'This sprint is longer than typical 2-4 week sprints.'}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Removed Story Points fields as per user request */}
+
+            <FormField
+              control={form.control}
+              name="isFacilitator"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Are you the facilitator/scrum master?
+                    </FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div
+              className={cn(
+                'transition-all duration-300 ease-in-out',
+                isFacilitator
+                  ? 'opacity-0 h-0 overflow-hidden'
+                  : 'opacity-100 h-auto'
+              )}
+            >
+              {!isFacilitator && (
+                <FormField
+                  control={form.control}
+                  name="facilitatorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Facilitator/Scrum Master Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter facilitator's name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  'Create'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

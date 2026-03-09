@@ -1,9 +1,9 @@
 
-import { AuthRedirector } from '@/components/auth/auth-redirector';
-import { FeaturesSection } from '@/components/landing/features';
-import { LandingPage } from '@/components/landing/landing-page';
-import { ResourcesSection } from '@/components/landing/resources';
-import { SolutionsSection } from '@/components/landing/solutions';
+import { AuthRedirector } from '@/modules/auth/auth-redirector';
+import { FeaturesSection } from '@/modules/landing/features';
+import { LandingPage } from '@/modules/landing/landing-page';
+import { ResourcesSection } from '@/modules/landing/resources';
+import { SolutionsSection } from '@/modules/landing/solutions';
 
 // ...
 export const dynamic = 'force-dynamic';
