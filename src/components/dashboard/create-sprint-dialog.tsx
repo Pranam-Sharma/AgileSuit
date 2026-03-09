@@ -45,7 +45,7 @@ const sprintSchema = z.object({
   userId: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  status: z.enum(['not_started', 'planning', 'preparing', 'active', 'retrospective', 'closed', 'cancelled']).default('planning'),
+  status: z.enum(['not_started', 'planning', 'preparing', 'active', 'retrospective', 'closed', 'cancelled', 'completed', 'archived']).default('planning'),
 }).refine(
   (data) => {
     if (data.isFacilitator) return true;
@@ -71,12 +71,14 @@ const sprintSchema = z.object({
 export type Sprint = z.infer<typeof sprintSchema>;
 
 type CreateSprintDialogProps = {
-  onCreateSprint: (sprint: Sprint & { id: string }) => void;
+  onCreateSprint?: (sprint: Sprint & { id: string }) => void;
+  onSprintCreated?: (sprint: any) => void;
   triggerVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   trigger?: React.ReactNode;
+  children?: React.ReactNode;
 };
 
-export function CreateSprintDialog({ onCreateSprint, triggerVariant = "default", trigger }: CreateSprintDialogProps) {
+export function CreateSprintDialog({ onCreateSprint, onSprintCreated, triggerVariant = "default", trigger, children }: CreateSprintDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
@@ -130,7 +132,8 @@ export function CreateSprintDialog({ onCreateSprint, triggerVariant = "default",
       const { createSprintAction } = await import('@/app/actions/sprints');
       const { sprint } = await createSprintAction(finalValues);
 
-      onCreateSprint({ ...values, id: sprint.id }); // Optimistic update / UI update
+      if (onCreateSprint) onCreateSprint({ ...values, id: sprint.id });
+      if (onSprintCreated) onSprintCreated({ ...values, id: sprint.id });
 
       toast({
         title: 'Sprint Created!',

@@ -2,7 +2,10 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(useGSAP);
 import {
   Search,
   Plus,
@@ -58,6 +61,30 @@ export function DashboardClient() {
   const [isSprintsLoading, setIsSprintsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
+
+  const containerRef = React.useRef<HTMLElement>(null);
+  const { contextSafe } = useGSAP({ scope: containerRef });
+
+  const handleViewModeChange = contextSafe((newMode: 'grid' | 'list') => {
+    if (newMode === viewMode || isTransitioning) return;
+    setIsTransitioning(true);
+
+    gsap.to('.gsap-item', {
+      opacity: 0,
+      y: -10,
+      scale: 0.98,
+      duration: 0.2,
+      stagger: { amount: 0.1 },
+      ease: "power2.in",
+      onComplete: () => {
+        setViewMode(newMode);
+        setIsTransitioning(false);
+      }
+    });
+  });
+
+
 
   // Persist View Mode
   React.useEffect(() => {
@@ -149,6 +176,16 @@ export function DashboardClient() {
       );
     });
   }, [sprints, filters, searchQuery]);
+
+  useGSAP(() => {
+    if (filteredSprints.length === 0 && !isSprintsLoading) return;
+    if (isTransitioning) return;
+
+    gsap.fromTo('.gsap-item',
+      { opacity: 0, y: 15, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: { amount: 0.15 }, ease: "back.out(1.2)", clearProps: "all" }
+    );
+  }, [viewMode, filteredSprints.length, isSprintsLoading, isTransitioning]);
 
 
   if (isUserLoading || !user) {
@@ -276,7 +313,7 @@ export function DashboardClient() {
                     "h-10 w-10 rounded-xl transition-all duration-300",
                     viewMode === 'grid' ? "bg-white shadow-sm text-rose-700" : "text-slate-400 hover:bg-white/60"
                   )}
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => handleViewModeChange('grid')}
                 >
                   <LayoutGrid className="h-5 w-5" />
                 </Button>
@@ -287,7 +324,7 @@ export function DashboardClient() {
                     "h-10 w-10 rounded-xl transition-all duration-300",
                     viewMode === 'list' ? "bg-white shadow-sm text-rose-700" : "text-slate-400 hover:bg-white/60"
                   )}
-                  onClick={() => setViewMode('list')}
+                  onClick={() => handleViewModeChange('list')}
                 >
                   <List className="h-5 w-5" />
                 </Button>
@@ -300,94 +337,77 @@ export function DashboardClient() {
             </section>
 
             {/* Sprints Canvas Grid/List */}
-            <section className="pt-2 pb-20">
-              <LayoutGroup>
-                {isSprintsLoading ? (
-                  <motion.div
-                    layout
-                    className={cn(
-                      viewMode === 'grid'
-                        ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "flex flex-col gap-4"
-                    )}
-                  >
-                    {[1, 2, 3, 4].map(i => (
-                      <motion.div
-                        layout
-                        key={i}
-                        className={cn(
-                          "bg-white/30 border border-white/50 animate-pulse",
-                          viewMode === 'grid' ? "h-[220px] rounded-[32px]" : "h-20 rounded-2xl"
-                        )}
-                      />
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    layout
-                    className={cn(
-                      viewMode === 'grid'
-                        ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                        : "flex flex-col gap-4"
-                    )}
-                  >
-                    {/* Integrated Create New Sprint - Conditional Layout */}
-                    <motion.div
-                      layout
-                      layoutId="create-sprint-button"
-                    >
-                      <CreateSprintDialog
-                        onCreateSprint={handleCreateSprint}
-                        trigger={
-                          viewMode === 'grid' ? (
-                            <div className="group border-2 border-dashed border-slate-300/40 rounded-[32px] flex flex-col items-center justify-center p-8 h-full min-h-[220px] hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm">
-                              <div className="h-14 w-14 rounded-[20px] bg-white shadow-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-90">
-                                <Plus className="h-7 w-7 text-rose-600" />
-                              </div>
-                              <div className="text-center">
-                                <p className="font-extrabold text-slate-800 text-lg tracking-tight mb-1">Create New Sprint</p>
-                                <p className="text-slate-400 text-xs font-medium">Launch a fresh cycle</p>
-                              </div>
+            <section className="pt-2 pb-20" ref={containerRef as any}>
+              {isSprintsLoading ? (
+                <div
+                  className={cn(
+                    viewMode === 'grid'
+                      ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "flex flex-col gap-4"
+                  )}
+                >
+                  {[1, 2, 3, 4].map(i => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "gsap-item bg-white/30 border border-white/50 animate-pulse",
+                        viewMode === 'grid' ? "h-[220px] rounded-[32px]" : "h-20 rounded-2xl"
+                      )}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    viewMode === 'grid'
+                      ? "grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      : "flex flex-col gap-4"
+                  )}
+                >
+                  {/* Integrated Create New Sprint - Conditional Layout */}
+                  <div className="gsap-item">
+                    <CreateSprintDialog
+                      onCreateSprint={handleCreateSprint}
+                      trigger={
+                        viewMode === 'grid' ? (
+                          <div className="group border-2 border-dashed border-slate-300/40 rounded-[32px] flex flex-col items-center justify-center p-8 h-full min-h-[220px] hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm">
+                            <div className="h-14 w-14 rounded-[20px] bg-white shadow-lg flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-90">
+                              <Plus className="h-7 w-7 text-rose-600" />
                             </div>
-                          ) : (
-                            <div className="group border-2 border-dashed border-slate-300/40 rounded-2xl flex items-center gap-4 p-4 hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm h-20">
-                              <div className="h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center group-hover:rotate-90 transition-transform duration-500">
-                                <Plus className="h-5 w-5 text-rose-600" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-800 text-sm tracking-tight">Add New Sprint</p>
-                                <p className="text-slate-400 text-[10px] font-medium">Quickly launch a new cycle</p>
-                              </div>
+                            <div className="text-center">
+                              <p className="font-extrabold text-slate-800 text-lg tracking-tight mb-1">Create New Sprint</p>
+                              <p className="text-slate-400 text-xs font-medium">Launch a fresh cycle</p>
                             </div>
-                          )
-                        }
-                      />
-                    </motion.div>
+                          </div>
+                        ) : (
+                          <div className="group border-2 border-dashed border-slate-300/40 rounded-2xl flex items-center gap-4 p-4 hover:border-rose-400/60 hover:bg-white/40 transition-all cursor-pointer bg-white/10 backdrop-blur-sm h-20">
+                            <div className="h-10 w-10 rounded-xl bg-white shadow-md flex items-center justify-center group-hover:rotate-90 transition-transform duration-500">
+                              <Plus className="h-5 w-5 text-rose-600" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm tracking-tight">Add New Sprint</p>
+                              <p className="text-slate-400 text-[10px] font-medium">Quickly launch a new cycle</p>
+                            </div>
+                          </div>
+                        )
+                      }
+                    />
+                  </div>
 
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      {filteredSprints.length > 0 && filteredSprints.map((sprint) => (
-                        <motion.div
-                          layout
-                          key={sprint.id}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{
-                            layout: { type: "spring", stiffness: 350, damping: 35 },
-                            opacity: { duration: 0.2 }
-                          }}
-                        >
-                          <SprintCard
-                            sprint={sprint}
-                            onDelete={handleDeleteSprint}
-                            variant={viewMode}
-                          />
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </motion.div>
-                )}
-              </LayoutGroup>
+                  {filteredSprints.length > 0 && filteredSprints.map((sprint) => (
+                    <div
+                      key={sprint.id}
+                      className="gsap-item"
+                    >
+                      <SprintCard
+                        sprint={sprint}
+                        onDelete={handleDeleteSprint}
+                        variant={viewMode}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </main>

@@ -19,7 +19,7 @@ import { Logo } from '../logo';
 const NAV_ITEMS = [
     { icon: Home, label: 'Overview', href: '/dashboard' },
     { icon: Layers, label: 'Sprints', href: '/dashboard', active: true },
-    { icon: Users, label: 'Teams', href: '/teams' },
+    { icon: Users, label: 'Teams', href: '/dashboard/team' },
     { icon: Settings, label: 'Settings', href: '/settings' },
 ];
 
