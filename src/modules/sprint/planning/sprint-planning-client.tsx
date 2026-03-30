@@ -39,7 +39,10 @@ import {
   Search,
   ListTodo,
   Menu,
-  Network
+  Network,
+  LayoutGrid,
+  List,
+  Pen
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -201,10 +204,10 @@ type SprintPlanningClientProps = {
 // --- Constants ---
 
 const PLANNING_SECTIONS = [
-  { id: 'general', label: 'General Info', icon: LayoutDashboard, description: 'Dates, duration, and capacity.' },
-  { id: 'team', label: 'Team Composition', icon: Users, description: 'Availability and role assignments.' },
-  { id: 'priority', label: 'Project Priority', icon: FileText, description: 'Focus areas for this sprint.' },
-  { id: 'metrics', label: 'Platform Metrics', icon: BarChart3, description: 'KPIs and success criteria.' },
+  { id: 'general', label: 'Core Sprint Parameters', icon: LayoutDashboard, description: 'Define core schedule, active duration, and baseline capacity metrics.' },
+  { id: 'team', label: 'Engineering Resources', icon: Users, description: 'Manage team availability, roles, and resource distribution.' },
+  { id: 'priority', label: 'Project Priority', icon: FileText, description: 'Prioritize key initiatives for the cycle.' },
+  { id: 'metrics', label: 'Performance & Velocity Targets', icon: BarChart3, description: 'Define throughput scales, story point targets, and dev velocity.' },
   { id: 'goals', label: 'Sprint Goals', icon: Target, description: 'Primary objectives.' },
   { id: 'milestones', label: 'Milestones', icon: Milestone, description: 'Project tracking.' },
   { id: 'demo', label: 'Sprint Demo', icon: Presentation, description: 'Demo plan and owner.' },
@@ -387,6 +390,7 @@ function ChecklistSidebar({ checklist, onToggle }: { checklist: ChecklistState, 
 export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   const [user, setUser] = React.useState<User | null>(null);
   const [isUserLoading, setIsUserLoading] = React.useState(true);
+  const [orgMembers, setOrgMembers] = React.useState<any[]>([]);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -445,6 +449,35 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       remarks: ''
     };
     setProjects(prev => [...prev, newProject]);
+  };
+
+  // Force Composition State
+  const [forceRoles, setForceRoles] = React.useState<any[]>([
+    { id: 'po', label: 'Product Owners', icon: Crown, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', desc: '' },
+    { id: 'sm', label: 'Scrum Masters', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', desc: '' }
+  ]);
+  const [editingRoleId, setEditingRoleId] = React.useState<string | null>(null);
+
+  const addForceRole = () => {
+    const newRole = {
+      id: Date.now().toString(),
+      label: '',
+      icon: Users,
+      color: 'text-slate-600',
+      bg: 'bg-slate-50',
+      border: 'border-slate-100',
+      desc: ''
+    };
+    setForceRoles(prev => [...prev, newRole]);
+    setEditingRoleId(newRole.id);
+  };
+
+  const updateForceRole = (id: string, newLabel: string) => {
+    setForceRoles(prev => prev.map(r => r.id === id ? { ...r, label: newLabel } : r));
+  };
+
+  const deleteForceRole = (id: string) => {
+    setForceRoles(prev => prev.filter(r => r.id !== id));
   };
 
   // Platform Metrics State
@@ -590,7 +623,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       targetVelocity: 0,
       holidays: [],
       developerLeaves: [],
-      isExpanded: true,
+      isExpanded: false,
     };
 
     setPlatforms(prev => [...prev, newPlatform]);
@@ -651,6 +684,39 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  const resourceContainerRef = React.useRef<HTMLDivElement>(null);
+  const { contextSafe: resourceContextSafe } = useGSAP({ scope: resourceContainerRef });
+
+  const [resourceViewMode, setResourceViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [isResourceTransitioning, setIsResourceTransitioning] = React.useState(false);
+
+  const handleResourceViewModeChange = resourceContextSafe((newMode: 'grid' | 'list') => {
+    if (newMode === resourceViewMode || isResourceTransitioning) return;
+    setIsResourceTransitioning(true);
+
+    gsap.to('.resource-gsap-item', {
+      opacity: 0,
+      y: -10,
+      scale: 0.98,
+      duration: 0.2,
+      stagger: { amount: 0.1 },
+      ease: "power2.in",
+      onComplete: () => {
+        setResourceViewMode(newMode);
+        setIsResourceTransitioning(false);
+      }
+    });
+  });
+
+  useGSAP(() => {
+    if (isLoading || isPlanningDataLoading || isResourceTransitioning || platforms.length === 0) return;
+
+    gsap.fromTo('.resource-gsap-item',
+      { opacity: 0, y: 15, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: { amount: 0.15 }, ease: "back.out(1.2)", clearProps: "all" }
+    );
+  }, [resourceViewMode, platforms.length, isPlanningDataLoading, isResourceTransitioning]);
+
   useGSAP(() => {
     if (isLoading || isPlanningDataLoading) return;
 
@@ -673,6 +739,21 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     };
     checkUser();
   }, [router, supabase.auth]);
+
+  // Load org members
+  React.useEffect(() => {
+    if (!user) return;
+    const fetchOrgMembers = async () => {
+      try {
+        const { getOrganizationMembersAction } = await import('@/backend/actions/teams.actions');
+        const members = await getOrganizationMembersAction();
+        setOrgMembers(members || []);
+      } catch (err) {
+        console.error('Failed to load org members', err);
+      }
+    };
+    fetchOrgMembers();
+  }, [user]);
 
   React.useEffect(() => {
     if (isUserLoading) return;
@@ -841,8 +922,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           })),
           target_improvement: p.targetImprovement,
           target_velocity: p.targetVelocity,
-          holidays: p.holidays,
-          developer_leaves: p.developerLeaves.map(d => ({
+          holidays: p.holidays || [],
+          developer_leaves: (p.developerLeaves || []).map(d => ({
             id: d.id,
             name: d.name,
             country: d.country,
@@ -962,38 +1043,26 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
         <div className="flex-1 flex overflow-hidden">
           {/* Main Planning Area */}
-          <main className="flex-1 overflow-y-auto custom-scrollbar lg:p-12 p-6" ref={containerRef}>
+          <main className="flex-1 overflow-y-auto custom-scrollbar lg:pt-6 lg:px-12 lg:pb-12 p-6" ref={containerRef}>
             <div className="w-full">
               {/* Premium Header Section */}
-              <div className="mb-14 space-y-5 gsap-stagger-item">
-                <div className="flex items-center gap-3">
-                  <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-100 border-transparent rounded-md px-3 py-1 font-semibold text-[10px] uppercase tracking-widest shadow-none">
-                    Mission Control
-                  </Badge>
-                  <div className="flex -space-x-2.5">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 shadow-sm flex items-center justify-center overflow-hidden">
-                        <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 animate-pulse" />
-                      </div>
-                    ))}
-                    <div className="w-7 h-7 rounded-full border-2 border-white bg-indigo-600 text-[10px] text-white flex items-center justify-center font-bold shadow-sm">+8</div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h1 className="text-6xl font-black text-slate-900 tracking-tight leading-[1.1] drop-shadow-sm">
-                    {activeSection === 'general' ? 'Sprint Parameters' :
-                      activeSection === 'team' ? 'Force Composition' :
-                        activeSection === 'priority' ? 'Core Objectives' :
+              <div className="mb-10 space-y-4 gsap-stagger-item">
+                <div className="space-y-1">
+                  <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight drop-shadow-sm">
+                    {activeSection === 'general' ? 'Core Sprint Parameters' :
+                      activeSection === 'team' ? 'Engineering Resources' :
+                        activeSection === 'priority' ? 'Project Priority' :
+                          activeSection === 'metrics' ? 'Performance & Velocity Targets' :
                           PLANNING_SECTIONS.find(s => s.id === activeSection)?.label}
                   </h1>
-                  <p className="text-slate-500 mt-4 text-[19px] max-w-2xl font-medium leading-relaxed">
+                  <p className="text-slate-500 mt-2 text-base max-w-2xl font-medium leading-relaxed">
                     {PLANNING_SECTIONS.find(s => s.id === activeSection)?.description} Orchestrate your team's collective brilliance in this tactical planning phase.
                   </p>
                 </div>
               </div>
 
               {/* Enhanced Navigation Tabs - Modern Glassmorphism */}
-              <div className="sticky top-0 z-30 mb-10 pb-2 flex items-center justify-between gap-4 gsap-stagger-item">
+              <div className="sticky top-0 z-30 mb-6 pb-2 flex items-center justify-between gap-4 gsap-stagger-item">
                 <div className="flex items-center gap-1.5 bg-white/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/50 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all">
                   {PLANNING_SECTIONS.filter(s => ['general', 'team', 'priority', 'metrics', 'goals', 'milestones', 'demo'].includes(s.id)).map(section => {
                     const Icon = section.icon;
@@ -1060,32 +1129,19 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       <LayoutDashboard className="h-7 w-7 text-indigo-600" />
                                     </div>
                                     <div>
-                                      <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Core Logistics</CardTitle>
-                                      <CardDescription className="text-sm font-medium text-slate-500">Configure the operational boundaries of this sprint cycle.</CardDescription>
+                                      <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Sprint Configuration</CardTitle>
+                                      <CardDescription className="text-sm font-medium text-slate-500">Align the team structure, platforms, and schedule to ensure delivery synchronization.</CardDescription>
                                     </div>
                                   </div>
                                 </CardHeader>
                                 <CardContent className="space-y-10 p-10">
-                                  {/* Strategic Alignment Alert */}
-                                  <div className="rounded-3xl bg-indigo-50/40 p-6 border border-indigo-100/50 flex gap-5 items-start shadow-inner relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
-                                    <div className="h-8 w-8 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">
-                                      <Info className="h-4 w-4 text-indigo-600" />
-                                    </div>
-                                    <div className="space-y-1 relative z-10">
-                                      <h4 className="text-sm font-bold text-indigo-900">Strategic Alignment</h4>
-                                      <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                                        Strategic planning mode enabled. Selection will pull <span className="text-indigo-700 font-bold underline decoration-indigo-200 underline-offset-4">Team Velocity</span>, <span className="text-indigo-700 font-bold underline decoration-indigo-200 underline-offset-4">Goals</span>, and <span className="text-indigo-700 font-bold underline decoration-indigo-200 underline-offset-4">Milestones</span> to establish baseline targets.
-                                      </p>
-                                    </div>
-                                  </div>
 
                                   <div className="grid gap-10 md:grid-cols-2">
                                     {/* Inception Date */}
                                     <div className="space-y-4">
                                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 pl-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                        Inception Date
+                                        Sprint Start Date
                                       </label>
                                       <Popover>
                                         <PopoverTrigger asChild>
@@ -1116,7 +1172,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <div className="space-y-4">
                                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 pl-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                        Conclusion Date
+                                        Sprint End Date
                                       </label>
                                       <Popover>
                                         <PopoverTrigger asChild>
@@ -1143,6 +1199,70 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       </Popover>
                                     </div>
                                   </div>
+
+                                    {/* Strategic Platform Initializer */}
+                                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                                      <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center gap-3">
+                                          <div className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center border border-slate-100 dark:border-slate-800 shadow-sm">
+                                            <LayoutDashboard className="h-5 w-5 text-indigo-500" />
+                                          </div>
+                                          <div>
+                                            <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Platforms / Services</h4>
+                                            <p className="text-[10px] font-medium text-slate-500">Define the cross-functional engineering units for this cycle.</p>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-6">
+                                        <div className="flex gap-4 items-center group/platform">
+                                          <div className="flex-1 relative">
+                                            <Input
+                                              placeholder="Define engineering unit (e.g. Android Core, Cloud Infra)..."
+                                              value={newPlatformName}
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
+                                              className="h-14 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl text-base font-bold shadow-sm transition-all placeholder:text-slate-300"
+                                              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
+                                            />
+                                          </div>
+                                          <Button
+                                            onClick={addPlatform}
+                                            disabled={!newPlatformName.trim()}
+                                            className="h-14 bg-slate-900 hover:bg-slate-800 rounded-2xl font-black text-[13px] uppercase tracking-[0.15em] px-8 shadow-xl shadow-black/10 transition-all active:scale-95"
+                                          >
+                                            <Plus className="h-5 w-5 mr-2" />
+                                            Register Unit
+                                          </Button>
+                                        </div>
+
+                                        {platforms.length > 0 && (
+                                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                                            {platforms.map((p) => (
+                                              <div 
+                                                key={p.id} 
+                                                className="p-5 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between group/card hover:border-indigo-200 transition-all shadow-sm hover:shadow-md"
+                                              >
+                                                <div className="flex items-center gap-4">
+                                                  <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                                                    <LayoutDashboard className="h-5 w-5 text-indigo-500" />
+                                                  </div>
+                                                  <div>
+                                                    <span className="font-bold text-slate-900 dark:text-white block">{p.name}</span>
+                                                    <span className="text-[10px] uppercase tracking-widest font-black text-slate-400">Engineering Division Unit</span>
+                                                  </div>
+                                                </div>
+                                                <button 
+                                                  onClick={() => deletePlatform(p.id)} 
+                                                  className="shrink-0 h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all opacity-0 group-hover/card:opacity-100"
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
 
                                   {/* Deployment Scope Summary */}
                                   <div className="pt-4">
@@ -1176,54 +1296,259 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
                               <div className="flex items-center justify-between px-2">
                                 <div className="space-y-1">
-                                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Force Composition</h3>
-                                  <p className="text-sm font-medium text-slate-500">Deploy elite personnel to strategic mission roles.</p>
+                                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Core Team Roles</h3>
+                                  <p className="text-sm font-medium text-slate-500">Define the primary accountability roles for this execution cycle.</p>
                                 </div>
-                                <Button className="rounded-2xl h-11 bg-slate-900 hover:bg-slate-800 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-black/5">
+                                <Button onClick={addForceRole} className="rounded-2xl h-11 bg-slate-900 hover:bg-slate-800 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-black/5">
                                   Add Resource
                                 </Button>
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
-                                {[
-                                  { id: 'po', label: 'Product Owners', icon: Crown, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', desc: 'Strategy & Vision Mapping' },
-                                  { id: 'sm', label: 'Scrum Masters', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', desc: 'Operational Flow Control' },
-                                  { id: 'dev', label: 'Engineering Root', icon: Code, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100', desc: 'Technical Architecture & Build' },
-                                  { id: 'qa', label: 'System Validation', icon: ShieldAlert, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', desc: 'Quality Guard & Hardening' }
-                                ].map((role) => (
-                                  <Card key={role.id} className="border-white/40 bg-white/60 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border-2 group hover:shadow-2xl hover:translate-y-[-4px] transition-all duration-500 overflow-hidden">
+                                {forceRoles.map((role) => (
+                                  <Card key={role.id} className="border-white/40 bg-white/60 backdrop-blur-md rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.03)] border-2 group/rolecard hover:shadow-2xl hover:translate-y-[-4px] transition-all duration-500 overflow-hidden">
                                     <CardHeader className="pb-6 p-8">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-5">
-                                          <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover:scale-110", role.bg)}>
+                                          <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner transition-transform group-hover/rolecard:scale-110", role.bg)}>
                                             <role.icon className={cn("h-7 w-7", role.color)} />
                                           </div>
                                           <div>
-                                            <h4 className="text-xl font-black text-slate-900 tracking-tight leading-none">{role.label}</h4>
-                                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2">{role.desc}</p>
+                                            {editingRoleId === role.id ? (
+                                              <Input
+                                                value={role.label}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateForceRole(role.id, e.target.value)}
+                                                onBlur={() => setEditingRoleId(null)}
+                                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditingRoleId(null)}
+                                                autoFocus
+                                                placeholder="Role Name"
+                                                className="h-8 -ml-3 px-3 w-52 bg-white/80 border-slate-200 text-xl font-black text-slate-900 tracking-tight leading-none focus-visible:ring-2 focus-visible:ring-indigo-500/20"
+                                              />
+                                            ) : (
+                                              <h4 onClick={() => setEditingRoleId(role.id)} className="text-xl font-black text-slate-900 tracking-tight leading-none hover:text-indigo-600 transition-colors cursor-pointer inline-block">
+                                                {role.label || 'Unnamed Role'}
+                                              </h4>
+                                            )}
                                           </div>
                                         </div>
-                                        <div className="h-10 w-10 rounded-full border-2 border-slate-50 flex items-center justify-center bg-white shadow-sm">
-                                          <span className="text-xs font-black text-slate-900">0</span>
+                                        <div className="flex items-center gap-2">
+                                          <Button variant="ghost" size="icon" onClick={() => confirmDelete('Delete Resource Role?', `Are you sure you want to remove "${role.label || 'this Role'}" from Force Composition?`, () => deleteForceRole(role.id))} className="shrink-0 h-8 w-8 text-slate-300 hover:text-rose-500 hover:bg-rose-50/50 rounded-full opacity-0 group-hover/rolecard:opacity-100 transition-opacity">
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                          <div className="h-10 w-10 shrink-0 rounded-full border-2 border-slate-50 flex items-center justify-center bg-white shadow-sm">
+                                            <span className="text-xs font-black text-slate-900">{role.assignedMember ? '1' : '0'}</span>
+                                          </div>
                                         </div>
                                       </div>
                                     </CardHeader>
                                     <CardContent className="px-8 pb-8">
-                                      <Select>
-                                        <SelectTrigger className="h-14 bg-white/80 rounded-2xl border-2 border-slate-100 focus:ring-4 ring-indigo-500/5 group-hover:border-indigo-200 transition-all font-bold text-slate-700 text-base">
-                                          <SelectValue placeholder={`Assign ${role.label}...`} />
+                                      <Select onValueChange={(val: string) => {
+                                        setForceRoles(prev => prev.map(r => r.id === role.id ? { ...r, assignedMember: val } : r));
+                                      }} value={role.assignedMember || ""}>
+                                        <SelectTrigger className="h-14 bg-white/80 rounded-2xl border-2 border-slate-100 focus:ring-4 ring-indigo-500/5 group-hover/rolecard:border-indigo-200 transition-all font-bold text-slate-700 text-base">
+                                          <SelectValue placeholder="Select Members" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-2xl border-0 shadow-2xl p-2">
                                           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-2">Available Members</div>
-                                          <SelectItem value="1" className="rounded-xl font-bold py-3">Sarah Johnson (Lead)</SelectItem>
-                                          <SelectItem value="2" className="rounded-xl font-bold py-3">Michael Chen (Expert)</SelectItem>
-                                          <SelectItem value="3" className="rounded-xl font-bold py-3">Elena Rodriguez</SelectItem>
+                                          {orgMembers.length > 0 ? orgMembers.map((member: any) => (
+                                            <SelectItem key={member.id} value={member.id} textValue={member.display_name || member.email} className="rounded-xl py-3 px-4">
+                                              <div className="flex items-center gap-3">
+                                                <Avatar className="h-8 w-8 border border-slate-200">
+                                                  <AvatarFallback className="bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                                                    {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
+                                                  </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col items-start overflow-hidden">
+                                                  <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-slate-900 truncate">{member.display_name || member.email}</span>
+                                                    {member.department?.name && (
+                                                      <Badge variant="outline" className="text-[9px] uppercase font-black tracking-wider px-1.5 py-0 border-indigo-100 text-indigo-600 h-4">
+                                                        {member.department.name}
+                                                      </Badge>
+                                                    )}
+                                                  </div>
+                                                  <span className="text-[10px] font-medium text-slate-500 truncate">{member.email}</span>
+                                                </div>
+                                              </div>
+                                            </SelectItem>
+                                          )) : (
+                                            <div className="p-3 text-sm font-medium text-slate-500 text-center">No members found</div>
+                                          )}
                                         </SelectContent>
                                       </Select>
                                     </CardContent>
                                   </Card>
                                 ))}
                               </div>
+
+                              {platforms.length > 0 && (
+                                <div className="space-y-8 pt-10 border-t border-slate-100 dark:border-slate-800">
+                                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="space-y-1 w-full sm:w-auto">
+                                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Platform Resource Distribution</h3>
+                                      <p className="text-sm font-medium text-slate-500">Allocate specialized engineering talent to specific platform domains.</p>
+                                    </div>
+                                    <div className="flex items-center gap-2 p-1.5 bg-slate-50 dark:bg-slate-900 rounded-[20px] border border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn(
+                                          "h-10 w-10 rounded-xl transition-all duration-300",
+                                          resourceViewMode === 'grid' ? "bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                                        )}
+                                        onClick={() => handleResourceViewModeChange('grid')}
+                                      >
+                                        <LayoutGrid className="h-5 w-5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className={cn(
+                                          "h-10 w-10 rounded-xl transition-all duration-300",
+                                          resourceViewMode === 'list' ? "bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400" : "text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                                        )}
+                                        onClick={() => handleResourceViewModeChange('list')}
+                                      >
+                                        <List className="h-5 w-5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  <div ref={resourceContainerRef} className={cn(resourceViewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "grid grid-cols-1 gap-6")}>
+                                    {platforms.map((platform) => (
+                                      <Card key={platform.id} className="resource-gsap-item border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] shadow-sm overflow-hidden group hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-colors transition-shadow duration-500">
+                                        <CardHeader className="pb-4 p-8 bg-slate-50/50 dark:bg-slate-900/30 flex flex-row items-center justify-between">
+                                          <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
+                                              <LayoutDashboard className="h-6 w-6 text-indigo-500" />
+                                            </div>
+                                            <div>
+                                              <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{platform.name}</h4>
+                                            </div>
+                                          </div>
+                                          <Badge className="rounded-lg px-3 py-1 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30 font-bold">
+                                            {platform.members.length} Members
+                                          </Badge>
+                                        </CardHeader>
+                                        <CardContent className="p-8 space-y-6">
+                                          <div className="relative group/member">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <button className="w-full text-left h-12 pl-12 pr-4 bg-white dark:bg-slate-900 shadow-inner rounded-2xl text-sm font-medium text-slate-500 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-colors">
+                                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                                    <Plus className="h-4 w-4" />
+                                                  </div>
+                                                  Assign Resources to Platform
+                                                </button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="start" className="w-[300px] rounded-2xl border-0 shadow-2xl p-2 z-50 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 border">
+                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3 py-2">Available Members</div>
+                                                <div className="max-h-64 overflow-y-auto pr-1">
+                                                  {orgMembers.length > 0 ? orgMembers.map((member: any) => (
+                                                    <DropdownMenuItem 
+                                                      key={member.id} 
+                                                      className="rounded-xl py-3 px-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-3"
+                                                      onClick={() => {
+                                                        const val = member.id;
+                                                        if (val && !platform.members.includes(val)) {
+                                                          setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: [...p.members, val] } : p));
+                                                        }
+                                                      }}
+                                                    >
+                                                      <Avatar className="h-10 w-10 border border-slate-200 shrink-0">
+                                                        <AvatarFallback className="bg-indigo-50 text-indigo-700 font-bold">
+                                                          {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                      <div className="flex flex-col overflow-hidden">
+                                                        <div className="flex items-center gap-2">
+                                                          <span className="font-bold text-slate-900 dark:text-white truncate text-sm">{member.display_name || member.email}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                          <span className="text-[10px] font-medium text-slate-500 truncate">{member.email}</span>
+                                                          {member.department?.name && (
+                                                            <>
+                                                              <span className="text-slate-300">•</span>
+                                                              <span className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{member.department.name}</span>
+                                                            </>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    </DropdownMenuItem>
+                                                  )) : (
+                                                    <div className="p-3 text-sm font-medium text-slate-500 text-center">No members found</div>
+                                                  )}
+                                                </div>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+
+                                          {platform.members.length > 0 && (
+                                            <div className={cn("flex flex-wrap", resourceViewMode === 'grid' ? "gap-1.5" : "gap-2")}>
+                                              {platform.members.map((member, idx) => {
+                                                const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
+                                                const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
+                                                const initials = displayName
+                                                    .trim()
+                                                    .split(/\s+/)
+                                                    .map((n: string) => n[0])
+                                                    .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
+                                                    .join('')
+                                                    .substring(0, 2)
+                                                    .toUpperCase();
+
+                                                if (resourceViewMode === 'grid') {
+                                                  return (
+                                                    <div 
+                                                      key={idx}
+                                                      title={displayName}
+                                                      className="group/badge relative h-9 w-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-[11px] font-black text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-default"
+                                                    >
+                                                      <Avatar className="h-full w-full">
+                                                        {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
+                                                        <AvatarFallback className="bg-slate-100 text-slate-600 font-black text-[10px]">{initials}</AvatarFallback>
+                                                      </Avatar>
+                                                      <button
+                                                        onClick={() => confirmDelete('Remove Assigned Resource', `Are you sure you want to remove ${displayName} from this platform sequence?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
+                                                        className="absolute -top-1.5 -right-1.5 z-10 h-4 w-4 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-white flex items-center justify-center opacity-0 group-hover/badge:opacity-100 transition-all shadow-sm hover:bg-rose-500 hover:border-rose-500 scale-75 group-hover/badge:scale-100"
+                                                      >
+                                                        <Trash2 className="h-2.5 w-2.5" />
+                                                      </button>
+                                                    </div>
+                                                  );
+                                                }
+
+                                                return (
+                                                  <Badge
+                                                    key={idx}
+                                                    variant="secondary"
+                                                    className="group/badge pl-1.5 pr-4 py-1.5 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-full flex items-center gap-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md transition-all relative overflow-visible"
+                                                  >
+                                                    <Avatar className="h-6 w-6 border-0">
+                                                      {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
+                                                      <AvatarFallback className="bg-indigo-50 text-indigo-700 text-[9px] font-black">{initials}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex flex-col items-start leading-none gap-0.5">
+                                                      <span className="text-xs">{displayName}</span>
+                                                      {memberObj?.department?.name && <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black">{memberObj.department.name}</span>}
+                                                    </div>
+                                                    <button
+                                                      onClick={() => confirmDelete('Remove Assigned Resource', `Are you sure you want to remove ${displayName} from this platform sequence?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
+                                                      className="ml-1 h-5 w-5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500 transition-all opacity-0 group-hover/badge:opacity-100 shrink-0"
+                                                    >
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </button>
+                                                  </Badge>
+                                                );
+                                              })}
+                                            </div>
+                                          )}
+                                        </CardContent>
+                                      </Card>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -1231,22 +1556,16 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
                               <div className="flex items-center justify-between px-2">
                                 <div className="space-y-1">
-                                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Core Objectives</h3>
-                                  <p className="text-sm font-medium text-slate-500">Define high-impact initiatives for the upcoming cycle.</p>
+                                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Strategic Project Priorities</h3>
+                                  <p className="text-sm font-medium text-slate-500">Prioritize mission-critical deliverables and service enhancements.</p>
                                 </div>
-                                <Button
-                                  onClick={addProject}
-                                  className="rounded-2xl h-11 bg-slate-900 hover:bg-slate-800 font-bold text-xs uppercase tracking-widest px-6 shadow-lg shadow-black/5"
-                                >
-                                  Define Objective
-                                </Button>
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {[
-                                  { label: 'Critical Path', value: projects.filter(p => p.priority === 'critical').length, color: 'text-rose-600', bg: 'bg-rose-50', icon: ShieldAlert },
-                                  { label: 'High Velocity', value: projects.filter(p => p.priority === 'high').length, color: 'text-indigo-600', bg: 'bg-indigo-50', icon: Zap },
-                                  { label: 'Strategic Ops', value: projects.filter(p => p.priority === 'medium').length, color: 'text-slate-600', bg: 'bg-slate-50', icon: Target }
+                                  { label: 'P0 - Critical Deliverables', value: projects.filter(p => p.priority === 'critical').length, color: 'text-rose-600', bg: 'bg-rose-50', icon: ShieldAlert },
+                                  { label: 'P1 - High Intensity', value: projects.filter(p => p.priority === 'high').length, color: 'text-indigo-600', bg: 'bg-indigo-50', icon: Zap },
+                                  { label: 'P2 - Strategic Maintenance', value: projects.filter(p => p.priority === 'medium').length, color: 'text-slate-600', bg: 'bg-slate-50', icon: Target }
                                 ].map((stat, i) => (
                                   <div key={i} className="p-6 rounded-[2rem] bg-white/60 backdrop-blur-md border-2 border-white/40 shadow-sm flex items-center justify-between group hover:shadow-xl transition-all duration-500">
                                     <div className="space-y-1">
@@ -1268,8 +1587,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <ListTodo className="h-7 w-7 text-white" />
                                       </div>
                                       <div>
-                                        <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">Project Pipeline</CardTitle>
-                                        <CardDescription className="text-sm font-medium text-slate-500">Sequencing mission-critical deliverables.</CardDescription>
+                                        <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Initiative Registry</CardTitle>
+                                        <CardDescription className="text-sm font-medium text-slate-500">Register and prioritize upcoming project initiatives for this cycle.</CardDescription>
                                       </div>
                                     </div>
                                     <Badge className="bg-slate-900 text-white rounded-full px-4 py-1.5 font-bold text-xs tracking-widest uppercase border-0">
@@ -1281,78 +1600,95 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   <div className="divide-y divide-slate-100">
                                     {projects.map((project, idx) => (
                                       <div key={project.id} className="p-8 flex items-center justify-between hover:bg-slate-50/80 transition-all group">
-                                        <div className="flex-1 space-y-6">
-                                          <div className="flex items-center gap-6">
-                                            <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-200">
-                                              {idx + 1}
-                                            </div>
-                                            <div className="flex-1">
-                                              <Input
-                                                value={project.name}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'name', e.target.value)}
-                                                className="border-0 bg-transparent p-0 h-auto text-xl font-black text-slate-900 focus-visible:ring-0 placeholder:text-slate-200"
-                                                placeholder="Mission Name..."
-                                              />
-                                              <div className="flex items-center gap-3 mt-1">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Impact Layer Alpha</span>
-                                              </div>
-                                            </div>
+                                        <div className="flex-1 flex items-center gap-4 w-full">
+                                          <div className="h-10 w-10 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400 border border-slate-200">
+                                            {idx + 1}
+                                          </div>
+                                          
+                                          <div className="flex-[2] min-w-[200px]">
+                                            <Input
+                                              value={project.name}
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'name', e.target.value)}
+                                              className="bg-white dark:bg-[#2b2d35] p-3 h-14 text-base font-black text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl shadow-sm transition-all placeholder:text-slate-300"
+                                              placeholder="Enter Project Name, ex: MyApp 1.2.0"
+                                            />
                                           </div>
 
-                                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-16">
-                                            <div className="md:col-span-1">
-                                              <Select
-                                                value={project.priority}
-                                                onValueChange={(val: string) => updateProject(project.id, 'priority', val)}
-                                              >
-                                                <SelectTrigger className="h-10 bg-white border-slate-200 rounded-xl font-bold text-xs uppercase tracking-wider">
-                                                  <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent className="rounded-xl border-0 shadow-2xl">
-                                                  <SelectItem value="critical" className="font-bold text-rose-600">Critical</SelectItem>
-                                                  <SelectItem value="high" className="font-bold text-indigo-600">High</SelectItem>
-                                                  <SelectItem value="medium" className="font-bold">Medium</SelectItem>
-                                                  <SelectItem value="low" className="font-bold text-slate-400">Low</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                            </div>
-                                            <div className="md:col-span-2">
-                                              <Input
-                                                value={project.remarks}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'remarks', e.target.value)}
-                                                className="h-10 bg-slate-50 border-slate-100 rounded-xl text-xs font-medium"
-                                                placeholder="Mission parameters and strategic remarks..."
-                                              />
-                                            </div>
-                                            <div className="md:col-span-1 flex justify-end">
-                                              <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-10 w-10 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
-                                                onClick={() => {
-                                                  setDeleteConfig({
-                                                    isOpen: true,
-                                                    title: "Strategic Termination",
-                                                    description: `Abort project "${project.name}" from current cycle?`,
-                                                    action: () => deleteProject(project.id)
-                                                  });
-                                                }}
-                                              >
-                                                <Trash2 className="h-4 w-4" />
-                                              </Button>
-                                            </div>
+                                          <div className="w-[140px] shrink-0">
+                                            <Select
+                                              value={project.priority}
+                                              onValueChange={(val: string) => updateProject(project.id, 'priority', val)}
+                                            >
+                                              <SelectTrigger className="h-11 bg-white dark:bg-[#2b2d35] rounded-xl font-bold text-xs uppercase tracking-wider border-0 focus:ring-[2px] focus:ring-indigo-500/30 transition-all">
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                              <SelectContent className="rounded-xl border-0 shadow-2xl">
+                                                <SelectItem value="critical" className="font-bold text-rose-600">Critical</SelectItem>
+                                                <SelectItem value="high" className="font-bold text-indigo-600">High</SelectItem>
+                                                <SelectItem value="medium" className="font-bold">Medium</SelectItem>
+                                                <SelectItem value="low" className="font-bold text-slate-400">Low</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+
+                                          <div className="flex-[3] min-w-[250px]">
+                                            <Input
+                                              value={project.remarks}
+                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'remarks', e.target.value)}
+                                              className="h-14 bg-slate-50/50 dark:bg-[#2b2d35] rounded-2xl text-[13px] font-bold border-2 border-transparent focus-visible:border-indigo-500/30 focus-visible:bg-white transition-all shadow-sm"
+                                              placeholder="Strategic context and delivery notes..."
+                                            />
+                                          </div>
+
+                                          <div className="shrink-0">
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-11 w-11 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                                              onClick={() => {
+                                                setDeleteConfig({
+                                                  isOpen: true,
+                                                  title: "Strategic Termination",
+                                                  description: `Abort project "${project.name}" from current cycle?`,
+                                                  action: () => deleteProject(project.id)
+                                                });
+                                              }}
+                                            >
+                                              <Trash2 className="h-5 w-5" />
+                                            </Button>
                                           </div>
                                         </div>
                                       </div>
                                     ))}
+                                    {projects.length > 0 && (
+                                      <div 
+                                        onClick={addProject}
+                                        className="p-6 flex items-center justify-center cursor-pointer hover:bg-slate-50/80 transition-all group border-t border-slate-100"
+                                      >
+                                        <div className="flex items-center gap-2 text-indigo-600 font-bold group-hover:text-indigo-700 transition-colors">
+                                          <div className="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                                            <Plus className="h-5 w-5" />
+                                          </div>
+                                          <span>Add New Project Pipeline</span>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     {projects.length === 0 && (
-                                      <div className="p-20 text-center space-y-4">
-                                        <div className="h-20 w-20 rounded-[2rem] bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center mx-auto">
-                                          <Target className="h-8 w-8 text-slate-300" />
+                                      <div className="p-20 text-center space-y-6 group">
+                                        <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800 mx-auto">
+                                          <Target className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                                         </div>
                                         <div>
-                                          <p className="font-black text-slate-900 tracking-tight">No active objectives</p>
-                                          <p className="text-sm font-medium text-slate-500">Start by defining your primary mission targets.</p>
+                                          <p className="font-black text-slate-900 tracking-tight text-xl mb-2">No active objectives</p>
+                                          <p className="text-sm font-medium text-slate-500 mb-6">Start by defining your primary mission targets.</p>
+                                          <Button
+                                            onClick={addProject}
+                                            className="rounded-2xl h-11 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs uppercase tracking-widest px-8 shadow-lg shadow-indigo-500/20"
+                                          >
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            Define Objective
+                                          </Button>
                                         </div>
                                       </div>
                                     )}
@@ -1373,42 +1709,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <BarChart3 className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                                   </div>
                                   <div>
-                                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight italic">Velocity Intelligence</h2>
-                                    <p className="text-slate-500 font-medium mt-1 text-sm">Orchestrate platform allocations & cross-functional capacity.</p>
+                                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Performance Intelligence</h2>
+                                    <p className="text-slate-500 font-medium mt-1 text-sm">Configure story point capacities and throughput targets per engineering unit.</p>
                                   </div>
                                 </div>
                               </div>
 
                               <Card className="border-0 rounded-[2.5rem] bg-white/40 dark:bg-slate-950/40 backdrop-blur-xl shadow-sm border border-white/50 dark:border-slate-800/50 overflow-hidden">
-                                <CardContent className="p-10 space-y-10">
-                                  {/* Add Platform Section */}
-                                  <div className="flex gap-4 items-center group/input">
-                                    <div className="flex-1 relative">
-                                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/input:text-indigo-500 transition-colors">
-                                        <LayoutDashboard className="h-5 w-5" />
-                                      </div>
-                                      <Input
-                                        placeholder="Define Strategic Platform (e.g. Android Core, Cloud Infra)..."
-                                        value={newPlatformName}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
-                                        className="h-14 pl-12 text-lg font-bold bg-white/80 dark:bg-slate-900/80 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-2xl shadow-lg shadow-slate-200/50 dark:shadow-none placeholder:text-slate-300 transition-all"
-                                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                                          if (e.key === 'Enter') addPlatform();
-                                        }}
-                                      />
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      onClick={addPlatform}
-                                      className="h-14 px-8 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-black shadow-xl shadow-slate-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-98 disabled:opacity-50"
-                                      disabled={!newPlatformName.trim()}
-                                    >
-                                      <Plus className="h-5 w-5 mr-2" />
-                                      Incorporate Platform
-                                    </Button>
-                                  </div>
-
-                                  <Separator className="bg-slate-100 dark:bg-slate-800" />
+                                <CardContent className="p-10 space-y-6">
 
                                   {/* Platforms List */}
                                   <div className="space-y-6">
@@ -1418,15 +1726,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           <LayoutDashboard className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors" />
                                         </div>
                                         <div className="space-y-2">
-                                          <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">No Active Platforms</h3>
-                                          <p className="text-slate-500 font-medium max-w-sm mx-auto">Configure your cross-functional strategic units to orchestrate delivery metrics.</p>
+                                          <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">No Active Platforms</h3>
+                                          <p className="text-slate-500 font-medium max-w-sm mx-auto">Configure your structural engineering platforms to define delivery metrics.</p>
                                         </div>
-                                        <Button
-                                          onClick={addPlatform}
-                                          className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-8 shadow-lg shadow-indigo-100 dark:shadow-none"
-                                        >
-                                          Initialize First Platform
-                                        </Button>
+                                        
                                       </div>
                                     ) : (
                                       platforms.map((platform, index) => {
@@ -1458,14 +1761,29 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   )}>
                                                     {platform.name}
                                                   </h4>
-                                                  <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Strategic Unit</span>
-                                                    <div className="h-1 w-1 rounded-full bg-slate-300" />
-                                                    <span className="text-[10px] font-bold text-slate-500">{platform.members.length} Intellectuals</span>
+                                                  <div className="flex items-center gap-3 mt-1.5">
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-tight">Engineering Platform</span>
+                                                    <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                    <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-0">
+                                                      {platform.members.length} members
+                                                    </Badge>
                                                   </div>
                                                 </div>
                                               </div>
-                                              <div className="flex items-center gap-3">
+                                              <div className="flex items-center gap-6">
+                                                {!platform.isExpanded && (
+                                                  <div className="hidden md:flex items-center gap-8 mr-4 opacity-100 transition-opacity duration-300">
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                      <span className="text-sm font-bold text-slate-900 dark:text-white">{platform.totalStoryPoints || 0} SP</span>
+                                                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">SP Threshold</span>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                      <span className="text-sm font-bold text-slate-900 dark:text-white">{platform.targetImprovement || 0}%</span>
+                                                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Improvement Goal</span>
+                                                    </div>
+                                                  </div>
+                                                )}
+                                                <div className="flex items-center gap-3">
                                                 <Button
                                                   variant="ghost"
                                                   size="icon"
@@ -1485,142 +1803,117 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <ChevronDown className="h-6 w-6" />
                                                 </div>
                                               </div>
+                                              </div>
                                             </div>
 
                                             {/* Platform Details Body */}
                                             {platform.isExpanded && (
-                                              <div className="p-10 bg-slate-50/20 dark:bg-slate-900/10 space-y-12 animate-in slide-in-from-top-4 duration-500">
+                                              <div className="p-10 bg-slate-50/20 dark:bg-slate-900/10 animate-in slide-in-from-top-4 duration-500">
+                                                <Tabs defaultValue="core" className="w-full">
+                                                  <TabsList className="w-full flex justify-start border-b border-slate-200 dark:border-slate-800 bg-transparent p-0 h-12 gap-8 mb-8 overflow-x-auto select-none no-scrollbar">
+                                                    <TabsTrigger value="core" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Velocity Targets</TabsTrigger>
+                                                    <TabsTrigger value="allocations" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Strategic Allocation</TabsTrigger>
+                                                    <TabsTrigger value="capacity" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Resource Availability</TabsTrigger>
+                                                  </TabsList>
 
-                                                {/* Members Section */}
-                                                <div className="space-y-6">
-                                                  <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                                        <Users className="h-5 w-5 text-indigo-500" />
+
+                                                  <TabsContent value="core" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                                                    <div className="flex items-start gap-4 mb-6">
+                                                      <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#2e3038] text-slate-600 dark:text-slate-400 mt-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border border-slate-200/50 dark:border-white/5">
+                                                        <Activity className="h-5 w-5" />
                                                       </div>
                                                       <div>
-                                                        <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight italic">Resource Distribution</h5>
-                                                        <p className="text-xs text-slate-500 font-medium">Assign strategic thinkers to this platform.</p>
+                                                        <h5 className="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight">Primary Scaling Factors</h5>
+                                                        <p className="text-sm text-slate-500 dark:text-slate-400">Define the baseline and target story point scales for this platform.</p>
                                                       </div>
                                                     </div>
-                                                    <Badge variant="outline" className="rounded-lg px-3 py-1 border-indigo-100 dark:border-indigo-900/30 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 font-bold">
-                                                      {platform.members.length} Intellectuals
-                                                    </Badge>
-                                                  </div>
 
-                                                  <div className="relative group/member">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/member:text-indigo-500 transition-colors">
-                                                      <Plus className="h-4 w-4" />
-                                                    </div>
-                                                    <Input
-                                                      placeholder="Enter name to incorporate member (Press Enter)..."
-                                                      className="h-12 pl-12 bg-white dark:bg-slate-900 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-2xl shadow-sm text-sm font-medium"
-                                                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                                                        if (e.key === 'Enter') {
-                                                          const val = e.currentTarget.value.trim();
-                                                          if (val) {
-                                                            setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: [...p.members, val] } : p));
-                                                            e.currentTarget.value = '';
-                                                          }
-                                                        }
-                                                      }}
-                                                    />
-                                                  </div>
-
-                                                  {platform.members.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 pt-2">
-                                                      {platform.members.map((member, idx) => (
-                                                        <Badge
-                                                          key={idx}
-                                                          variant="secondary"
-                                                          className="group/badge px-4 py-2 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-xl flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md transition-all hover:scale-105"
-                                                        >
-                                                          <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                                                          {member}
-                                                          <button
-                                                            onClick={() => confirmDelete(
-                                                              "Remove Strategic Member?",
-                                                              `Are you sure you want to remove ${member} from this platform sequence?`,
-                                                              () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p))
-                                                            )}
-                                                            className="ml-1 text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover/badge:opacity-100"
-                                                          >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                          </button>
-                                                        </Badge>
-                                                      ))}
-                                                    </div>
-                                                  )}
-                                                </div>
-
-                                                <Separator className="bg-slate-100/50 dark:bg-slate-800/50" />
-
-                                                {/* Metrics Inputs - Stat Cards Style */}
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                                  {/* Total Story Points */}
-                                                  <div className="group/stat bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500">
-                                                    <div className="flex items-center gap-4 mb-6">
-                                                      <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 group-hover/stat:scale-110 transition-transform">
-                                                        <Zap className="h-6 w-6" />
+                                                    {/* Metrics Inputs - Stat Cards Style */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                      {/* Total Story Points */}
+                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
+                                                        <div className="flex flex-col gap-4">
+                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-blue-50 dark:bg-blue-100/5 text-blue-600 dark:text-blue-400">
+                                                            <div className="h-3 w-3 rounded-full border-[1.5px] border-current flex items-center justify-center relative"><div className="w-[1.5px] h-1 bg-current absolute top-[2px] right-[4px]"></div></div>
+                                                          </div>
+                                                          <div className="space-y-1">
+                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Target Point Threshold</h6>
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Base story points</p>
+                                                          </div>
+                                                        </div>
+                                                        
+                                                        <div className="mt-5 flex flex-col gap-3">
+                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30 transition-shadow">
+                                                            <Input
+                                                              type="number"
+                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
+                                                              placeholder="0"
+                                                              value={platform.totalStoryPoints || ''}
+                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
+                                                            />
+                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">SP</span>
+                                                          </div>
+                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Total sprint capacity in story points</p>
+                                                        </div>
                                                       </div>
-                                                      <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Capacity</label>
-                                                        <div className="text-sm font-bold text-slate-900 dark:text-white">Story Points</div>
-                                                      </div>
-                                                    </div>
-                                                    <Input
-                                                      type="number"
-                                                      className="h-14 text-2xl font-black bg-slate-50 dark:bg-slate-950 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-2xl text-center"
-                                                      placeholder="0"
-                                                      value={platform.totalStoryPoints || ''}
-                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
-                                                    />
-                                                  </div>
 
-                                                  {/* Target Improvement */}
-                                                  <div className="group/stat bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500">
-                                                    <div className="flex items-center gap-4 mb-6">
-                                                      <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover/stat:scale-110 transition-transform">
-                                                        <ArrowUp className="h-6 w-6" />
+                                                      {/* Target Improvement */}
+                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
+                                                        <div className="flex flex-col gap-4">
+                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-red-50 dark:bg-rose-100/5 text-rose-600 dark:text-rose-400">
+                                                            <ArrowUp className="h-4 w-4 rotate-45" />
+                                                          </div>
+                                                          <div className="space-y-1">
+                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Target Alpha</h6>
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Improvement %</p>
+                                                          </div>
+                                                        </div>
+                                                        
+                                                        <div className="mt-5 flex flex-col gap-3">
+                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30 transition-shadow">
+                                                            <Input
+                                                              type="number"
+                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
+                                                              placeholder="0"
+                                                              value={platform.targetImprovement || ''}
+                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))}
+                                                            />
+                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">%</span>
+                                                          </div>
+                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Sprint-over-sprint velocity improvement target</p>
+                                                        </div>
                                                       </div>
-                                                      <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Alpha</label>
-                                                        <div className="text-sm font-bold text-slate-900 dark:text-white">Improvement %</div>
-                                                      </div>
-                                                    </div>
-                                                    <Input
-                                                      type="number"
-                                                      className="h-14 text-2xl font-black bg-slate-50 dark:bg-slate-950 border-0 focus-visible:ring-2 focus-visible:ring-rose-500/20 rounded-2xl text-center"
-                                                      placeholder="0%"
-                                                      value={platform.targetImprovement || ''}
-                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))}
-                                                    />
-                                                  </div>
 
-                                                  {/* Target Velocity */}
-                                                  <div className="group/stat bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500">
-                                                    <div className="flex items-center gap-4 mb-6">
-                                                      <div className="h-12 w-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400 group-hover/stat:scale-110 transition-transform">
-                                                        <Activity className="h-6 w-6" />
-                                                      </div>
-                                                      <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Velocity Node</label>
-                                                        <div className="text-sm font-bold text-slate-900 dark:text-white">Target Rhythm</div>
+                                                      {/* Target Velocity */}
+                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
+                                                        <div className="flex flex-col gap-4">
+                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-amber-50 dark:bg-amber-100/5 text-amber-600 dark:text-amber-400">
+                                                            <Activity className="h-4 w-4" />
+                                                          </div>
+                                                          <div className="space-y-1">
+                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Velocity Node</h6>
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Target rhythm</p>
+                                                          </div>
+                                                        </div>
+                                                        
+                                                        <div className="mt-5 flex flex-col gap-3">
+                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30 transition-shadow">
+                                                            <Input
+                                                              type="number"
+                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
+                                                              placeholder="0"
+                                                              value={platform.targetVelocity || ''}
+                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))}
+                                                            />
+                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">SP/day</span>
+                                                          </div>
+                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Target velocity per man-day</p>
+                                                        </div>
                                                       </div>
                                                     </div>
-                                                    <Input
-                                                      type="number"
-                                                      className="h-14 text-2xl font-black bg-slate-50 dark:bg-slate-950 border-0 focus-visible:ring-2 focus-visible:ring-amber-500/20 rounded-2xl text-center"
-                                                      placeholder="0"
-                                                      value={platform.targetVelocity || ''}
-                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))}
-                                                    />
-                                                  </div>
-                                                </div>
-
-                                                <Separator className="bg-slate-100/50 dark:bg-slate-800/50" />
-
-                                                {/* Project Allocations */}
+                                                  </TabsContent>
+                                                  <TabsContent value="allocations" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
+                                                    {/* Project Allocations */}
                                                 <div className="space-y-6">
                                                   <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
@@ -1671,10 +1964,16 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                     } : p));
                                                                   }}
                                                                 >
-                                                                  <SelectTrigger className="h-10 border-slate-200 dark:border-slate-800 bg-transparent rounded-xl font-bold text-slate-700 dark:text-slate-300">
+                                                                  <SelectTrigger className={cn(
+                                                                    "h-10 bg-slate-50 dark:bg-[#2b2d35] rounded-xl font-bold !border-0 !shadow-none overflow-hidden transition-all",
+                                                                    platform.name.toLowerCase().includes('android') ? "focus:ring-[2px] focus:ring-inset focus:ring-blue-500/30" :
+                                                                    platform.name.toLowerCase().includes('ios') ? "focus:ring-[2px] focus:ring-inset focus:ring-rose-500/30" :
+                                                                    platform.name.toLowerCase().includes('backend') ? "focus:ring-[2px] focus:ring-inset focus:ring-amber-500/30" :
+                                                                    "focus:ring-[2px] focus:ring-inset focus:ring-indigo-500/30"
+                                                                  )}>
                                                                     <SelectValue placeholder="Select Project" />
                                                                   </SelectTrigger>
-                                                                  <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl">
+                                                                  <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#1a1b1e]">
                                                                     {projects.map(p => (
                                                                       <SelectItem key={p.id} value={p.id} className="rounded-xl focus:bg-indigo-50 dark:focus:bg-indigo-950/40">{p.name}</SelectItem>
                                                                     ))}
@@ -1682,10 +1981,16 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 </Select>
                                                               </td>
                                                               <td className="p-6">
-                                                                <div className="relative group/percent">
+                                                                <div className={cn(
+                                                                  "relative group/percent flex items-center px-4 py-1 bg-slate-50 dark:bg-[#2b2d35] rounded-xl !border-0 overflow-hidden transition-shadow",
+                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
+                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
+                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
+                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
+                                                                )}>
                                                                   <Input
                                                                     type="number"
-                                                                    className="h-10 pr-8 text-right font-black border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl focus:ring-indigo-500/20"
+                                                                    className="h-8 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-black text-lg focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-6 text-right"
                                                                     value={alloc.allocatedPercent}
                                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                                       setPlatforms(prev => prev.map(p => p.id === platform.id ? {
@@ -1694,7 +1999,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                       } : p));
                                                                     }}
                                                                   />
-                                                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 group-focus-within/percent:text-indigo-500">%</span>
+                                                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 group-focus-within/percent:text-current">%</span>
                                                                 </div>
                                                               </td>
                                                               <td className="p-6">
@@ -1743,9 +2048,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   </div>
                                                 </div>
 
-                                                <Separator />
-
-                                                {/* Holidays */}
+                                                  </TabsContent>
+                                                  <TabsContent value="capacity" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
+                                                    {/* Holidays */}
                                                 <div className="space-y-6">
                                                   <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
@@ -1753,7 +2058,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <CalendarIcon className="h-5 w-5 text-indigo-500" />
                                                       </div>
                                                       <div>
-                                                        <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight italic">Temporal Exceptions</h5>
+                                                        <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Regional Holidays & Availability</h5>
                                                         <p className="text-xs text-slate-500 font-medium">Define regional holidays and mandatory downtime.</p>
                                                       </div>
                                                     </div>
@@ -1773,34 +2078,46 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     </Button>
                                                   </div>
 
-                                                  <div className="space-y-3">
+                                                  <div className="space-y-1">
                                                     {platform.holidays.map((holiday, idx) => (
-                                                      <div key={holiday.id} className="group/holiday flex gap-4 items-center p-4 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-[1.5rem] shadow-sm hover:shadow-md transition-all">
-                                                        <div className="flex-1">
-                                                          <Input
-                                                            placeholder="Country / Region Name"
-                                                            className="h-10 border-0 bg-transparent font-bold text-slate-700 dark:text-slate-300 focus-visible:ring-0 px-0"
-                                                            value={holiday.country}
-                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.map((h, i) => i === idx ? { ...h, country: e.target.value } : h) } : p))}
-                                                          />
-                                                        </div>
-                                                        <div className="relative w-32">
+                                                      <div key={holiday.id} className="group/holiday flex gap-4 items-center p-5 bg-white dark:bg-[#202127] !border-0 !shadow-none rounded-[1.5rem] transition-all duration-300">
+                                                          <div className={cn(
+                                                            "flex-1 flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-xl border-0 transition-shadow",
+                                                            platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
+                                                            platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
+                                                            platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
+                                                            "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
+                                                          )}>
+                                                            <Input
+                                                              placeholder="Country / Region Name"
+                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-[15px] text-slate-900 dark:text-white focus-visible:ring-0 px-0 !rounded-none !appearance-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                                                              value={holiday.country}
+                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.map((h, i) => i === idx ? { ...h, country: e.target.value } : h) } : p))}
+                                                            />
+                                                          </div>
+                                                        <div className={cn(
+                                                          "flex items-center w-36 px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-xl border-0 transition-shadow",
+                                                          platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
+                                                          platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
+                                                          platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
+                                                          "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
+                                                        )}>
                                                           <Input
                                                             type="number"
-                                                            placeholder="Days"
-                                                            className="h-10 pr-12 text-right font-black border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl"
+                                                            placeholder="0"
+                                                            className="h-10 pr-2 text-right font-black text-xl !border-0 !ring-0 !shadow-none bg-transparent focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full px-0"
                                                             value={holiday.days || ''}
                                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.map((h, i) => i === idx ? { ...h, days: Number(e.target.value) } : h) } : p))}
                                                           />
-                                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Days</span>
+                                                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase ml-2">Days</span>
                                                         </div>
                                                         <Button
                                                           variant="ghost"
                                                           size="icon"
-                                                          className="text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl opacity-0 group-hover/holiday:opacity-100 transition-all"
+                                                          className="h-10 w-10 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl opacity-0 group-hover/holiday:opacity-100 transition-all shrink-0"
                                                           onClick={() => confirmDelete(
                                                             "Expunge Holiday?",
-                                                            `Are you sure you want to remove the temporal entry for "${holiday.country || 'Specified Region'}"?`,
+                                                            `Are you sure you want to remove the downtime entry for "${holiday.country || 'Specified Region'}"?`,
                                                             () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.filter((_, i) => i !== idx) } : p))
                                                           )}
                                                         >
@@ -1810,13 +2127,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     ))}
                                                     {platform.holidays.length === 0 && (
                                                       <div className="text-sm text-slate-400 italic px-4 py-8 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2rem] text-center">
-                                                        No temporal exceptions registered for this platform sequence.
+                                                        No regional holidays or downtime events registered for this platform domain.
                                                       </div>
                                                     )}
                                                   </div>
                                                 </div>
-
-                                                <Separator className="bg-slate-100/50 dark:bg-slate-800/50" />
 
                                                 {/* Developer Details */}
                                                 <div className="space-y-8">
@@ -1825,14 +2140,17 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       <Briefcase className="h-5 w-5 text-indigo-500" />
                                                     </div>
                                                     <div>
-                                                      <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight italic">Unit Capacity & Deployment</h5>
-                                                      <p className="text-xs text-slate-500 font-medium">Fine-tune individual contributor throughput and leave schedules.</p>
+                                                      <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Contributor Availability & Capacity</h5>
+                                                      <p className="text-xs text-slate-500 font-medium">Adjust throughput scales and log scheduled leave for individual team members.</p>
                                                     </div>
                                                   </div>
 
                                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     {platform.members.map((member, idx) => {
                                                       const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
+                                                      const memberDetails = orgMembers.find(m => m.id === member);
+                                                      const memberName = memberDetails ? (memberDetails.display_name || memberDetails.email) : member;
+                                                      const initials = memberDetails ? (memberDetails.display_name || memberDetails.email || 'U').split(' ').map((n: any) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
 
                                                       const updateDetails = (field: keyof DeveloperLeave, value: any) => {
                                                         setPlatforms(prev => prev.map(p => p.id === platform.id ? {
@@ -1848,22 +2166,35 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       };
 
                                                       return (
-                                                        <div key={idx} className="p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-xl transition-all duration-500 group/dev">
+                                                        <div key={idx} className="p-6 rounded-[2rem] !border-0 bg-white dark:bg-slate-900 !shadow-none transition-all duration-500 group/dev">
                                                           <div className="flex items-center gap-4 mb-6">
-                                                            <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-400 group-hover/dev:text-indigo-500 transition-colors">
-                                                              <Users className="h-6 w-6" />
-                                                            </div>
-                                                            <div className="font-black text-lg text-slate-900 dark:text-white tracking-tight italic">{member}</div>
+                                                            {memberDetails ? (
+                                                              <Avatar className="h-12 w-12 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 bg-white">
+                                                                <AvatarImage src={memberDetails.profileUrl} alt={memberName} className="object-cover" />
+                                                                <AvatarFallback className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold">{initials}</AvatarFallback>
+                                                              </Avatar>
+                                                            ) : (
+                                                              <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-400 group-hover/dev:text-indigo-500 transition-colors">
+                                                                <Users className="h-6 w-6" />
+                                                              </div>
+                                                            )}
+                                                            <div className="font-black text-xl text-slate-900 dark:text-white tracking-tight italic line-clamp-1">{memberName}</div>
                                                           </div>
 
                                                           <div className="grid grid-cols-1 gap-6">
                                                             {/* Country Selection */}
                                                             <div className="space-y-2">
                                                               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Geographical Node</label>
-                                                              <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
-                                                                <SelectTrigger className="h-12 bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-2xl font-bold">
-                                                                  <SelectValue placeholder="Select Deployment Country" />
-                                                                </SelectTrigger>
+                                                                <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
+                                                                  <SelectTrigger className={cn(
+                                                                    "h-12 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl font-bold transition-all !border-0 !shadow-none overflow-hidden",
+                                                                    platform.name.toLowerCase().includes('android') ? "focus:ring-[2px] focus:ring-inset focus:ring-blue-500/30" :
+                                                                    platform.name.toLowerCase().includes('ios') ? "focus:ring-[2px] focus:ring-inset focus:ring-rose-500/30" :
+                                                                    platform.name.toLowerCase().includes('backend') ? "focus:ring-[2px] focus:ring-inset focus:ring-amber-500/30" :
+                                                                    "focus:ring-[2px] focus:ring-inset focus:ring-indigo-500/30"
+                                                                  )}>
+                                                                    <SelectValue placeholder="Select Deployment Country" />
+                                                                  </SelectTrigger>
                                                                 <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl">
                                                                   {platform.holidays.filter(h => h.country).map(h => (
                                                                     <SelectItem key={h.id} value={h.country} className="rounded-xl">{h.country} ({h.days} Regional Days)</SelectItem>
@@ -1877,31 +2208,43 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               {/* Capacity */}
                                                               <div className="space-y-2">
                                                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Throughput Scale</label>
-                                                                <div className="relative">
+                                                                <div className={cn(
+                                                                  "relative flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl !border-0 overflow-hidden transition-shadow",
+                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
+                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
+                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
+                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
+                                                                )}>
                                                                   <Input
                                                                     type="number"
                                                                     step="0.1"
                                                                     max="1"
                                                                     min="0"
-                                                                    className="h-12 bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-2xl font-black text-center pr-12"
+                                                                    className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full pr-2"
                                                                     value={details.capacity}
                                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value))}
                                                                   />
-                                                                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">FPS</span>
+                                                                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">FPS</span>
                                                                 </div>
                                                               </div>
 
                                                               {/* Planned Leave */}
                                                               <div className="space-y-2">
                                                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Planned Absense</label>
-                                                                <div className="relative">
+                                                                <div className={cn(
+                                                                  "relative flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl !border-0 overflow-hidden transition-shadow",
+                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
+                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
+                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
+                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
+                                                                )}>
                                                                   <Input
                                                                     type="number"
-                                                                    className="h-12 bg-slate-50/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 rounded-2xl font-black text-center pr-12"
+                                                                    className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full pr-2"
                                                                     value={details.plannedLeave}
                                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
                                                                   />
-                                                                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Days</span>
+                                                                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Days</span>
                                                                 </div>
                                                               </div>
                                                             </div>
@@ -1935,6 +2278,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         </thead>
                                                         <tbody className="divide-y divide-white/5">
                                                           {platform.members.map((member, idx) => {
+                                                            const memberDetails = orgMembers.find(m => m.id === member);
+                                                            const memberName = memberDetails ? (memberDetails.display_name || memberDetails.email) : member;
                                                             const details = platform.developerLeaves.find(d => d.name === member);
                                                             const countryHoliday = platform.holidays.find(h => h.country === details?.country);
                                                             const holidayDays = countryHoliday?.days || 0;
@@ -1943,7 +2288,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                                             return (
                                                               <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                                                <td className="p-4 font-bold text-slate-300">{member}</td>
+                                                                <td className="p-4 font-bold text-slate-300">{memberName}</td>
                                                                 <td className="p-4 text-right">
                                                                   <div className="flex flex-col items-end">
                                                                     <div className="flex items-center gap-2">
@@ -1967,6 +2312,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     </div>
                                                   </div>
                                                 </div>
+                                                </TabsContent>
+                                                </Tabs>
 
                                               </div>
                                             )}
@@ -1990,12 +2337,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <Target className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                                       </div>
                                       <div>
-                                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Sprint Vision</CardTitle>
+                                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Strategic Performance Goals</CardTitle>
                                         <Dialog>
                                           <DialogTrigger asChild>
                                             <div className="flex items-center gap-1.5 mt-1 cursor-pointer group/info">
                                               <p className="text-sm text-slate-500 font-medium group-hover/info:text-indigo-600 transition-colors">
-                                                Strategic alignment guide & status legend
+                                                Define outcome-driven objectives to provide tactical direction.
                                               </p>
                                               <Info className="h-4 w-4 text-slate-400 group-hover/info:text-indigo-500 transition-colors" />
                                             </div>
@@ -2294,7 +2641,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       className="bg-slate-900 hover:bg-indigo-600 text-white shadow-xl shadow-slate-200 dark:shadow-none transition-all duration-300 rounded-2xl px-6 h-12 font-bold group"
                                     >
                                       <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                                      Define New Goal
+                                      Create Goal
                                     </Button>
                                   </div>
                                 </CardHeader>
@@ -2342,25 +2689,24 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     <div className="pl-6 flex flex-col xl:flex-row gap-6 items-start w-full">
                                                       {/* Description */}
                                                       <div className="flex-1 w-full space-y-3">
-                                                        <div className="flex items-center gap-2">
-                                                          <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                            <Target className="h-3.5 w-3.5 text-indigo-600" />
+                                                          <div className="flex items-center gap-2">
+                                                            <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
+                                                              <Target className="h-3.5 w-3.5 text-indigo-600" />
+                                                            </div>
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Goal Definition</label>
                                                           </div>
-                                                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Objective Statement</label>
-                                                        </div>
-                                                        <div className="relative group/field">
-                                                          <Textarea
-                                                            value={goal.description}
-                                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                                                              updateSprintGoal(goal.id, 'description', e.target.value);
-                                                              e.target.style.height = 'auto';
-                                                              e.target.style.height = `${e.target.scrollHeight}px`;
-                                                            }}
-                                                            placeholder="Empower users with seamless biometric authentication..."
-                                                            className="min-h-[64px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-transparent border-0 focus-visible:ring-0 p-0 text-slate-900 dark:text-white placeholder:text-slate-300"
-                                                          />
-                                                          <div className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 group-focus-within/field:w-1/2 transition-all duration-500" />
-                                                        </div>
+                                                          <div className="relative group/field mt-2">
+                                                            <Textarea
+                                                              value={goal.description}
+                                                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                                updateSprintGoal(goal.id, 'description', e.target.value);
+                                                                e.target.style.height = 'auto';
+                                                                e.target.style.height = `${e.target.scrollHeight}px`;
+                                                              }}
+                                                              placeholder="Define a primary goal for this sprint cycle..."
+                                                              className="min-h-[80px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 p-4 rounded-[1.5rem] text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
+                                                            />
+                                                          </div>
                                                       </div>
 
                                                       {/* Status & Remark Middle Layer */}
@@ -2424,9 +2770,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                             <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
                                                               <FileText className="h-3.5 w-3.5 text-indigo-600" />
                                                             </div>
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Deployment Intelligence</label>
+                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Strategic Context</label>
                                                           </div>
-                                                          <div className="relative group/remark">
+                                                          <div className="relative group/remark mt-2">
                                                             <Textarea
                                                               value={goal.remark}
                                                               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -2434,8 +2780,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 e.target.style.height = 'auto';
                                                                 e.target.style.height = `${e.target.scrollHeight}px`;
                                                               }}
-                                                              placeholder="Add critical context or status updates..."
-                                                              className="min-h-[56px] overflow-hidden text-sm font-medium resize-none bg-slate-50/50 dark:bg-slate-900/50 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-2xl transition-all shadow-inner"
+                                                              placeholder="Add supporting notes or detailed success criteria..."
+                                                              className="min-h-[64px] overflow-hidden text-sm font-medium resize-none bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl p-4 transition-all shadow-sm placeholder:text-slate-300"
                                                             />
                                                           </div>
                                                         </div>
@@ -2479,9 +2825,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   <Milestone className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                                 </div>
                                 <div>
-                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight italic">Mission Milestones</h2>
+                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight italic">Key Execution Milestones</h2>
                                   <div className="flex items-center gap-2 mt-1">
-                                    <p className="text-slate-500 font-medium">Strategic checkpoints & phase-gate orchestration.</p>
+                                    <p className="text-slate-500 font-medium">Identify and sequence critical checkpoints to track delivery progress.</p>
                                     <div className="h-1 w-1 rounded-full bg-indigo-300 mx-1" />
                                     <Dialog>
                                       <DialogTrigger asChild>
@@ -2711,7 +3057,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   className="bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-bold px-6 h-12 shadow-xl shadow-slate-200 dark:shadow-none group transition-all duration-300"
                                 >
                                   <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-                                  Initialize Milestone
+                                  Add Milestone
                                 </Button>
                               </div>
 
@@ -2751,7 +3097,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <Input
                                                     value={milestone.name}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMilestone(milestone.id, 'name', e.target.value)}
-                                                    className="text-xl font-black tracking-tight h-14 bg-transparent border-0 focus-visible:ring-0 p-0 text-slate-900 dark:text-white placeholder:text-slate-300"
+                                                    className="text-xl font-black tracking-tight h-14 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl px-6 text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
                                                     placeholder="OSDK 5.3.0 Release Authorization"
                                                   />
                                                 </div>
@@ -2832,7 +3178,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       e.target.style.height = `${e.target.scrollHeight}px`;
                                                     }}
                                                     placeholder="Define the critical success factors for this milestone..."
-                                                    className="min-h-[80px] text-sm font-medium resize-none overflow-hidden bg-slate-50/50 dark:bg-slate-900/50 border-0 focus-visible:ring-2 focus-visible:ring-indigo-500/20 rounded-[1.5rem] p-4 transition-all shadow-inner"
+                                                    className="min-h-[100px] text-sm font-medium resize-none overflow-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-[1.5rem] p-4 transition-all shadow-sm placeholder:text-slate-300"
                                                   />
                                                 </div>
                                               )}
@@ -2909,7 +3255,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 <Input
                                                                   value={phase.name}
                                                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePhase(milestone.id, phase.id, 'name', e.target.value)}
-                                                                  className="h-10 text-base font-bold tracking-tight bg-transparent border-0 focus-visible:ring-0 p-0 text-slate-900 dark:text-white placeholder:text-slate-300"
+                                                                  className="h-12 text-base font-bold tracking-tight bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl px-4 text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
                                                                   placeholder="Phase Authorization (e.g. UX Design)"
                                                                 />
                                                               </div>
@@ -2981,8 +3327,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 <Input
                                                                   value={phase.remarks}
                                                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePhase(milestone.id, phase.id, 'remarks', e.target.value)}
-                                                                  placeholder="Telemetry notes..."
-                                                                  className="h-12 text-sm font-medium bg-white/30 dark:bg-slate-900/30 border-0 rounded-2xl px-6 focus-visible:ring-2 focus-visible:ring-indigo-500/20 shadow-inner"
+                                                                  placeholder="Add deployment context or notes..."
+                                                                  className="h-12 text-sm font-medium bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500/30 rounded-2xl px-6 transition-all shadow-sm placeholder:text-slate-300"
                                                                 />
                                                               </div>
 
@@ -3074,163 +3420,181 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           </div>
                                         </div>
                                       </CardHeader>
-                                      <CardContent className="p-4 space-y-4">
-                                        {/* Row 1: Topic and Presenter */}
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <Presentation className="h-4 w-4 text-zinc-400" />
-                                              Demo Topic <span className="text-red-500">*</span>
-                                            </label>
-                                            <Input
-                                              placeholder="e.g., User Authentication Feature"
-                                              value={item.topic}
-                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'topic', e.target.value)}
-                                              className="bg-white dark:bg-zinc-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <Users className="h-4 w-4 text-zinc-400" />
-                                              Presenter / PIC <span className="text-red-500">*</span>
-                                            </label>
-                                            <Input
-                                              placeholder="e.g., John Doe"
-                                              value={item.presenter}
-                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'presenter', e.target.value)}
-                                              className="bg-white dark:bg-zinc-900"
-                                            />
-                                          </div>
-                                        </div>
+                                                                            <CardContent className="p-0">
+                                        <Tabs defaultValue="core" className="w-full">
+                                          <TabsList className="grid w-full grid-cols-3 bg-zinc-50 dark:bg-zinc-900/50 p-1 rounded-none border-b border-zinc-100 dark:border-zinc-800 h-12">
+                                            <TabsTrigger value="core" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Core Info</TabsTrigger>
+                                            <TabsTrigger value="schedule" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Schedule</TabsTrigger>
+                                            <TabsTrigger value="notes" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Context & Notes</TabsTrigger>
+                                          </TabsList>
+                                          
+                                          <div className="p-6">
+                                            <TabsContent value="core" className="mt-0 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                                              <div className="grid gap-6 md:grid-cols-2">
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <Presentation className="h-3.5 w-3.5" />
+                                                    Demo Topic
+                                                  </label>
+                                                  <Input
+                                                    placeholder="Define the core mission or feature..."
+                                                    value={item.topic}
+                                                    onChange={(e) => updateDemoItem(item.id, 'topic', e.target.value)}
+                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
+                                                  />
+                                                </div>
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <Users className="h-3.5 w-3.5" />
+                                                    Presenter / PIC
+                                                  </label>
+                                                  <Input
+                                                    placeholder="Assigned mission owner..."
+                                                    value={item.presenter}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'presenter', e.target.value)}
+                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
+                                                  />
+                                                </div>
+                                              </div>
+                                              
+                                              <div className="grid gap-6 md:grid-cols-2">
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <Activity className="h-3.5 w-3.5" />
+                                                    Execution Status
+                                                  </label>
+                                                  <Select
+                                                    value={item.status}
+                                                    onValueChange={(value: string) => updateDemoItem(item.id, 'status', value)}
+                                                  >
+                                                    <SelectTrigger className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
+                                                      <SelectValue placeholder="Select status" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                                                      <SelectItem value="scheduled" className="focus:bg-blue-50 dark:focus:bg-blue-900/20 rounded-lg">
+                                                        <div className="flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400">
+                                                          <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                                          Scheduled
+                                                        </div>
+                                                      </SelectItem>
+                                                      <SelectItem value="in_progress" className="focus:bg-amber-50 dark:focus:bg-amber-900/20 rounded-lg">
+                                                        <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                                                          <div className="h-2 w-2 rounded-full bg-amber-500" />
+                                                          In Progress
+                                                        </div>
+                                                      </SelectItem>
+                                                      <SelectItem value="completed" className="focus:bg-emerald-50 dark:focus:bg-emerald-900/20 rounded-lg">
+                                                        <div className="flex items-center gap-2 font-bold text-emerald-600 dark:text-emerald-400">
+                                                          <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                                                          Completed
+                                                        </div>
+                                                      </SelectItem>
+                                                      <SelectItem value="cancelled" className="focus:bg-red-50 dark:focus:bg-red-900/20 rounded-lg">
+                                                        <div className="flex items-center gap-2 font-bold text-red-600 dark:text-red-400">
+                                                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                                                          Cancelled
+                                                        </div>
+                                                      </SelectItem>
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <Zap className="h-3.5 w-3.5" />
+                                                    Duration
+                                                  </label>
+                                                  <Select
+                                                    value={item.duration}
+                                                    onValueChange={(value: string) => updateDemoItem(item.id, 'duration', value)}
+                                                  >
+                                                    <SelectTrigger className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
+                                                      <SelectValue placeholder="Select duration" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                                                      <SelectItem value="15" className="rounded-lg font-bold">15 minutes</SelectItem>
+                                                      <SelectItem value="30" className="rounded-lg font-bold">30 minutes</SelectItem>
+                                                      <SelectItem value="45" className="rounded-lg font-bold">45 minutes</SelectItem>
+                                                      <SelectItem value="60" className="rounded-lg font-bold">60 minutes</SelectItem>
+                                                      <SelectItem value="90" className="rounded-lg font-bold">90 minutes</SelectItem>
+                                                    </SelectContent>
+                                                  </Select>
+                                                </div>
+                                              </div>
+                                            </TabsContent>
 
-                                        {/* Row 2: Date, Time, Duration */}
-                                        <div className="grid gap-4 md:grid-cols-3">
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <CalendarIcon className="h-4 w-4 text-zinc-400" />
-                                              Demo Date <span className="text-red-500">*</span>
-                                            </label>
-                                            <Popover>
-                                              <PopoverTrigger asChild>
-                                                <Button
-                                                  variant="outline"
-                                                  className={cn(
-                                                    "w-full justify-start text-left font-normal bg-white dark:bg-zinc-900",
-                                                    !item.dueDate && "text-muted-foreground"
-                                                  )}
-                                                >
-                                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                                  {item.dueDate ? format(item.dueDate, "PPP") : "Select date"}
-                                                </Button>
-                                              </PopoverTrigger>
-                                              <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                  mode="single"
-                                                  selected={item.dueDate}
-                                                  onSelect={(date: Date | undefined) => updateDemoItem(item.id, 'dueDate', date)}
-                                                  initialFocus
+                                            <TabsContent value="schedule" className="mt-0 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                                              <div className="grid gap-6 md:grid-cols-2">
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <CalendarIcon className="h-3.5 w-3.5" />
+                                                    Date Release
+                                                  </label>
+                                                  <Popover>
+                                                    <PopoverTrigger asChild>
+                                                      <Button
+                                                        variant="outline"
+                                                        className={cn(
+                                                          "w-full h-12 justify-start text-left font-bold bg-zinc-50 dark:bg-zinc-900/50 border-0 rounded-xl focus:ring-2 focus:ring-violet-500/20 transition-all",
+                                                          !item.dueDate && "text-muted-foreground"
+                                                        )}
+                                                      >
+                                                        <CalendarIcon className="mr-3 h-4 w-4 text-violet-500" />
+                                                        {item.dueDate ? format(item.dueDate, "PPP") : "Select Launch Date"}
+                                                      </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                      <Calendar
+                                                        mode="single"
+                                                        selected={item.dueDate}
+                                                        onSelect={(date: Date | undefined) => updateDemoItem(item.id, 'dueDate', date)}
+                                                        initialFocus
+                                                      />
+                                                    </PopoverContent>
+                                                  </Popover>
+                                                </div>
+                                                <div className="space-y-3">
+                                                  <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                    <Activity className="h-3.5 w-3.5" />
+                                                    Time Slot
+                                                  </label>
+                                                  <Input
+                                                    type="time"
+                                                    value={item.dueTime}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'dueTime', e.target.value)}
+                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-black"
+                                                  />
+                                                </div>
+                                              </div>
+                                            </TabsContent>
+
+                                            <TabsContent value="notes" className="mt-0 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
+                                              <div className="space-y-3">
+                                                <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                  <Users className="h-3.5 w-3.5" />
+                                                  Strategic Audience / Attendees
+                                                </label>
+                                                <Input
+                                                  placeholder="e.g., Tactical Leadership, Stakeholders..."
+                                                  value={item.attendees}
+                                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'attendees', e.target.value)}
+                                                  className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
                                                 />
-                                              </PopoverContent>
-                                            </Popover>
+                                              </div>
+                                              <div className="space-y-3">
+                                                <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                                                  <FileText className="h-3.5 w-3.5" />
+                                                  Notes & Mission Parameters
+                                                </label>
+                                                <Textarea
+                                                  placeholder="Strategic overview of the demonstration sequence..."
+                                                  value={item.description}
+                                                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDemoItem(item.id, 'description', e.target.value)}
+                                                  className="min-h-[120px] bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-2xl font-medium resize-none p-4"
+                                                />
+                                              </div>
+                                            </TabsContent>
                                           </div>
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <Activity className="h-4 w-4 text-zinc-400" />
-                                              Demo Time
-                                            </label>
-                                            <Input
-                                              type="time"
-                                              value={item.dueTime}
-                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'dueTime', e.target.value)}
-                                              className="bg-white dark:bg-zinc-900"
-                                            />
-                                          </div>
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <Activity className="h-4 w-4 text-zinc-400" />
-                                              Duration
-                                            </label>
-                                            <Select
-                                              value={item.duration}
-                                              onValueChange={(value: string) => updateDemoItem(item.id, 'duration', value)}
-                                            >
-                                              <SelectTrigger className="bg-white dark:bg-zinc-900">
-                                                <SelectValue placeholder="Select duration" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                <SelectItem value="15">15 minutes</SelectItem>
-                                                <SelectItem value="30">30 minutes</SelectItem>
-                                                <SelectItem value="45">45 minutes</SelectItem>
-                                                <SelectItem value="60">60 minutes</SelectItem>
-                                                <SelectItem value="90">90 minutes</SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                          </div>
-                                        </div>
-
-                                        {/* Row 3: Status and Attendees */}
-                                        <div className="grid gap-4 md:grid-cols-2">
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
-                                            <Select
-                                              value={item.status}
-                                              onValueChange={(value: string) => updateDemoItem(item.id, 'status', value as DemoStatus)}
-                                            >
-                                              <SelectTrigger className="bg-white dark:bg-zinc-900">
-                                                <SelectValue placeholder="Select status" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                <SelectItem value="scheduled">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-blue-500" />
-                                                    Scheduled
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="in_progress">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-amber-500" />
-                                                    In Progress
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="completed">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                    Completed
-                                                  </div>
-                                                </SelectItem>
-                                                <SelectItem value="cancelled">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-2 rounded-full bg-red-500" />
-                                                    Cancelled
-                                                  </div>
-                                                </SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                          </div>
-                                          <div className="space-y-2">
-                                            <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                                              <Users className="h-4 w-4 text-zinc-400" />
-                                              Attendees
-                                            </label>
-                                            <Input
-                                              placeholder="e.g., Product Team, Stakeholders"
-                                              value={item.attendees}
-                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'attendees', e.target.value)}
-                                              className="bg-white dark:bg-zinc-900"
-                                            />
-                                          </div>
-                                        </div>
-
-                                        {/* Row 4: Description */}
-                                        <div className="space-y-2">
-                                          <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Demo Description / Notes</label>
-                                          <Textarea
-                                            placeholder="Describe what will be demonstrated, key features to highlight, any dependencies or prerequisites..."
-                                            value={item.description}
-                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDemoItem(item.id, 'description', e.target.value)}
-                                            className="min-h-[80px] bg-white dark:bg-zinc-900"
-                                          />
-                                        </div>
+                                        </Tabs>
                                       </CardContent>
                                     </Card>
                                   ))}
