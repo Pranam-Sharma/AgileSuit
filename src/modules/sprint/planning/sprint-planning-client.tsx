@@ -1597,6 +1597,21 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
+                                  {/* Column Headers */}
+                                  <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30 flex items-center gap-4">
+                                    <div className="w-10 shrink-0" />
+                                    <div className="flex-[2] min-w-[200px]">
+                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-4">Project Name</span>
+                                    </div>
+                                    <div className="w-[140px] shrink-0">
+                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-2">Priority</span>
+                                    </div>
+                                    <div className="flex-[3] min-w-[250px]">
+                                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-4">Strategic Remark</span>
+                                    </div>
+                                    <div className="w-11 shrink-0" />
+                                  </div>
+
                                   <div className="divide-y divide-slate-100">
                                     {projects.map((project, idx) => (
                                       <div key={project.id} className="p-8 flex items-center justify-between hover:bg-slate-50/80 transition-all group">
@@ -1609,7 +1624,13 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             <Input
                                               value={project.name}
                                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'name', e.target.value)}
-                                              className="bg-white dark:bg-[#2b2d35] p-3 h-14 text-base font-black text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl shadow-sm transition-all placeholder:text-slate-300"
+                                              className={cn(
+                                                "p-4 h-14 text-base font-black transition-all rounded-2xl !border-2 shadow-sm placeholder:text-slate-300 focus-visible:ring-[3px] focus-visible:ring-inset",
+                                                project.priority === 'critical' ? "bg-rose-50 border-rose-100 text-rose-700 focus-visible:ring-rose-500/30 focus-visible:border-rose-300" :
+                                                project.priority === 'high' ? "bg-indigo-50 border-indigo-100 text-indigo-700 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-300" :
+                                                project.priority === 'medium' ? "bg-amber-50 border-amber-100 text-amber-700 focus-visible:ring-amber-500/30 focus-visible:border-amber-300" :
+                                                "bg-emerald-50 border-emerald-100 text-emerald-700 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-300"
+                                              )}
                                               placeholder="Enter Project Name, ex: MyApp 1.2.0"
                                             />
                                           </div>
@@ -1619,14 +1640,20 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               value={project.priority}
                                               onValueChange={(val: string) => updateProject(project.id, 'priority', val)}
                                             >
-                                              <SelectTrigger className="h-11 bg-white dark:bg-[#2b2d35] rounded-xl font-bold text-xs uppercase tracking-wider border-0 focus:ring-[2px] focus:ring-indigo-500/30 transition-all">
+                                              <SelectTrigger className={cn(
+                                                "h-11 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] border-0 transition-all shadow-md active:scale-95",
+                                                project.priority === 'critical' ? "bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200" :
+                                                project.priority === 'high' ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200" :
+                                                project.priority === 'medium' ? "bg-amber-600 text-white hover:bg-amber-700 shadow-amber-200" :
+                                                "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200"
+                                              )}>
                                                 <SelectValue />
                                               </SelectTrigger>
-                                              <SelectContent className="rounded-xl border-0 shadow-2xl">
-                                                <SelectItem value="critical" className="font-bold text-rose-600">Critical</SelectItem>
-                                                <SelectItem value="high" className="font-bold text-indigo-600">High</SelectItem>
-                                                <SelectItem value="medium" className="font-bold">Medium</SelectItem>
-                                                <SelectItem value="low" className="font-bold text-slate-400">Low</SelectItem>
+                                              <SelectContent className="rounded-2xl border-0 shadow-2xl p-1 bg-white">
+                                                <SelectItem value="critical" className="rounded-xl font-bold text-rose-600 focus:bg-rose-50">Critical</SelectItem>
+                                                <SelectItem value="high" className="rounded-xl font-bold text-indigo-600 focus:bg-indigo-50">High</SelectItem>
+                                                <SelectItem value="medium" className="rounded-xl font-bold text-amber-600 focus:bg-amber-50">Medium</SelectItem>
+                                                <SelectItem value="low" className="rounded-xl font-bold text-emerald-600 focus:bg-emerald-50">Low</SelectItem>
                                               </SelectContent>
                                             </Select>
                                           </div>
@@ -1635,8 +1662,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             <Input
                                               value={project.remarks}
                                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'remarks', e.target.value)}
-                                              className="h-14 bg-slate-50/50 dark:bg-[#2b2d35] rounded-2xl text-[13px] font-bold border-2 border-transparent focus-visible:border-indigo-500/30 focus-visible:bg-white transition-all shadow-sm"
-                                              placeholder="Strategic context and delivery notes..."
+                                              className={cn(
+                                                "p-4 h-14 text-sm font-bold transition-all rounded-2xl border-2 shadow-sm placeholder:text-slate-400 focus-visible:ring-[3px] focus-visible:ring-inset",
+                                                project.priority === 'critical' ? "bg-white/60 border-rose-50 focus-visible:ring-rose-500/30 focus-visible:border-rose-200" :
+                                                project.priority === 'high' ? "bg-white/60 border-indigo-50 focus-visible:ring-indigo-500/30 focus-visible:border-indigo-200" :
+                                                project.priority === 'medium' ? "bg-white/60 border-amber-50 focus-visible:ring-amber-500/30 focus-visible:border-amber-200" :
+                                                "bg-white/60 border-emerald-50 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-200"
+                                              )}
+                                              placeholder="Strategic context..."
                                             />
                                           </div>
 
@@ -1914,140 +1947,177 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   </TabsContent>
                                                   <TabsContent value="allocations" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
                                                     {/* Project Allocations */}
-                                                <div className="space-y-6">
-                                                  <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                                        <Target className="h-5 w-5 text-indigo-500" />
+                                                    <div className="space-y-8">
+                                                  <div className="flex items-center justify-between px-2">
+                                                    <div className="flex items-center gap-5">
+                                                      <div className="h-14 w-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shadow-sm">
+                                                        <Target className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
                                                       </div>
                                                       <div>
-                                                        <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight italic">Strategic Allocation</h5>
-                                                        <p className="text-xs text-slate-500 font-medium">Distribute story points across active projects.</p>
+                                                        <h5 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Strategic Allocation</h5>
+                                                        <p className="text-sm font-medium text-slate-500">Distribute story point capacity across mission-critical benchmarks.</p>
                                                       </div>
                                                     </div>
                                                     <Button
                                                       variant="outline"
-                                                      size="sm"
                                                       onClick={() => {
                                                         setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, allocations: [...p.allocations, { projectId: projects[0]?.id || '', allocatedPercent: 0 }] } : p));
                                                       }}
-                                                      className="rounded-xl border-slate-200 dark:border-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                      className="rounded-[1.25rem] h-12 border-2 border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-900 hover:border-indigo-200 transition-all px-6 shadow-sm"
                                                     >
-                                                      <Plus className="h-3.5 w-3.5 mr-2" />
-                                                      Initialize Allocation
+                                                      <Plus className="h-4 w-4 mr-2" />
+                                                      Initialize Node
                                                     </Button>
                                                   </div>
 
-                                                  <div className="rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-950 shadow-sm">
-                                                    <table className="w-full text-sm border-collapse">
-                                                      <thead>
-                                                        <tr className="bg-slate-50/50 dark:bg-slate-900/50">
-                                                          <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400 p-6">Strategic Project</th>
-                                                          <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400 p-6 w-32">Allocation %</th>
-                                                          <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400 p-6 w-32">Points</th>
-                                                          <th className="w-20"></th>
-                                                        </tr>
-                                                      </thead>
-                                                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                        {platform.allocations.map((alloc, idx) => {
-                                                          const project = projects.find(p => p.id === alloc.projectId);
-                                                          const points = Math.round((platform.totalStoryPoints * alloc.allocatedPercent) / 100);
-                                                          return (
-                                                            <tr key={idx} className="group/row hover:bg-slate-50/30 dark:hover:bg-slate-900/30 transition-colors">
-                                                              <td className="p-6">
-                                                                <Select
-                                                                  value={alloc.projectId}
-                                                                  onValueChange={(val: string) => {
+                                                  <div className="space-y-4">
+                                                    {/* Header Labels */}
+                                                    <div className="px-10 py-4 flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                                                      <div className="flex-[3]">Strategic Project Distribution</div>
+                                                      <div className="w-40 text-center">Weight (%)</div>
+                                                      <div className="w-32 text-right">Yield (Pts)</div>
+                                                      <div className="w-12" />
+                                                    </div>
+
+                                                    <div className="space-y-3">
+                                                      {platform.allocations.map((alloc, idx) => {
+                                                        const project = projects.find(p => p.id === alloc.projectId);
+                                                        const priority = project?.priority || 'low';
+                                                        const points = Math.round((platform.totalStoryPoints * alloc.allocatedPercent) / 100);
+                                                        
+                                                        return (
+                                                          <div key={idx} className="group p-6 rounded-[2rem] border-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 hover:bg-white dark:bg-slate-900/50 dark:hover:bg-slate-900 transition-all duration-300 flex items-center gap-8 shadow-sm hover:shadow-md">
+                                                            <div className="flex-[3]">
+                                                              <Select
+                                                                value={alloc.projectId}
+                                                                onValueChange={(val: string) => {
+                                                                  setPlatforms(prev => prev.map(p => p.id === platform.id ? {
+                                                                    ...p,
+                                                                    allocations: p.allocations.map((a, i) => i === idx ? { ...a, projectId: val } : a)
+                                                                  } : p));
+                                                                }}
+                                                              >
+                                                                <SelectTrigger className={cn(
+                                                                  "h-14 rounded-2xl font-black text-base border-2 shadow-sm transition-all focus:ring-4",
+                                                                  priority === 'critical' ? "bg-rose-50 border-rose-100 text-rose-900 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-100 focus:ring-rose-500/10" :
+                                                                  priority === 'high' ? "bg-indigo-50 border-indigo-100 text-indigo-900 dark:bg-indigo-950/40 dark:border-indigo-900/50 dark:text-indigo-100 focus:ring-indigo-500/10" :
+                                                                  priority === 'medium' ? "bg-amber-50 border-amber-100 text-amber-900 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-100 focus:ring-amber-500/10" :
+                                                                  priority === 'low' ? "bg-emerald-50 border-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-100 focus:ring-emerald-500/10" :
+                                                                  "bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-white focus:ring-slate-500/10"
+                                                                )}>
+                                                                  <SelectValue placeholder="Identify Mission Target" />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="rounded-2xl border-0 shadow-2xl p-1 bg-white dark:bg-[#1a1b1e]">
+                                                                  {projects.map(p => (
+                                                                    <SelectItem key={p.id} value={p.id} className="rounded-xl focus:bg-indigo-50 dark:focus:bg-indigo-950/40">
+                                                                       <div className="flex items-center gap-3">
+                                                                         <div className={cn("h-2 w-2 rounded-full", 
+                                                                           p.priority === 'critical' ? "bg-rose-500" :
+                                                                           p.priority === 'high' ? "bg-indigo-500" :
+                                                                           p.priority === 'medium' ? "bg-amber-500" : "bg-emerald-500"
+                                                                         )} />
+                                                                         <span className="font-bold">{p.name}</span>
+                                                                       </div>
+                                                                    </SelectItem>
+                                                                  ))}
+                                                                </SelectContent>
+                                                              </Select>
+                                                            </div>
+                                                            
+                                                            <div className="w-40 flex justify-center">
+                                                              <div className="relative group/percent w-full max-w-[120px]">
+                                                                <Input
+                                                                  type="number"
+                                                                  className={cn(
+                                                                    "h-14 text-center font-black text-xl rounded-2xl border-2 focus-visible:ring-4 shadow-sm",
+                                                                    priority === 'critical' ? "bg-rose-50 border-rose-100 text-rose-900 focus:ring-rose-500/10" :
+                                                                    priority === 'high' ? "bg-indigo-50 border-indigo-100 text-indigo-900 focus:ring-indigo-500/10" :
+                                                                    priority === 'medium' ? "bg-amber-50 border-amber-100 text-amber-900 focus:ring-amber-500/10" :
+                                                                    priority === 'low' ? "bg-emerald-50 border-emerald-100 text-emerald-900 focus:ring-emerald-500/10" :
+                                                                    "bg-white border-slate-100 dark:bg-slate-800 dark:border-slate-700 text-slate-900 focus:ring-slate-500/10"
+                                                                  )}
+                                                                  value={alloc.allocatedPercent}
+                                                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                                     setPlatforms(prev => prev.map(p => p.id === platform.id ? {
                                                                       ...p,
-                                                                      allocations: p.allocations.map((a, i) => i === idx ? { ...a, projectId: val } : a)
+                                                                      allocations: p.allocations.map((a, i) => i === idx ? { ...a, allocatedPercent: Number(e.target.value) } : a)
                                                                     } : p));
                                                                   }}
-                                                                >
-                                                                  <SelectTrigger className={cn(
-                                                                    "h-10 bg-slate-50 dark:bg-[#2b2d35] rounded-xl font-bold !border-0 !shadow-none overflow-hidden transition-all",
-                                                                    platform.name.toLowerCase().includes('android') ? "focus:ring-[2px] focus:ring-inset focus:ring-blue-500/30" :
-                                                                    platform.name.toLowerCase().includes('ios') ? "focus:ring-[2px] focus:ring-inset focus:ring-rose-500/30" :
-                                                                    platform.name.toLowerCase().includes('backend') ? "focus:ring-[2px] focus:ring-inset focus:ring-amber-500/30" :
-                                                                    "focus:ring-[2px] focus:ring-inset focus:ring-indigo-500/30"
-                                                                  )}>
-                                                                    <SelectValue placeholder="Select Project" />
-                                                                  </SelectTrigger>
-                                                                  <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#1a1b1e]">
-                                                                    {projects.map(p => (
-                                                                      <SelectItem key={p.id} value={p.id} className="rounded-xl focus:bg-indigo-50 dark:focus:bg-indigo-950/40">{p.name}</SelectItem>
-                                                                    ))}
-                                                                  </SelectContent>
-                                                                </Select>
-                                                              </td>
-                                                              <td className="p-6">
-                                                                <div className={cn(
-                                                                  "relative group/percent flex items-center px-4 py-1 bg-slate-50 dark:bg-[#2b2d35] rounded-xl !border-0 overflow-hidden transition-shadow",
-                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
-                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
-                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
-                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
-                                                                )}>
-                                                                  <Input
-                                                                    type="number"
-                                                                    className="h-8 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-black text-lg focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-6 text-right"
-                                                                    value={alloc.allocatedPercent}
-                                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                                      setPlatforms(prev => prev.map(p => p.id === platform.id ? {
-                                                                        ...p,
-                                                                        allocations: p.allocations.map((a, i) => i === idx ? { ...a, allocatedPercent: Number(e.target.value) } : a)
-                                                                      } : p));
-                                                                    }}
-                                                                  />
-                                                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 group-focus-within/percent:text-current">%</span>
-                                                                </div>
-                                                              </td>
-                                                              <td className="p-6">
-                                                                <div className="flex flex-col">
-                                                                  <span className="text-base font-black text-slate-900 dark:text-white">{points}</span>
-                                                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Points</span>
-                                                                </div>
-                                                              </td>
-                                                              <td className="p-6 text-right">
-                                                                <button
-                                                                  onClick={() => confirmDelete(
-                                                                    "Purge Allocation?",
-                                                                    `Are you sure you want to remove the resource distribution for "${project?.name || 'this Project'}"?`,
-                                                                    () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, allocations: p.allocations.filter((_, i) => i !== idx) } : p))
-                                                                  )}
-                                                                  className="h-10 w-10 flex items-center justify-center rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all opacity-0 group-hover/row:opacity-100"
-                                                                >
-                                                                  <Trash2 className="h-4 w-4" />
-                                                                </button>
-                                                              </td>
-                                                            </tr>
-                                                          );
-                                                        })}
-                                                        {platform.allocations.length === 0 && (
-                                                          <tr>
-                                                            <td colSpan={4} className="p-12 text-center">
-                                                              <div className="flex flex-col items-center gap-3 text-slate-400">
-                                                                <Target className="h-10 w-10 opacity-10" />
-                                                                <p className="text-sm font-medium italic">No strategic allocations defined.</p>
+                                                                />
+                                                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-30">%</span>
                                                               </div>
-                                                            </td>
-                                                          </tr>
-                                                        )}
-                                                        <tr className="bg-slate-50/50 dark:bg-slate-900/50 font-black text-slate-900 dark:text-white border-t-2 border-slate-100 dark:border-slate-800">
-                                                          <td className="p-6 text-right text-[10px] uppercase tracking-widest text-slate-400">Aggregated Total</td>
-                                                          <td className="p-6 text-lg">
-                                                            {platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0)}%
-                                                          </td>
-                                                          <td className="p-6 text-lg">
-                                                            {Math.round((platform.totalStoryPoints * platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0)) / 100)} pts
-                                                          </td>
-                                                          <td></td>
-                                                        </tr>
-                                                      </tbody>
-                                                    </table>
+                                                            </div>
+
+                                                            <div className="w-32 text-right">
+                                                              <div className="flex flex-col">
+                                                                <span className={cn("text-2xl font-black tracking-tighter", 
+                                                                  priority === 'critical' ? "text-rose-600" : 
+                                                                  priority === 'high' ? "text-indigo-600" : 
+                                                                  priority === 'medium' ? "text-amber-600" : 
+                                                                  priority === 'low' ? "text-emerald-600" :
+                                                                  "text-slate-900 dark:text-white"
+                                                                )}>{points}</span>
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Adjusted Pts</span>
+                                                              </div>
+                                                            </div>
+
+                                                            <div className="w-12 flex justify-end">
+                                                              <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() => confirmDelete(
+                                                                  "Purge Allocation?",
+                                                                  `Remove tactical distribution for "${project?.name || 'this Project'}"?`,
+                                                                  () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, allocations: p.allocations.filter((_, i) => i !== idx) } : p))
+                                                                )}
+                                                                className="h-11 w-11 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100"
+                                                              >
+                                                                <Trash2 className="h-5 w-5" />
+                                                              </Button>
+                                                            </div>
+                                                          </div>
+                                                        );
+                                                      })}
+
+                                                      {platform.allocations.length === 0 && (
+                                                        <div className="p-20 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 flex flex-col items-center gap-4 text-slate-400">
+                                                          <Target className="h-12 w-12 opacity-10" />
+                                                          <p className="text-sm font-black uppercase tracking-[0.2em]">Deployment Null</p>
+                                                        </div>
+                                                      )}
+                                                      
+                                                      {/* Aggregated Status Footer */}
+                                                      <div className="mt-8 p-10 rounded-[2.5rem] bg-slate-900 dark:bg-slate-950 shadow-2xl flex items-center justify-between border ring-4 ring-slate-100 dark:ring-slate-900 border-white/10">
+                                                        <div className="flex items-center gap-6">
+                                                          <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10">
+                                                            <Activity className="h-6 w-6 text-white" />
+                                                          </div>
+                                                          <div className="space-y-0.5">
+                                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Strategic Load Distribution</p>
+                                                            <p className="text-xl font-black text-white tracking-tight">Consolidated Network Yield</p>
+                                                          </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-12">
+                                                          <div className="text-right">
+                                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Utilization</p>
+                                                            <p className={cn("text-3xl font-black tracking-tighter", 
+                                                              platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0) === 100 ? "text-emerald-400" :
+                                                              platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0) > 100 ? "text-rose-400" : "text-amber-400"
+                                                            )}>
+                                                              {platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0)}%
+                                                            </p>
+                                                          </div>
+                                                          <div className="text-right">
+                                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Deployed Yield</p>
+                                                            <p className="text-3xl font-black text-white tracking-tighter">
+                                                              {Math.round((platform.totalStoryPoints * platform.allocations.reduce((sum, a) => sum + a.allocatedPercent, 0)) / 100)} <span className="text-lg opacity-40">pts</span>
+                                                            </p>
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    </div>
                                                   </div>
                                                 </div>
-
                                                   </TabsContent>
                                                   <TabsContent value="capacity" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
                                                     {/* Holidays */}

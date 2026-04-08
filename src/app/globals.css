@@ -304,4 +304,16 @@
   .animate-pulse-ring {
     animation: pulse-ring 1.5s ease-out infinite;
   }
+
+  /* Hide Spinners for Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Hide Spinners for Firefox */
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
 }
