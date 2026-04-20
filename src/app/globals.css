@@ -208,4 +208,37 @@
   .animate-spin {
       animation: spin 4s steps(4, end) infinite;
   }
+
+  /* Coming Soon Page Animations */
+  @keyframes aurora-mesh {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 50% 0%; }
+    50% { background-position: 100% 50%; }
+    75% { background-position: 50% 100%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .animate-aurora-mesh {
+    animation: aurora-mesh 20s ease infinite;
+  }
+
+  @keyframes orb-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -20px) scale(1.05); }
+    50% { transform: translate(-10px, 20px) scale(0.95); }
+    75% { transform: translate(-30px, -10px) scale(1.02); }
+  }
+
+  .animate-orb-float {
+    animation: orb-float 12s ease-in-out infinite;
+  }
+
+  @keyframes particle-twinkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.6; }
+  }
+
+  .animate-particle-twinkle {
+    animation: particle-twinkle 4s ease-in-out infinite;
+  }
 }
