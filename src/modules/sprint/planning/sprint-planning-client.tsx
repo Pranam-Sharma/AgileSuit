@@ -941,7 +941,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
         start_date: date?.from ? date.from.toISOString().split('T')[0] : null,
         end_date: date?.to ? date.to.toISOString().split('T')[0] : null,
         sprint_days: calculateSprintDays(),
-        regional_clusters: regionalClusters,
+        regional_clusters: regionalClusters.map(c => ({
+          id: c.id,
+          name: c.name,
+          country_code: c.countryCode,
+          holidays: c.holidays,
+        })),
         team_members: orgMembers,
         projects: projects.map(p => ({
           id: p.id,
