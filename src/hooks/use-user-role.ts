@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/auth/firebase/client';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getUserRole } from '@/app/actions/role';
+import { getUserRole } from '@/backend/actions/role.actions';
 
 export function useUserRole() {
     const [role, setRole] = React.useState<string | null>(null);
