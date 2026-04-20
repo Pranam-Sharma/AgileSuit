@@ -141,6 +141,13 @@ type DeveloperLeave = {
   plannedLeave: number;
 };
 
+export type RegionalCluster = {
+  id: string;
+  name: string;
+  countryCode: string;
+  holidays: Holiday[];
+};
+
 type Platform = {
   id: string;
   name: string;
@@ -149,6 +156,7 @@ type Platform = {
   allocations: Allocation[];
   targetImprovement: number;
   targetVelocity: number;
+  regionalClusterId?: string;
   holidays: Holiday[];
   developerLeaves: DeveloperLeave[];
   isExpanded: boolean;
@@ -432,6 +440,27 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     from: new Date(),
     to: addDays(new Date(), 13),
   });
+
+  // Regional Clusters State
+  const [regionalClusters, setRegionalClusters] = React.useState<RegionalCluster[]>([]);
+
+  const addRegionalCluster = () => {
+    const newCluster: RegionalCluster = {
+      id: Date.now().toString(),
+      name: '',
+      countryCode: '',
+      holidays: []
+    };
+    setRegionalClusters(prev => [...prev, newCluster]);
+  };
+
+  const updateRegionalCluster = (id: string, field: keyof RegionalCluster, value: any) => {
+    setRegionalClusters(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
+  };
+
+  const deleteRegionalCluster = (id: string) => {
+    setRegionalClusters(prev => prev.filter(c => c.id !== id));
+  };
 
   // Project Priorities State
   const [projects, setProjects] = React.useState<Array<{
@@ -810,6 +839,16 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
             setChecklist(planningData.checklist);
           }
 
+          // Restore regional clusters
+          if (planningData.regional_clusters && planningData.regional_clusters.length > 0) {
+            setRegionalClusters(planningData.regional_clusters.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              countryCode: c.country_code,
+              holidays: c.holidays || []
+            })));
+          }
+
           // Restore projects
           if (planningData.projects && planningData.projects.length > 0) {
             setProjects(planningData.projects.map((p: any) => ({
@@ -833,6 +872,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
               })),
               targetImprovement: p.target_improvement ?? p.targetImprovement ?? 0,
               targetVelocity: p.target_velocity ?? p.targetVelocity ?? 0,
+              regionalClusterId: p.regional_cluster_id ?? '',
               holidays: (p.holidays || []).map((h: any) => ({
                 id: h.id,
                 country: h.country || '',
@@ -901,7 +941,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
         start_date: date?.from ? date.from.toISOString().split('T')[0] : null,
         end_date: date?.to ? date.to.toISOString().split('T')[0] : null,
         sprint_days: calculateSprintDays(),
-        team_members: [], // Add when team composition is implemented
+        regional_clusters: regionalClusters,
+        team_members: orgMembers,
         projects: projects.map(p => ({
           id: p.id,
           name: p.name,
@@ -922,6 +963,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           })),
           target_improvement: p.targetImprovement,
           target_velocity: p.targetVelocity,
+          regional_cluster_id: p.regionalClusterId,
           holidays: p.holidays || [],
           developer_leaves: (p.developerLeaves || []).map(d => ({
             id: d.id,
@@ -1200,6 +1242,111 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     </div>
                                   </div>
 
+                                  {/* Operational Blueprint (Mid-Tier Strategic Layer) */}
+                                  <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center justify-between mb-6">
+                                      <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-xl bg-purple-50 dark:bg-purple-900/40 flex items-center justify-center border border-purple-100 dark:border-purple-800 shadow-sm">
+                                          <CalendarIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                        </div>
+                                        <div>
+                                          <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Regional Holidays & Availability</h4>
+                                          <p className="text-[10px] font-medium text-slate-500">Define regional holidays and mandatory downtime.</p>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        onClick={addRegionalCluster}
+                                        className="rounded-xl h-9 bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white font-bold text-xs shadow-sm transition-all px-4"
+                                      >
+                                        <Plus className="h-3.5 w-3.5 mr-2" />
+                                        Record Holiday
+                                      </Button>
+                                    </div>
+
+                                    {regionalClusters.length === 0 ? (
+                                      <div className="text-center py-6 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/20">
+                                        <p className="font-bold text-slate-400 text-sm">No regional holidays defined yet.</p>
+                                      </div>
+                                    ) : (
+                                      <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar">
+                                        {regionalClusters.map((cluster, idx) => (
+                                          <div key={cluster.id} className="min-w-[320px] max-w-[320px] snap-start shrink-0 group p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-white dark:bg-[#1a1b1e] shadow-sm hover:shadow-md transition-all duration-300 relative">
+                                            <div className="flex justify-between items-start mb-4">
+                                              <div className="space-y-1 w-full">
+                                                <Input
+                                                  value={cluster.countryCode}
+                                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRegionalCluster(cluster.id, 'countryCode', e.target.value)}
+                                                  placeholder="Country / Region Name"
+                                                  className="h-8 border-0 bg-slate-50 dark:bg-slate-900 px-3 font-bold text-sm focus-visible:ring-2 focus-visible:ring-indigo-500/20 placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-lg w-[85%]"
+                                                />
+                                              </div>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => deleteRegionalCluster(cluster.id)}
+                                                className="h-8 w-8 rounded-full text-slate-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-all absolute right-4 top-4"
+                                              >
+                                                <Trash2 className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                              {cluster.holidays.map((h, hIdx) => (
+                                                <div key={hIdx} className="flex items-center gap-2">
+                                                  <Input 
+                                                    value={h.country}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                      const newHolidays = [...cluster.holidays];
+                                                      newHolidays[hIdx].country = e.target.value;
+                                                      updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                    }}
+                                                    placeholder="Holiday Description"
+                                                    className="h-8 border-slate-100 dark:border-slate-800 rounded-md bg-transparent text-xs font-medium"
+                                                  />
+                                                  <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-900 rounded-md border border-slate-100 dark:border-slate-800 pr-2">
+                                                    <Input 
+                                                      type="number"
+                                                      value={h.days || ''}
+                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                        const newHolidays = [...cluster.holidays];
+                                                        newHolidays[hIdx].days = Number(e.target.value);
+                                                        updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                      }}
+                                                      placeholder="0"
+                                                      className="h-8 w-12 border-0 bg-transparent text-xs font-bold text-right px-1 focus-visible:ring-0"
+                                                    />
+                                                    <span className="text-[10px] font-bold text-slate-400">DAYS</span>
+                                                  </div>
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                      const newHolidays = cluster.holidays.filter((_, i) => i !== hIdx);
+                                                      updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                    }}
+                                                    className="h-6 w-6 rounded-md text-slate-400 hover:text-rose-500"
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </Button>
+                                                </div>
+                                              ))}
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                  updateRegionalCluster(cluster.id, 'holidays', [...cluster.holidays, { id: Date.now().toString(), country: '', days: 0 }]);
+                                                }}
+                                                className="w-full rounded-lg border-dashed border-slate-200 dark:border-slate-700 h-8 text-[10px] uppercase tracking-widest font-bold text-slate-500"
+                                              >
+                                                <Plus className="h-3 w-3 mr-2" /> Add Date
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
                                     {/* Strategic Platform Initializer */}
                                     <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
                                       <div className="flex items-center justify-between mb-6">
@@ -1414,9 +1561,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     </div>
                                   </div>
 
-                                  <div ref={resourceContainerRef} className={cn(resourceViewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "grid grid-cols-1 gap-6")}>
+                                  <div ref={resourceContainerRef} className={cn(resourceViewMode === 'grid' ? "columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6" : "grid grid-cols-1 gap-6 items-start")}>
                                     {platforms.map((platform) => (
-                                      <Card key={platform.id} className="resource-gsap-item border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] shadow-sm overflow-hidden group hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-colors transition-shadow duration-500">
+                                      <Card key={platform.id} className="resource-gsap-item break-inside-avoid-column border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] shadow-sm overflow-hidden group hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-colors transition-shadow duration-500 mb-6">
                                         <CardHeader className="pb-4 p-8 bg-slate-50/50 dark:bg-slate-900/30 flex flex-row items-center justify-between">
                                           <div className="flex items-center gap-4">
                                             <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
@@ -1479,68 +1626,125 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     <div className="p-3 text-sm font-medium text-slate-500 text-center">No members found</div>
                                                   )}
                                                 </div>
-                                              </DropdownMenuContent>
-                                            </DropdownMenu>
-                                          </div>
+                                                </DropdownMenuContent>
+                                              </DropdownMenu>
+                                            </div>
 
-                                          {platform.members.length > 0 && (
-                                            <div className={cn("flex flex-wrap", resourceViewMode === 'grid' ? "gap-1.5" : "gap-2")}>
-                                              {platform.members.map((member, idx) => {
-                                                const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
-                                                const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
-                                                const initials = displayName
-                                                    .trim()
-                                                    .split(/\s+/)
-                                                    .map((n: string) => n[0])
-                                                    .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
-                                                    .join('')
-                                                    .substring(0, 2)
-                                                    .toUpperCase();
+                                            {platform.members.length > 0 && (
+                                            <div className="space-y-4 mt-4 border-t border-slate-50 dark:border-slate-800 pt-6">
+                                              <div className="flex items-center justify-between px-1">
+                                                <div className="flex items-center gap-2">
+                                                  <Users className="h-4 w-4 text-slate-400" />
+                                                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Team Node Composition & Availability</h5>
+                                                </div>
+                                              </div>
 
-                                                if (resourceViewMode === 'grid') {
+                                              {/* Grid Header Row for Column Clarity */}
+                                              <div className="grid grid-cols-[1fr_80px_64px_64px_32px] gap-2 px-3 pb-1 border-b border-slate-50 dark:border-slate-800/50">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Resource</label>
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Origin</label>
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Alloc %</label>
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Off (L)</label>
+                                                <div />
+                                              </div>
+
+                                              <div className="space-y-2">
+                                                {platform.members.map((member, idx) => {
+                                                  const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
+                                                  const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
+                                                  const initials = displayName
+                                                      .trim()
+                                                      .split(/\s+/)
+                                                      .map((n: string) => n[0])
+                                                      .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
+                                                      .join('')
+                                                      .substring(0, 2)
+                                                      .toUpperCase();
+                                                  
+                                                  const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
+                                                  
+                                                  const updateDetails = (field: keyof DeveloperLeave, value: any) => {
+                                                    setPlatforms(prev => prev.map(p => p.id === platform.id ? {
+                                                      ...p,
+                                                      developerLeaves: (() => {
+                                                        const textExists = p.developerLeaves.find(d => d.name === member);
+                                                        if (textExists) {
+                                                          return p.developerLeaves.map(d => d.name === member ? { ...d, [field]: value } : d);
+                                                        }
+                                                        return [...p.developerLeaves, { id: Date.now().toString(), name: member, country: '', capacity: 1, plannedLeave: 0, [field]: value }];
+                                                      })()
+                                                    } : p));
+                                                  };
+
                                                   return (
-                                                    <div 
-                                                      key={idx}
-                                                      title={displayName}
-                                                      className="group/badge relative h-9 w-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-[11px] font-black text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-default"
-                                                    >
-                                                      <Avatar className="h-full w-full">
-                                                        {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
-                                                        <AvatarFallback className="bg-slate-100 text-slate-600 font-black text-[10px]">{initials}</AvatarFallback>
-                                                      </Avatar>
-                                                      <button
+                                                    <div key={idx} className="group/member-row p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-100 dark:hover:border-indigo-900/40 transition-all grid grid-cols-[1fr_80px_64px_64px_32px] gap-2 items-center overflow-hidden">
+                                                      <div className="flex items-center gap-2.5 min-w-0">
+                                                        <Avatar className="h-8 w-8 rounded-xl border border-slate-100 dark:border-slate-800 shrink-0">
+                                                          {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
+                                                          <AvatarFallback className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 font-bold text-[9px]">{initials}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col min-w-0">
+                                                          <span className="text-xs font-bold text-slate-900 dark:text-white leading-none truncate mb-0.5">{displayName}</span>
+                                                          <span className="text-[9px] text-slate-400 font-medium truncate leading-none">{memberObj?.email || 'External'}</span>
+                                                        </div>
+                                                      </div>
+
+                                                      <div className="w-20">
+                                                        <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
+                                                          <SelectTrigger className="h-8 bg-slate-50 dark:bg-[#1e1f26] rounded-xl font-black text-[10px] !border-0 !shadow-none overflow-hidden transition-all focus:ring-2 focus:ring-indigo-500/20 px-2 uppercase text-slate-500">
+                                                            {details.country ? (regionalClusters.find(rc => rc.id === details.country)?.countryCode || details.country) : "Region"}
+                                                          </SelectTrigger>
+                                                          <SelectContent className="rounded-xl border-slate-100 dark:border-slate-800 shadow-2xl">
+                                                            {regionalClusters.map(rc => {
+                                                              const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H, ${rc.holidays.reduce((sum, h) => sum + (h.days || 0), 0)}D` : 'None';
+                                                              return (
+                                                                <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs">
+                                                                  <div className="flex items-center justify-between gap-4 w-full">
+                                                                    <span className="font-bold">{rc.countryCode || 'Node'}</span>
+                                                                    <span className="text-[9px] text-slate-400 font-black uppercase">{holidaySummary}</span>
+                                                                  </div>
+                                                                </SelectItem>
+                                                              );
+                                                            })}
+                                                            <SelectItem value="Other" className="rounded-lg text-xs font-bold text-slate-400">Other</SelectItem>
+                                                          </SelectContent>
+                                                        </Select>
+                                                      </div>
+
+                                                      <div className="relative w-full">
+                                                        <Input
+                                                          type="number"
+                                                          className="h-8 bg-slate-50 dark:bg-[#1e1f26] rounded-xl font-bold text-[10px] !border-0 !ring-0 !shadow-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 px-2 pr-4 text-center"
+                                                          value={Math.round(details.capacity * 100) || ''}
+                                                          placeholder="100"
+                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value) / 100)}
+                                                        />
+                                                        <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-300 pointer-events-none">%</span>
+                                                      </div>
+
+                                                      <div className="relative w-full">
+                                                        <Input
+                                                          type="number"
+                                                          className="h-8 bg-slate-50 dark:bg-[#1e1f26] rounded-xl font-bold text-[10px] !border-0 !ring-0 !shadow-none focus-visible:ring-2 focus-visible:ring-indigo-500/20 px-2 pr-4 text-center"
+                                                          value={details.plannedLeave || ''}
+                                                          placeholder="0"
+                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
+                                                        />
+                                                        <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-300 pointer-events-none">L</span>
+                                                      </div>
+
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => confirmDelete('Remove Assigned Resource', `Are you sure you want to remove ${displayName} from this platform sequence?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
-                                                        className="absolute -top-1.5 -right-1.5 z-10 h-4 w-4 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-white flex items-center justify-center opacity-0 group-hover/badge:opacity-100 transition-all shadow-sm hover:bg-rose-500 hover:border-rose-500 scale-75 group-hover/badge:scale-100"
+                                                        className="h-7 w-7 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all shrink-0 ml-auto"
                                                       >
-                                                        <Trash2 className="h-2.5 w-2.5" />
-                                                      </button>
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                      </Button>
                                                     </div>
                                                   );
-                                                }
-
-                                                return (
-                                                  <Badge
-                                                    key={idx}
-                                                    variant="secondary"
-                                                    className="group/badge pl-1.5 pr-4 py-1.5 bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 rounded-full flex items-center gap-2.5 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md transition-all relative overflow-visible"
-                                                  >
-                                                    <Avatar className="h-6 w-6 border-0">
-                                                      {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
-                                                      <AvatarFallback className="bg-indigo-50 text-indigo-700 text-[9px] font-black">{initials}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex flex-col items-start leading-none gap-0.5">
-                                                      <span className="text-xs">{displayName}</span>
-                                                      {memberObj?.department?.name && <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black">{memberObj.department.name}</span>}
-                                                    </div>
-                                                    <button
-                                                      onClick={() => confirmDelete('Remove Assigned Resource', `Are you sure you want to remove ${displayName} from this platform sequence?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
-                                                      className="ml-1 h-5 w-5 rounded-full flex items-center justify-center text-slate-300 hover:text-white hover:bg-rose-500 transition-all opacity-0 group-hover/badge:opacity-100 shrink-0"
-                                                    >
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </button>
-                                                  </Badge>
-                                                );
-                                              })}
+                                                })}
+                                              </div>
                                             </div>
                                           )}
                                         </CardContent>
@@ -1846,7 +2050,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <TabsList className="w-full flex justify-start border-b border-slate-200 dark:border-slate-800 bg-transparent p-0 h-12 gap-8 mb-8 overflow-x-auto select-none no-scrollbar">
                                                     <TabsTrigger value="core" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Velocity Targets</TabsTrigger>
                                                     <TabsTrigger value="allocations" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Strategic Allocation</TabsTrigger>
-                                                    <TabsTrigger value="capacity" className="rounded-none font-bold text-[13px] h-full text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-slate-900 dark:data-[state=active]:border-white data-[state=active]:shadow-none transition-colors px-1">Resource Availability</TabsTrigger>
                                                   </TabsList>
 
 
@@ -2119,211 +2322,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   </div>
                                                 </div>
                                                   </TabsContent>
-                                                  <TabsContent value="capacity" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
-                                                    {/* Holidays */}
-                                                <div className="space-y-6">
-                                                  <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                      <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                                        <CalendarIcon className="h-5 w-5 text-indigo-500" />
-                                                      </div>
-                                                      <div>
-                                                        <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Regional Holidays & Availability</h5>
-                                                        <p className="text-xs text-slate-500 font-medium">Define regional holidays and mandatory downtime.</p>
-                                                      </div>
-                                                    </div>
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      onClick={() => {
-                                                        setPlatforms(prev => prev.map(p => p.id === platform.id ? {
-                                                          ...p,
-                                                          holidays: [...p.holidays, { id: Date.now().toString(), country: '', days: 0 }]
-                                                        } : p));
-                                                      }}
-                                                      className="rounded-xl border-slate-200 dark:border-slate-800 font-bold"
-                                                    >
-                                                      <Plus className="h-3.5 w-3.5 mr-2" />
-                                                      Record Holiday
-                                                    </Button>
-                                                  </div>
+                                                </Tabs>
 
-                                                  <div className="space-y-1">
-                                                    {platform.holidays.map((holiday, idx) => (
-                                                      <div key={holiday.id} className="group/holiday flex gap-4 items-center p-5 bg-white dark:bg-[#202127] !border-0 !shadow-none rounded-[1.5rem] transition-all duration-300">
-                                                          <div className={cn(
-                                                            "flex-1 flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-xl border-0 transition-shadow",
-                                                            platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
-                                                            platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
-                                                            platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
-                                                            "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
-                                                          )}>
-                                                            <Input
-                                                              placeholder="Country / Region Name"
-                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-[15px] text-slate-900 dark:text-white focus-visible:ring-0 px-0 !rounded-none !appearance-none placeholder:text-slate-400 dark:placeholder:text-slate-600"
-                                                              value={holiday.country}
-                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.map((h, i) => i === idx ? { ...h, country: e.target.value } : h) } : p))}
-                                                            />
-                                                          </div>
-                                                        <div className={cn(
-                                                          "flex items-center w-36 px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-xl border-0 transition-shadow",
-                                                          platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
-                                                          platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
-                                                          platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
-                                                          "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
-                                                        )}>
-                                                          <Input
-                                                            type="number"
-                                                            placeholder="0"
-                                                            className="h-10 pr-2 text-right font-black text-xl !border-0 !ring-0 !shadow-none bg-transparent focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full px-0"
-                                                            value={holiday.days || ''}
-                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.map((h, i) => i === idx ? { ...h, days: Number(e.target.value) } : h) } : p))}
-                                                          />
-                                                          <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase ml-2">Days</span>
-                                                        </div>
-                                                        <Button
-                                                          variant="ghost"
-                                                          size="icon"
-                                                          className="h-10 w-10 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl opacity-0 group-hover/holiday:opacity-100 transition-all shrink-0"
-                                                          onClick={() => confirmDelete(
-                                                            "Expunge Holiday?",
-                                                            `Are you sure you want to remove the downtime entry for "${holiday.country || 'Specified Region'}"?`,
-                                                            () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, holidays: p.holidays.filter((_, i) => i !== idx) } : p))
-                                                          )}
-                                                        >
-                                                          <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                      </div>
-                                                    ))}
-                                                    {platform.holidays.length === 0 && (
-                                                      <div className="text-sm text-slate-400 italic px-4 py-8 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-[2rem] text-center">
-                                                        No regional holidays or downtime events registered for this platform domain.
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                </div>
-
-                                                {/* Developer Details */}
-                                                <div className="space-y-8">
-                                                  <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                                      <Briefcase className="h-5 w-5 text-indigo-500" />
-                                                    </div>
-                                                    <div>
-                                                      <h5 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Contributor Availability & Capacity</h5>
-                                                      <p className="text-xs text-slate-500 font-medium">Adjust throughput scales and log scheduled leave for individual team members.</p>
-                                                    </div>
-                                                  </div>
-
-                                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                    {platform.members.map((member, idx) => {
-                                                      const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
-                                                      const memberDetails = orgMembers.find(m => m.id === member);
-                                                      const memberName = memberDetails ? (memberDetails.display_name || memberDetails.email) : member;
-                                                      const initials = memberDetails ? (memberDetails.display_name || memberDetails.email || 'U').split(' ').map((n: any) => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
-
-                                                      const updateDetails = (field: keyof DeveloperLeave, value: any) => {
-                                                        setPlatforms(prev => prev.map(p => p.id === platform.id ? {
-                                                          ...p,
-                                                          developerLeaves: (() => {
-                                                            const textExists = p.developerLeaves.find(d => d.name === member);
-                                                            if (textExists) {
-                                                              return p.developerLeaves.map(d => d.name === member ? { ...d, [field]: value } : d);
-                                                            }
-                                                            return [...p.developerLeaves, { id: Date.now().toString(), name: member, country: '', capacity: 1, plannedLeave: 0, [field]: value }];
-                                                          })()
-                                                        } : p));
-                                                      };
-
-                                                      return (
-                                                        <div key={idx} className="p-6 rounded-[2rem] !border-0 bg-white dark:bg-slate-900 !shadow-none transition-all duration-500 group/dev">
-                                                          <div className="flex items-center gap-4 mb-6">
-                                                            {memberDetails ? (
-                                                              <Avatar className="h-12 w-12 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 bg-white">
-                                                                <AvatarImage src={memberDetails.profileUrl} alt={memberName} className="object-cover" />
-                                                                <AvatarFallback className="rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold">{initials}</AvatarFallback>
-                                                              </Avatar>
-                                                            ) : (
-                                                              <div className="h-12 w-12 rounded-2xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-400 group-hover/dev:text-indigo-500 transition-colors">
-                                                                <Users className="h-6 w-6" />
-                                                              </div>
-                                                            )}
-                                                            <div className="font-black text-xl text-slate-900 dark:text-white tracking-tight italic line-clamp-1">{memberName}</div>
-                                                          </div>
-
-                                                          <div className="grid grid-cols-1 gap-6">
-                                                            {/* Country Selection */}
-                                                            <div className="space-y-2">
-                                                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Geographical Node</label>
-                                                                <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
-                                                                  <SelectTrigger className={cn(
-                                                                    "h-12 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl font-bold transition-all !border-0 !shadow-none overflow-hidden",
-                                                                    platform.name.toLowerCase().includes('android') ? "focus:ring-[2px] focus:ring-inset focus:ring-blue-500/30" :
-                                                                    platform.name.toLowerCase().includes('ios') ? "focus:ring-[2px] focus:ring-inset focus:ring-rose-500/30" :
-                                                                    platform.name.toLowerCase().includes('backend') ? "focus:ring-[2px] focus:ring-inset focus:ring-amber-500/30" :
-                                                                    "focus:ring-[2px] focus:ring-inset focus:ring-indigo-500/30"
-                                                                  )}>
-                                                                    <SelectValue placeholder="Select Deployment Country" />
-                                                                  </SelectTrigger>
-                                                                <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl">
-                                                                  {platform.holidays.filter(h => h.country).map(h => (
-                                                                    <SelectItem key={h.id} value={h.country} className="rounded-xl">{h.country} ({h.days} Regional Days)</SelectItem>
-                                                                  ))}
-                                                                  <SelectItem value="Other" className="rounded-xl tracking-wide">Global / Standard Node</SelectItem>
-                                                                </SelectContent>
-                                                              </Select>
-                                                            </div>
-
-                                                            <div className="grid grid-cols-2 gap-4">
-                                                              {/* Capacity */}
-                                                              <div className="space-y-2">
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Throughput Scale</label>
-                                                                <div className={cn(
-                                                                  "relative flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl !border-0 overflow-hidden transition-shadow",
-                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
-                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
-                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
-                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
-                                                                )}>
-                                                                  <Input
-                                                                    type="number"
-                                                                    step="0.1"
-                                                                    max="1"
-                                                                    min="0"
-                                                                    className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full pr-2"
-                                                                    value={details.capacity}
-                                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value))}
-                                                                  />
-                                                                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">FPS</span>
-                                                                </div>
-                                                              </div>
-
-                                                              {/* Planned Leave */}
-                                                              <div className="space-y-2">
-                                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Planned Absense</label>
-                                                                <div className={cn(
-                                                                  "relative flex items-center px-4 py-1.5 bg-slate-50 dark:bg-[#2b2d35] rounded-2xl !border-0 overflow-hidden transition-shadow",
-                                                                  platform.name.toLowerCase().includes('android') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-blue-500/30" :
-                                                                  platform.name.toLowerCase().includes('ios') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30" :
-                                                                  platform.name.toLowerCase().includes('backend') ? "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30" :
-                                                                  "focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30"
-                                                                )}>
-                                                                  <Input
-                                                                    type="number"
-                                                                    className="h-10 !border-0 !ring-0 !shadow-none bg-transparent font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none focus:ring-0 outline-none text-slate-900 dark:text-white w-full pr-2"
-                                                                    value={details.plannedLeave}
-                                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
-                                                                  />
-                                                                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase">Days</span>
-                                                                </div>
-                                                              </div>
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                      );
-                                                    })}
-                                                  </div>
-                                                </div>
                                                 {/* Final Summary Table */}
                                                 <div className="p-8 bg-slate-900 dark:bg-black rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden relative group/summary">
                                                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-rose-500/5 opacity-50" />
@@ -2351,8 +2351,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                             const memberDetails = orgMembers.find(m => m.id === member);
                                                             const memberName = memberDetails ? (memberDetails.display_name || memberDetails.email) : member;
                                                             const details = platform.developerLeaves.find(d => d.name === member);
-                                                            const countryHoliday = platform.holidays.find(h => h.country === details?.country);
-                                                            const holidayDays = countryHoliday?.days || 0;
+                                                            const activeCluster = regionalClusters.find(rc => rc.id === details?.country || (rc.name || rc.id) === details?.country || rc.countryCode === details?.country);
+                                                            const holidayDays = activeCluster ? activeCluster.holidays.reduce((sum, h) => sum + h.days, 0) : 0;
                                                             const leaveDays = details?.plannedLeave || 0;
                                                             const totalOff = holidayDays + leaveDays;
 
@@ -2382,8 +2382,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     </div>
                                                   </div>
                                                 </div>
-                                                </TabsContent>
-                                                </Tabs>
 
                                               </div>
                                             )}
@@ -3509,7 +3507,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <Input
                                                     placeholder="Define the core mission or feature..."
                                                     value={item.topic}
-                                                    onChange={(e) => updateDemoItem(item.id, 'topic', e.target.value)}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'topic', e.target.value)}
                                                     className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
                                                   />
                                                 </div>
@@ -3915,7 +3913,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               <div>
                                                 <div className="text-muted-foreground">Holidays</div>
                                                 <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
-                                                  {platform.holidays.reduce((sum, h) => sum + h.days, 0)} days
+                                                  {platform.members.reduce((total, member) => {
+                                                    const details = platform.developerLeaves.find(d => d.name === member);
+                                                    const cluster = regionalClusters.find(rc => rc.id === details?.country || (rc.name || rc.id) === details?.country || rc.countryCode === details?.country);
+                                                    return total + (cluster ? cluster.holidays.reduce((s, h) => s + h.days, 0) : 0);
+                                                  }, 0)} days
                                                 </div>
                                               </div>
                                             </div>
