@@ -241,4 +241,66 @@
   .animate-particle-twinkle {
     animation: particle-twinkle 4s ease-in-out infinite;
   }
+
+  /* Floating UI Cards for Coming Soon */
+  @keyframes float-card-1 {
+    0%, 100% { transform: translateY(0) rotate(3deg); }
+    50% { transform: translateY(-14px) rotate(4.5deg); }
+  }
+  @keyframes float-card-2 {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-18px) rotate(-0.5deg); }
+  }
+  @keyframes float-card-3 {
+    0%, 100% { transform: translateY(0) rotate(1deg); }
+    50% { transform: translateY(-12px) rotate(2.5deg); }
+  }
+
+  .animate-float-card-1 { animation: float-card-1 6s ease-in-out infinite; }
+  .animate-float-card-2 { animation: float-card-2 7s ease-in-out infinite 0.5s; }
+  .animate-float-card-3 { animation: float-card-3 8s ease-in-out infinite 1s; }
+
+  /* Animated Background Blobs */
+  @keyframes blob-drift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -20px) scale(1.05); }
+    66% { transform: translate(-15px, 15px) scale(0.98); }
+  }
+  @keyframes blob-drift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-20px, 30px) scale(1.03); }
+    66% { transform: translate(25px, -10px) scale(0.97); }
+  }
+  @keyframes blob-drift-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(15px, 20px) scale(1.04); }
+    66% { transform: translate(-25px, -15px) scale(0.96); }
+  }
+
+  .animate-blob-1 { animation: blob-drift-1 18s ease-in-out infinite; }
+  .animate-blob-2 { animation: blob-drift-2 22s ease-in-out infinite 2s; }
+  .animate-blob-3 { animation: blob-drift-3 20s ease-in-out infinite 4s; }
+
+  /* Shimmer bar effect */
+  @keyframes shimmer-bar {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer-bar {
+    background-size: 200% 100%;
+    animation: shimmer-bar 3s ease-in-out infinite;
+  }
+
+  /* SVG line draw */
+  @keyframes draw-line {
+    from { stroke-dashoffset: 300; }
+    to { stroke-dashoffset: 0; }
+  }
+
+  .animate-draw-line {
+    stroke-dasharray: 300;
+    animation: draw-line 1.5s ease-out 1s forwards;
+    stroke-dashoffset: 300;
+  }
 }
