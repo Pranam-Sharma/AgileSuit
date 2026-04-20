@@ -1,73 +1,163 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import { Loader2, ArrowRight, CheckCircle2, Sparkles, Zap, Shield } from 'lucide-react';
+import {
+  Loader2,
+  ArrowRight,
+  CheckCircle2,
+  Zap,
+  Users,
+  CalendarDays,
+  TrendingUp,
+  Star,
+  Github,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Rocket,
+  Mail,
+} from 'lucide-react';
 
-// ─── Gradient Palettes ─────────────────────────────────────────────
-const GRADIENT_PALETTES = [
-  { name: 'Midnight Aurora', colors: ['#0f0c29', '#302b63', '#24243e', '#0f0c29'] },
-  { name: 'Ocean Depths', colors: ['#0a1628', '#1a3a5c', '#0d4f6e', '#0a1628'] },
-  { name: 'Cosmic Purple', colors: ['#1a0533', '#3d1466', '#6b21a8', '#1a0533'] },
-  { name: 'Northern Lights', colors: ['#0a192f', '#112240', '#233554', '#0a192f'] },
-  { name: 'Deep Space', colors: ['#000000', '#0f172a', '#1e1b4b', '#000000'] },
-  { name: 'Ember Glow', colors: ['#1a0a00', '#3d1c00', '#7c2d12', '#1a0a00'] },
-  { name: 'Jade Matrix', colors: ['#021a0f', '#064e3b', '#0d9488', '#021a0f'] },
-  { name: 'Twilight Rose', colors: ['#1a0a1e', '#4a1942', '#831843', '#1a0a1e'] },
-  { name: 'Arctic Steel', colors: ['#0c1220', '#1e293b', '#334155', '#0c1220'] },
-  { name: 'Neon Void', colors: ['#0a0a0a', '#1a0533', '#312e81', '#0a0a0a'] },
-];
+// ─── Floating UI Card Components ────────────────────────────────────
 
-// ─── Floating Orb Component ────────────────────────────────────────
-function FloatingOrb({ delay, size, color, position }: {
-  delay: number;
-  size: number;
-  color: string;
-  position: { top?: string; left?: string; right?: string; bottom?: string };
-}) {
+function SprintCard() {
   return (
-    <div
-      className="absolute rounded-full blur-3xl opacity-20 animate-orb-float pointer-events-none"
-      style={{
-        width: size,
-        height: size,
-        background: `radial-gradient(circle, ${color}, transparent 70%)`,
-        animationDelay: `${delay}s`,
-        ...position,
-      }}
-    />
+    <div className="absolute top-4 right-0 w-72 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(99,102,241,0.15)] p-6 rotate-3 animate-float-card-1 border border-indigo-100/60">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <CalendarDays className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <p className="text-sm font-extrabold text-slate-900">Sprint 24</p>
+          <p className="text-[11px] text-slate-400 font-medium">2 weeks · 8 members</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-slate-600">Velocity</span>
+          <span className="text-xs font-extrabold text-emerald-500 flex items-center gap-1">
+            <TrendingUp className="h-3 w-3" /> 42 pts
+          </span>
+        </div>
+        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-full w-3/4 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 rounded-full animate-shimmer-bar" />
+        </div>
+        <div className="flex gap-2 mt-4">
+          {[
+            { label: 'To Do', count: '4', color: 'bg-slate-50 text-slate-500 border-slate-200' },
+            { label: 'In Progress', count: '6', color: 'bg-amber-50 text-amber-600 border-amber-200' },
+            { label: 'Done', count: '12', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+          ].map(({ label, count, color }) => (
+            <div key={label} className={`flex-1 py-2 rounded-xl text-center text-[10px] font-bold border ${color}`}>
+              <span className="block text-lg font-black leading-none mb-0.5">{count}</span>
+              {label}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
-// ─── Particle Field ────────────────────────────────────────────────
-function ParticleField() {
-  const particles = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    size: Math.random() * 3 + 1,
-    delay: Math.random() * 5,
-    duration: Math.random() * 3 + 4,
-  }));
+function AnalyticsCard() {
+  return (
+    <div className="absolute top-56 right-20 w-64 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(139,92,246,0.15)] p-6 -rotate-2 animate-float-card-2 border border-violet-100/60 z-10">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <TrendingUp className="h-4 w-4 text-white" />
+          </div>
+          <p className="text-sm font-extrabold text-slate-900">AI Insights</p>
+        </div>
+        <div className="h-7 w-7 rounded-lg bg-amber-50 flex items-center justify-center">
+          <Zap className="h-3.5 w-3.5 text-amber-500" />
+        </div>
+      </div>
+      <div className="flex items-end gap-1.5 h-20 px-1">
+        {[35, 55, 40, 75, 50, 85, 65, 90].map((h, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-lg bg-gradient-to-t from-indigo-500 to-violet-400 transition-all duration-500"
+            style={{
+              height: `${h}%`,
+              opacity: 0.7 + (i * 0.04),
+              animationDelay: `${i * 100}ms`,
+            }}
+          />
+        ))}
+      </div>
+      <div className="mt-4 flex items-center gap-2">
+        <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+        <p className="text-[11px] text-slate-500 font-semibold">Throughput +23% this quarter</p>
+      </div>
+    </div>
+  );
+}
+
+function TeamCard() {
+  return (
+    <div className="absolute bottom-8 right-8 w-64 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(236,72,153,0.12)] p-6 rotate-1 animate-float-card-3 border border-pink-100/60">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
+          <Users className="h-4 w-4 text-white" />
+        </div>
+        <p className="text-sm font-extrabold text-slate-900">Team Capacity</p>
+      </div>
+      <div className="flex -space-x-2.5 mb-4">
+        {[
+          'from-rose-400 to-orange-400',
+          'from-indigo-400 to-purple-400',
+          'from-emerald-400 to-teal-400',
+          'from-amber-400 to-yellow-400',
+          'from-pink-400 to-fuchsia-400',
+        ].map((gradient, i) => (
+          <div key={i} className={`h-9 w-9 rounded-full bg-gradient-to-br ${gradient} border-[3px] border-white flex items-center justify-center text-[10px] font-bold text-white shadow-md`}>
+            {['PS', 'AK', 'RJ', 'MK', 'DV'][i]}
+          </div>
+        ))}
+        <div className="h-9 w-9 rounded-full bg-slate-100 border-[3px] border-white flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-md">
+          +3
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map(i => (
+            <Star key={i} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+          ))}
+        </div>
+        <span className="text-[10px] text-emerald-500 font-extrabold uppercase tracking-wide">Excellent</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Animated Counter ──────────────────────────────────────────────
+function SpotsCounter() {
+  const [count, setCount] = useState(100);
+
+  useEffect(() => {
+    // Simulate spots being taken
+    const interval = setInterval(() => {
+      setCount(prev => {
+        const next = prev - 1;
+        if (next <= 73) { clearInterval(interval); return 73; }
+        return next;
+      });
+    }, 120);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute rounded-full bg-white animate-particle-twinkle"
-          style={{
-            left: p.left,
-            top: p.top,
-            width: p.size,
-            height: p.size,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.duration}s`,
-          }}
-        />
-      ))}
-    </div>
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+      </span>
+      <span className="text-[11px] font-extrabold tabular-nums">{count}</span>
+      <span className="text-[11px] font-bold">spots left</span>
+    </span>
   );
 }
 
@@ -77,49 +167,53 @@ export function ComingSoonPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
   const [error, setError] = useState('');
-  const [activePalette] = useState(() => GRADIENT_PALETTES[Math.floor(Math.random() * GRADIENT_PALETTES.length)]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Animate headline typing
-  const [headlineVisible, setHeadlineVisible] = useState(false);
-  const [subtextVisible, setSubtextVisible] = useState(false);
-  const [ctaVisible, setCtaVisible] = useState(false);
+  // Staggered reveal
+  const [show, setShow] = useState({ label: false, headline: false, sub: false, cta: false, cards: false });
 
   useEffect(() => {
-    const t1 = setTimeout(() => setHeadlineVisible(true), 300);
-    const t2 = setTimeout(() => setSubtextVisible(true), 800);
-    const t3 = setTimeout(() => setCtaVisible(true), 1300);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const timers = [
+      setTimeout(() => setShow(s => ({ ...s, label: true })), 200),
+      setTimeout(() => setShow(s => ({ ...s, headline: true })), 500),
+      setTimeout(() => setShow(s => ({ ...s, sub: true })), 900),
+      setTimeout(() => setShow(s => ({ ...s, cta: true })), 1300),
+      setTimeout(() => setShow(s => ({ ...s, cards: true })), 600),
+    ];
+    return () => timers.forEach(clearTimeout);
   }, []);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!email.trim()) {
-      setError('Please enter your email address.');
-      inputRef.current?.focus();
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError('Please enter a valid email address.');
-      inputRef.current?.focus();
-      return;
-    }
-
+    setIsSubmitted(false);
+    setIsAlreadySubscribed(false);
+    if (!email.trim()) { setError('Please enter your email address.'); inputRef.current?.focus(); return; }
+    if (!validateEmail(email)) { setError('Please enter a valid email address.'); inputRef.current?.focus(); return; }
     setIsSubmitting(true);
     try {
-      await addDoc(collection(firestore, 'waitlist_emails'), {
-        email: email.trim().toLowerCase(),
-        created_at: serverTimestamp(),
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      const history = JSON.parse(localStorage.getItem('waitlist_history') || '[]');
+      if (history.includes(normalizedEmail)) {
+        setIsAlreadySubscribed(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await setDoc(doc(firestore, 'waitlist_emails', normalizedEmail), {
+        email: normalizedEmail,
+        updated_at: serverTimestamp(),
         source: 'coming_soon_page',
-      });
+      }, { merge: true });
+      
+      history.push(normalizedEmail);
+      localStorage.setItem('waitlist_history', JSON.stringify(history));
+      
       setIsSubmitted(true);
       setEmail('');
     } catch (err) {
@@ -130,158 +224,177 @@ export function ComingSoonPage() {
     }
   };
 
-  const gradientBg = `linear-gradient(135deg, ${activePalette.colors.join(', ')})`;
-
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: gradientBg, backgroundSize: '400% 400%' }}
-    >
-      {/* Animated background layer */}
-      <div
-        className="absolute inset-0 animate-aurora-mesh"
-        style={{ background: gradientBg, backgroundSize: '400% 400%' }}
-      />
+    <div className="relative min-h-screen bg-[#fafbff] overflow-hidden flex flex-col">
 
-      {/* Floating Orbs */}
-      <FloatingOrb delay={0} size={400} color="#6366f1" position={{ top: '-10%', left: '-5%' }} />
-      <FloatingOrb delay={2} size={300} color="#8b5cf6" position={{ bottom: '-5%', right: '-5%' }} />
-      <FloatingOrb delay={4} size={250} color="#a78bfa" position={{ top: '40%', right: '10%' }} />
-      <FloatingOrb delay={1} size={200} color="#c084fc" position={{ bottom: '20%', left: '5%' }} />
+      {/* Animated Gradient Blobs */}
+      <div className="absolute -top-40 -right-40 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-200/80 via-violet-200/60 to-purple-200/40 blur-[100px] pointer-events-none animate-blob-1" />
+      <div className="absolute top-1/3 -left-60 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-amber-100/60 via-orange-100/40 to-rose-100/30 blur-[80px] pointer-events-none animate-blob-2" />
+      <div className="absolute -bottom-40 right-1/3 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-cyan-100/40 via-sky-100/30 to-indigo-100/20 blur-[80px] pointer-events-none animate-blob-3" />
 
-      {/* Particle Field */}
-      <ParticleField />
+      {/* Subtle dot grid */}
+      <div className="absolute inset-0 dotted-bg opacity-30 pointer-events-none" />
 
-      {/* Subtle grid overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
+      {/* Main Content */}
+      <div className="relative z-10 flex-1 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-16 lg:py-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-12 items-center min-h-[85vh]">
 
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 text-center">
+            {/* Left: Text Content */}
+            <div className="flex flex-col justify-center max-w-lg">
 
-        {/* Logo */}
-        <div className={`mb-12 transition-all duration-1000 ${headlineVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-              <div className="grid grid-cols-2 grid-rows-2 gap-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-300" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-              </div>
-            </div>
-            <span className="text-sm font-bold text-white/80 tracking-wider uppercase">AgileSuit</span>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <h1
-          className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tight transition-all duration-1000 ease-out ${headlineVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <span className="text-white">Your team deserves tools</span>
-          <br />
-          <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            that move at the speed of thought.
-          </span>
-        </h1>
-
-        {/* Subtext */}
-        <p
-          className={`mt-6 md:mt-8 text-base md:text-lg text-white/60 max-w-xl mx-auto leading-relaxed font-medium transition-all duration-1000 delay-200 ease-out ${subtextVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-        >
-          No more waiting for pages to load. No more drowning in features you&apos;ll never use.
-          <span className="text-white/80 font-semibold"> Project management, rebuilt from zero.</span>
-        </p>
-
-        {/* Feature Pills */}
-        <div
-          className={`mt-8 flex flex-wrap justify-center gap-3 transition-all duration-1000 delay-300 ease-out ${subtextVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-        >
-          {[
-            { icon: Zap, label: 'Sub-second latency' },
-            { icon: Sparkles, label: 'AI-powered sprints' },
-            { icon: Shield, label: 'Zero bloat' },
-          ].map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-white/70 text-xs font-bold uppercase tracking-wider"
-            >
-              <Icon className="h-3.5 w-3.5 text-indigo-400" />
-              {label}
-            </div>
-          ))}
-        </div>
-
-        {/* CTA Section */}
-        <div
-          className={`mt-12 transition-all duration-1000 delay-500 ease-out ${ctaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-        >
-          {isSubmitted ? (
-            <div className="animate-fade-in-up">
-              <div className="inline-flex flex-col items-center gap-4 p-8 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 backdrop-blur-md">
-                <CheckCircle2 className="h-12 w-12 text-emerald-400 animate-bounce" />
-                <div>
-                  <p className="text-xl font-bold text-white">You&apos;re on the list!</p>
-                  <p className="mt-1 text-sm text-white/60">We&apos;ll notify you when early access opens.</p>
+              {/* Badge */}
+              <div className={`transition-all duration-700 ease-out ${show.label ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-8">
+                  <Rocket className="h-4 w-4 text-indigo-500" />
+                  <span className="text-xs font-bold text-indigo-600 tracking-wide uppercase">Coming Soon</span>
                 </div>
               </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
-              <div className="relative w-full max-w-md">
-                <div className="flex items-center gap-2 p-1.5 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-md shadow-2xl shadow-black/20 focus-within:border-indigo-500/40 focus-within:bg-white/10 transition-all duration-300">
-                  <input
-                    ref={inputRef}
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                    placeholder="Enter your email address"
-                    className="flex-1 bg-transparent border-0 outline-none px-4 py-3 text-white placeholder-white/30 text-sm font-medium"
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        Join the Beta
-                        <ArrowRight className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-                {error && (
-                  <p className="absolute -bottom-6 left-4 text-xs text-red-400 font-medium animate-fade-in">{error}</p>
+
+              {/* Headline */}
+              <h1 className={`text-[3.5rem] sm:text-6xl lg:text-[4.25rem] font-black leading-[1.08] tracking-[-0.03em] transition-all duration-1000 ease-out ${show.headline ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+                <span className="text-slate-900">Get Notified</span>
+                <br />
+                <span className="text-slate-900">When we </span>
+                <span className="relative inline-block">
+                  <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">Launch</span>
+                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
+                    <path d="M2 8C40 2 70 2 100 6C130 10 170 4 198 8" stroke="url(#underline-grad)" strokeWidth="3" strokeLinecap="round" className="animate-draw-line" />
+                    <defs>
+                      <linearGradient id="underline-grad" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#6366f1" />
+                        <stop offset="0.5" stopColor="#8b5cf6" />
+                        <stop offset="1" stopColor="#a855f7" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </span>
+              </h1>
+
+              {/* Subtext */}
+              <p className={`mt-7 text-[17px] text-slate-500 leading-relaxed font-medium transition-all duration-1000 delay-100 ease-out ${show.sub ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+                Project management shouldn&apos;t feel like a second job.
+                We&apos;re building something{' '}
+                <span className="text-slate-800 font-bold">lightning-fast</span>,{' '}
+                <span className="text-slate-800 font-bold">zero-bloat</span>, and powered by{' '}
+                <span className="text-slate-800 font-bold">AI</span>
+                &nbsp;&mdash; for teams that actually ship.
+              </p>
+
+              {/* CTA */}
+              <div className={`mt-10 transition-all duration-1000 delay-300 ease-out ${show.cta ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+                {isAlreadySubscribed ? (
+                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-200 shadow-lg shadow-indigo-100/50">
+                    <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-base font-extrabold text-indigo-800">You're already on the list!</p>
+                      <p className="text-sm text-indigo-600 mt-1 font-medium">Keep an eye on your inbox for updates.</p>
+                      <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); }} className="mt-3 text-xs font-bold text-indigo-600 underline hover:text-indigo-800 transition-colors">Enter a different email</button>
+                    </div>
+                  </div>
+                ) : isSubmitted ? (
+                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-lg shadow-emerald-100/50">
+                    <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-base font-extrabold text-emerald-800">You're on the list! 🎉</p>
+                      <p className="text-sm text-emerald-600 mt-1 font-medium">We'll send you an invite when early access opens.</p>
+                      <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    <form onSubmit={handleSubmit}>
+                      <div className="relative group">
+                        {/* Animated gradient border */}
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
+
+                        <div className="relative flex items-center gap-0 p-2 rounded-full border-2 border-slate-200 bg-white shadow-xl shadow-slate-200/40 group-focus-within:border-transparent group-focus-within:shadow-indigo-200/30 transition-all duration-300">
+                          <Mail className="h-5 w-5 text-slate-300 ml-4 shrink-0" />
+                          <input
+                            ref={inputRef}
+                            type="email"
+                            value={email}
+                            onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                            placeholder="Enter your email address"
+                            className="flex-1 bg-transparent border-0 outline-none px-4 py-3 text-slate-900 placeholder-slate-400 text-[15px] font-medium"
+                            disabled={isSubmitting}
+                          />
+                          <button
+                            type="submit"
+                            disabled={isSubmitting}
+                            className="shrink-0 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.03] hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.97]"
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                Notify Me
+                                <ArrowRight className="h-4 w-4" />
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {error && (
+                        <p className="mt-2 text-xs text-red-500 font-semibold pl-6">{error}</p>
+                      )}
+                    </form>
+
+                    {/* Trust indicators */}
+                    <div className="flex items-center gap-4 pl-1">
+                      <SpotsCounter />
+                      <span className="text-[11px] text-slate-400 font-medium">No spam, ever. Unsubscribe anytime.</span>
+                    </div>
+                  </div>
                 )}
               </div>
+            </div>
 
-              {/* Trust Text */}
-              <p className="mt-4 text-xs text-white/30 font-medium tracking-wide">
-                🔒 Only <span className="text-white/50 font-bold">100 spots</span> available for early access. No spam, ever.
-              </p>
-            </form>
-          )}
+            {/* Right: Floating UI Cards */}
+            <div className={`relative hidden lg:block h-[580px] transition-all duration-1200 delay-200 ease-out ${show.cards ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+              <SprintCard />
+              <AnalyticsCard />
+              <TeamCard />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bottom gradient fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-
       {/* Footer */}
-      <div className="absolute bottom-6 left-0 right-0 text-center">
-        <p className="text-[11px] text-white/20 font-medium tracking-wider uppercase">
-          © {new Date().getFullYear()} AgileSuit · Built for teams that ship.
-        </p>
-      </div>
+      <footer className="relative z-10 border-t border-slate-100 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Social Icons */}
+          <div className="flex items-center gap-3">
+            {[
+              { icon: Github, href: '#' },
+              { icon: Twitter, href: '#' },
+              { icon: Linkedin, href: '#' },
+              { icon: Instagram, href: '#' },
+            ].map(({ icon: Icon, href }, i) => (
+              <a
+                key={i}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-10 w-10 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 transform hover:scale-110"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+
+          {/* Footer Links */}
+          <div className="flex items-center gap-8 text-sm font-semibold text-slate-400">
+            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">FAQ</a>
+            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Privacy Policy</a>
+            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Email Us</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
