@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, increment, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import {
   Loader2,
@@ -12,10 +12,6 @@ import {
   CalendarDays,
   TrendingUp,
   Star,
-  Github,
-  Twitter,
-  Linkedin,
-  Instagram,
   Rocket,
   Mail,
 } from 'lucide-react';
@@ -133,21 +129,39 @@ function TeamCard() {
   );
 }
 
-// ─── Animated Counter ──────────────────────────────────────────────
-function SpotsCounter() {
-  const [count, setCount] = useState(100);
+// ─── Constants ─────────────────────────────────────────────────────
+const TOTAL_SPOTS = 100;
+const COUNTER_DOC = 'waitlist_meta/stats';
+
+// ─── Dynamic Counter ───────────────────────────────────────────────
+function SpotsCounter({ firestore }: { firestore: ReturnType<typeof useFirestore> }) {
+  const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    // Simulate spots being taken
-    const interval = setInterval(() => {
-      setCount(prev => {
-        const next = prev - 1;
-        if (next <= 73) { clearInterval(interval); return 73; }
-        return next;
-      });
-    }, 120);
-    return () => clearInterval(interval);
-  }, []);
+    // Listen for real-time updates to the counter document
+    const unsubscribe = onSnapshot(
+      doc(firestore, COUNTER_DOC),
+      (snap) => {
+        const data = snap.data();
+        const signupCount = data?.count ?? 0;
+        setSpotsLeft(Math.max(0, TOTAL_SPOTS - signupCount));
+      },
+      (err) => {
+        console.warn('SpotsCounter: could not read counter, using fallback', err);
+        setSpotsLeft(TOTAL_SPOTS); // fallback
+      }
+    );
+    return () => unsubscribe();
+  }, [firestore]);
+
+  if (spotsLeft === null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+        <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+        <span className="text-[11px] font-bold">checking spots…</span>
+      </span>
+    );
+  }
 
   return (
     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
@@ -155,8 +169,8 @@ function SpotsCounter() {
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
         <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
       </span>
-      <span className="text-[11px] font-extrabold tabular-nums">{count}</span>
-      <span className="text-[11px] font-bold">spots left</span>
+      <span className="text-[11px] font-extrabold tabular-nums">{spotsLeft}</span>
+      <span className="text-[11px] font-bold">{spotsLeft === 1 ? 'spot left' : 'spots left'}</span>
     </span>
   );
 }
@@ -209,6 +223,11 @@ export function ComingSoonPage() {
         email: normalizedEmail,
         updated_at: serverTimestamp(),
         source: 'coming_soon_page',
+      }, { merge: true });
+
+      // Increment the global signup counter
+      await setDoc(doc(firestore, COUNTER_DOC), {
+        count: increment(1),
       }, { merge: true });
       
       history.push(normalizedEmail);
@@ -310,23 +329,25 @@ export function ComingSoonPage() {
                     <form onSubmit={handleSubmit}>
                       <div className="relative group">
                         {/* Animated gradient border */}
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl sm:rounded-full opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
 
-                        <div className="relative flex items-center gap-0 p-2 rounded-full border-2 border-slate-200 bg-white shadow-xl shadow-slate-200/40 group-focus-within:border-transparent group-focus-within:shadow-indigo-200/30 transition-all duration-300">
-                          <Mail className="h-5 w-5 text-slate-300 ml-4 shrink-0" />
-                          <input
-                            ref={inputRef}
-                            type="email"
-                            value={email}
-                            onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                            placeholder="Enter your email address"
-                            className="flex-1 bg-transparent border-0 outline-none px-4 py-3 text-slate-900 placeholder-slate-400 text-[15px] font-medium"
-                            disabled={isSubmitting}
-                          />
+                        <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 p-2 rounded-2xl sm:rounded-full border-2 border-slate-200 bg-white shadow-xl shadow-slate-200/40 group-focus-within:border-transparent group-focus-within:shadow-indigo-200/30 transition-all duration-300">
+                          <div className="flex items-center flex-1 min-w-0">
+                            <Mail className="h-5 w-5 text-slate-300 ml-3 sm:ml-4 shrink-0" />
+                            <input
+                              ref={inputRef}
+                              type="email"
+                              value={email}
+                              onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                              placeholder="Enter your email address"
+                              className="flex-1 min-w-0 bg-transparent border-0 outline-none px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-[15px] font-medium"
+                              disabled={isSubmitting}
+                            />
+                          </div>
                           <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="shrink-0 inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.03] hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.97]"
+                            className="shrink-0 inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl sm:rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.03] hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.97]"
                           >
                             {isSubmitting ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -346,7 +367,7 @@ export function ComingSoonPage() {
 
                     {/* Trust indicators */}
                     <div className="flex items-center gap-4 pl-1">
-                      <SpotsCounter />
+                      <SpotsCounter firestore={firestore} />
                       <span className="text-[11px] text-slate-400 font-medium">No spam, ever. Unsubscribe anytime.</span>
                     </div>
                   </div>
@@ -364,37 +385,6 @@ export function ComingSoonPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-100 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Social Icons */}
-          <div className="flex items-center gap-3">
-            {[
-              { icon: Github, href: '#' },
-              { icon: Twitter, href: '#' },
-              { icon: Linkedin, href: '#' },
-              { icon: Instagram, href: '#' },
-            ].map(({ icon: Icon, href }, i) => (
-              <a
-                key={i}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-10 w-10 rounded-full border-2 border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 transform hover:scale-110"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
-
-          {/* Footer Links */}
-          <div className="flex items-center gap-8 text-sm font-semibold text-slate-400">
-            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">FAQ</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Privacy Policy</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors duration-200">Email Us</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
