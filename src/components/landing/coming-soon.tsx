@@ -167,6 +167,7 @@ export function ComingSoonPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -189,16 +190,30 @@ export function ComingSoonPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitted(false);
+    setIsAlreadySubscribed(false);
     if (!email.trim()) { setError('Please enter your email address.'); inputRef.current?.focus(); return; }
     if (!validateEmail(email)) { setError('Please enter a valid email address.'); inputRef.current?.focus(); return; }
     setIsSubmitting(true);
     try {
       const normalizedEmail = email.trim().toLowerCase();
+      
+      const history = JSON.parse(localStorage.getItem('waitlist_history') || '[]');
+      if (history.includes(normalizedEmail)) {
+        setIsAlreadySubscribed(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       await setDoc(doc(firestore, 'waitlist_emails', normalizedEmail), {
         email: normalizedEmail,
         updated_at: serverTimestamp(),
         source: 'coming_soon_page',
       }, { merge: true });
+      
+      history.push(normalizedEmail);
+      localStorage.setItem('waitlist_history', JSON.stringify(history));
+      
       setIsSubmitted(true);
       setEmail('');
     } catch (err) {
@@ -268,14 +283,26 @@ export function ComingSoonPage() {
 
               {/* CTA */}
               <div className={`mt-10 transition-all duration-1000 delay-300 ease-out ${show.cta ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-                {isSubmitted ? (
+                {isAlreadySubscribed ? (
+                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-200 shadow-lg shadow-indigo-100/50">
+                    <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-6 w-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-base font-extrabold text-indigo-800">You're already on the list!</p>
+                      <p className="text-sm text-indigo-600 mt-1 font-medium">Keep an eye on your inbox for updates.</p>
+                      <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); }} className="mt-3 text-xs font-bold text-indigo-600 underline hover:text-indigo-800 transition-colors">Enter a different email</button>
+                    </div>
+                  </div>
+                ) : isSubmitted ? (
                   <div className="flex items-center gap-4 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-lg shadow-emerald-100/50">
                     <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                     </div>
                     <div>
-                      <p className="text-base font-extrabold text-emerald-800">You&apos;re on the list! 🎉</p>
-                      <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
+                      <p className="text-base font-extrabold text-emerald-800">You're on the list! 🎉</p>
+                      <p className="text-sm text-emerald-600 mt-1 font-medium">We'll send you an invite when early access opens.</p>
+                      <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
                     </div>
                   </div>
                 ) : (
