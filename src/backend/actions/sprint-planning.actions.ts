@@ -56,6 +56,13 @@ export type HolidayData = {
     days: number;
 };
 
+export type RegionalClusterData = {
+    id: string;
+    name: string;
+    country_code: string;
+    holidays: HolidayData[];
+};
+
 export type DeveloperLeaveData = {
     id: string;
     name: string;
@@ -72,6 +79,7 @@ export type PlatformData = {
     allocations: AllocationData[];
     target_improvement: number;
     target_velocity: number;
+    regional_cluster_id?: string;
     holidays: HolidayData[];
     developer_leaves: DeveloperLeaveData[];
 };
@@ -94,6 +102,8 @@ export type SprintPlanningData = {
     sprint_days: number;
     // Team Composition (stored as JSON)
     team_members: any[];
+    // Regional Clusters
+    regional_clusters?: RegionalClusterData[];
     // Project Priorities
     projects: ProjectPriorityData[];
     // Platform Metrics
@@ -165,6 +175,7 @@ export async function saveSprintPlanningAction(data: SprintPlanningData) {
         end_date: data.end_date,
         sprint_days: data.sprint_days,
         team_members: data.team_members,
+        regional_clusters: data.regional_clusters,
         projects: data.projects,
         platforms: data.platforms,
         goals: data.goals,
