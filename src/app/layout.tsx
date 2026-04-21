@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { FirebaseProvider } from '@/auth/firebase/provider';
+import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 
 export const metadata: Metadata = {
   title: 'AgileSuit',
@@ -24,6 +25,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased animate-fade-in" suppressHydrationWarning>
+        <GoogleAnalytics />
         <FirebaseProvider>
           {children}
         </FirebaseProvider>
