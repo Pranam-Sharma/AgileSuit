@@ -1569,18 +1569,68 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   <div ref={resourceContainerRef} className={cn(resourceViewMode === 'grid' ? "columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6" : "grid grid-cols-1 gap-6 items-start")}>
                                     {platforms.map((platform) => (
                                       <Card key={platform.id} className="resource-gsap-item break-inside-avoid-column border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-[2.5rem] shadow-sm overflow-hidden group hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-colors transition-shadow duration-500 mb-6">
-                                        <CardHeader className="pb-4 p-8 bg-slate-50/50 dark:bg-slate-900/30 flex flex-row items-center justify-between">
-                                          <div className="flex items-center gap-4">
-                                            <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
-                                              <LayoutDashboard className="h-6 w-6 text-indigo-500" />
+                                        <CardHeader className="pb-4 p-8 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col gap-6">
+                                          <div className="flex flex-row items-center justify-between w-full">
+                                            <div className="flex items-center gap-4">
+                                              <div className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-800">
+                                                <LayoutDashboard className="h-6 w-6 text-indigo-500" />
+                                              </div>
+                                              <div>
+                                                <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{platform.name}</h4>
+                                              </div>
                                             </div>
-                                            <div>
-                                              <h4 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{platform.name}</h4>
+                                            <Badge className="rounded-lg px-3 py-1 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30 font-bold">
+                                              {platform.members.length} Members
+                                            </Badge>
+                                          </div>
+                                          
+                                          {/* Primary Scaling Factors Compact Grid */}
+                                          <div className="grid grid-cols-3 gap-3 w-full animate-in fade-in duration-500">
+                                            {/* Base SP */}
+                                            <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+                                              <div className="flex items-center gap-1.5">
+                                                <div className="h-4 w-4 rounded-md bg-blue-50 dark:bg-blue-100/10 text-blue-600 flex items-center justify-center shrink-0"><Activity className="h-2.5 w-2.5" /></div>
+                                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Base SP</div>
+                                              </div>
+                                              <Input
+                                                type="number"
+                                                className="h-8 !border-0 bg-transparent px-1 font-black text-lg focus-visible:ring-0 !rounded-none !shadow-none !appearance-none text-slate-900 dark:text-white w-full"
+                                                placeholder="0"
+                                                value={platform.totalStoryPoints || ''}
+                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
+                                              />
+                                            </div>
+                                            
+                                            {/* Target Alpha */}
+                                            <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+                                              <div className="flex items-center gap-1.5">
+                                                <div className="h-4 w-4 rounded-md bg-rose-50 dark:bg-rose-100/10 text-rose-600 flex items-center justify-center shrink-0"><ArrowUp className="h-2.5 w-2.5 rotate-45" /></div>
+                                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Target %</div>
+                                              </div>
+                                              <Input
+                                                type="number"
+                                                className="h-8 !border-0 bg-transparent px-1 font-black text-lg focus-visible:ring-0 !rounded-none !shadow-none !appearance-none text-slate-900 dark:text-white w-full"
+                                                placeholder="0"
+                                                value={platform.targetImprovement || ''}
+                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))}
+                                              />
+                                            </div>
+                                            
+                                            {/* Velocity Node */}
+                                            <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-sm">
+                                              <div className="flex items-center gap-1.5">
+                                                <div className="h-4 w-4 rounded-md bg-amber-50 dark:bg-amber-100/10 text-amber-600 flex items-center justify-center shrink-0"><Zap className="h-2.5 w-2.5" /></div>
+                                                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">SP / Day</div>
+                                              </div>
+                                              <Input
+                                                type="number"
+                                                className="h-8 !border-0 bg-transparent px-1 font-black text-lg focus-visible:ring-0 !rounded-none !shadow-none !appearance-none text-slate-900 dark:text-white w-full"
+                                                placeholder="0"
+                                                value={platform.targetVelocity || ''}
+                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))}
+                                              />
                                             </div>
                                           </div>
-                                          <Badge className="rounded-lg px-3 py-1 bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30 font-bold">
-                                            {platform.members.length} Members
-                                          </Badge>
                                         </CardHeader>
                                         <CardContent className="p-8 space-y-6">
                                           <div className="relative group/member">
@@ -2059,98 +2109,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
 
                                                   <TabsContent value="core" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                                                    <div className="flex items-start gap-4 mb-6">
-                                                      <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-[#2e3038] text-slate-600 dark:text-slate-400 mt-0.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border border-slate-200/50 dark:border-white/5">
-                                                        <Activity className="h-5 w-5" />
+                                                    <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2rem] bg-slate-50/50 dark:bg-slate-900/20">
+                                                      <div className="h-16 w-16 rounded-3xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
+                                                        <Activity className="h-8 w-8" />
                                                       </div>
-                                                      <div>
-                                                        <h5 className="text-[15px] font-bold text-slate-900 dark:text-white tracking-tight">Primary Scaling Factors</h5>
-                                                        <p className="text-sm text-slate-500 dark:text-slate-400">Define the baseline and target story point scales for this platform.</p>
-                                                      </div>
-                                                    </div>
-
-                                                    {/* Metrics Inputs - Stat Cards Style */}
-                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                      {/* Total Story Points */}
-                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
-                                                        <div className="flex flex-col gap-4">
-                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-blue-50 dark:bg-blue-100/5 text-blue-600 dark:text-blue-400">
-                                                            <div className="h-3 w-3 rounded-full border-[1.5px] border-current flex items-center justify-center relative"><div className="w-[1.5px] h-1 bg-current absolute top-[2px] right-[4px]"></div></div>
-                                                          </div>
-                                                          <div className="space-y-1">
-                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Target Point Threshold</h6>
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Base story points</p>
-                                                          </div>
-                                                        </div>
-                                                        
-                                                        <div className="mt-5 flex flex-col gap-3">
-                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-indigo-500/30 transition-shadow">
-                                                            <Input
-                                                              type="number"
-                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
-                                                              placeholder="0"
-                                                              value={platform.totalStoryPoints || ''}
-                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
-                                                            />
-                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">SP</span>
-                                                          </div>
-                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Total sprint capacity in story points</p>
-                                                        </div>
-                                                      </div>
-
-                                                      {/* Target Improvement */}
-                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
-                                                        <div className="flex flex-col gap-4">
-                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-red-50 dark:bg-rose-100/5 text-rose-600 dark:text-rose-400">
-                                                            <ArrowUp className="h-4 w-4 rotate-45" />
-                                                          </div>
-                                                          <div className="space-y-1">
-                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Target Alpha</h6>
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Improvement %</p>
-                                                          </div>
-                                                        </div>
-                                                        
-                                                        <div className="mt-5 flex flex-col gap-3">
-                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-rose-500/30 transition-shadow">
-                                                            <Input
-                                                              type="number"
-                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
-                                                              placeholder="0"
-                                                              value={platform.targetImprovement || ''}
-                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))}
-                                                            />
-                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">%</span>
-                                                          </div>
-                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Sprint-over-sprint velocity improvement target</p>
-                                                        </div>
-                                                      </div>
-
-                                                      {/* Target Velocity */}
-                                                      <div className="flex flex-col justify-between bg-white dark:bg-[#202127] p-5 rounded-[20px] shadow-sm border border-slate-200 dark:border-[#33353e] hover:border-slate-300 dark:hover:border-[#404450] transition-colors duration-300">
-                                                        <div className="flex flex-col gap-4">
-                                                          <div className="h-9 w-9 flex shrink-0 items-center justify-center rounded-[10px] bg-amber-50 dark:bg-amber-100/5 text-amber-600 dark:text-amber-400">
-                                                            <Activity className="h-4 w-4" />
-                                                          </div>
-                                                          <div className="space-y-1">
-                                                            <h6 className="text-[10px] font-bold tracking-wider uppercase text-slate-500 dark:text-slate-400">Velocity Node</h6>
-                                                            <p className="text-sm font-bold text-slate-900 dark:text-white">Target rhythm</p>
-                                                          </div>
-                                                        </div>
-                                                        
-                                                        <div className="mt-5 flex flex-col gap-3">
-                                                           <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#2b2d35] !border-0 overflow-hidden px-4 py-1.5 focus-within:ring-[2px] focus-within:ring-inset focus-within:ring-amber-500/30 transition-shadow">
-                                                            <Input
-                                                              type="number"
-                                                              className="h-10 !border-0 !ring-0 !shadow-none bg-transparent px-0 font-bold text-xl focus-visible:ring-0 !rounded-none !appearance-none text-slate-900 dark:text-white w-full pr-2"
-                                                              placeholder="0"
-                                                              value={platform.targetVelocity || ''}
-                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))}
-                                                            />
-                                                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">SP/day</span>
-                                                          </div>
-                                                          <p className="text-[11px] text-slate-500 dark:text-slate-400/80 leading-relaxed pr-2">Target velocity per man-day</p>
-                                                        </div>
-                                                      </div>
+                                                      <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">Metrics Relocated</h3>
+                                                      <p className="text-sm font-medium text-slate-500 max-w-sm">
+                                                        Primary Scaling Factors are now configured directly within the Platform Resource Distribution cards above.
+                                                      </p>
                                                     </div>
                                                   </TabsContent>
                                                   <TabsContent value="allocations" className="space-y-12 mt-0 focus-visible:outline-none focus-visible:ring-0">
