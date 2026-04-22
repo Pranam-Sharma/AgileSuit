@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'A modern suite for agile development.',
 };
 
+import { CommandPalette } from '@/components/layout/command-palette';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +31,7 @@ export default function RootLayout({
         <FirebaseProvider>
           {children}
         </FirebaseProvider>
+        <CommandPalette />
         <Toaster />
       </body>
     </html>

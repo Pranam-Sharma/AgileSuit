@@ -210,7 +210,9 @@ export async function saveSprintPlanningAction(data: SprintPlanningData) {
 
     if (result.error) {
         console.error('Error saving sprint planning:', result.error);
-        throw new Error('Failed to save sprint planning');
+        const fs = require('fs');
+        fs.writeFileSync('/Users/pranamsharma/AntigravityProject/AgileSuit/supabase_error_log.json', JSON.stringify(result.error, null, 2));
+        throw new Error(`DB Error: ${result.error.message || JSON.stringify(result.error)}`);
     }
 
     // Sync dates with the sprints table
