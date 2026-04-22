@@ -55,7 +55,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/cn';
 import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, createStory, updateStory, moveStory, deleteStory } from '@/backend/actions/stories.actions';
-import { getColumnsBySprintId, initializeDefaultColumns, updateColumnTitle, deleteColumn } from '@/backend/actions/columns.actions';
+import { getColumnsBySprintId, initializeDefaultColumns, updateColumn, deleteColumn } from '@/backend/actions/columns.actions';
 import { getCapacitySwapRecommendationAction } from '@/backend/actions/ai.actions';
 
 function UserNav({ user }: { user: any }) {
