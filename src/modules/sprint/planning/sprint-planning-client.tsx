@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { SprintBoardClient } from '@/modules/sprint/board/sprint-board-client';
 import type { User } from '@supabase/supabase-js';
 import {
   Loader2,
@@ -38,11 +39,12 @@ import {
   ShieldAlert,
   Search,
   ListTodo,
-  Menu,
   Network,
   LayoutGrid,
   List,
-  Pen
+  Globe,
+  Pen,
+  Kanban
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -146,6 +148,7 @@ export type RegionalCluster = {
   name: string;
   countryCode: string;
   holidays: Holiday[];
+  isExpanded?: boolean;
 };
 
 type Platform = {
@@ -215,7 +218,8 @@ const PLANNING_SECTIONS = [
   { id: 'general', label: 'Core Sprint Parameters', icon: LayoutDashboard, description: 'Define core schedule, active duration, and baseline capacity metrics.' },
   { id: 'team', label: 'Engineering Resources', icon: Users, description: 'Manage team availability, roles, and resource distribution.' },
   { id: 'priority', label: 'Project Priority', icon: FileText, description: 'Prioritize key initiatives for the cycle.' },
-  { id: 'metrics', label: 'Performance & Velocity Targets', icon: BarChart3, description: 'Define throughput scales, story point targets, and dev velocity.' },
+  { id: 'board', label: 'Sprint Board', icon: Kanban, description: 'Quick access to active sprint board for real-time adjustments and spike handling.' },
+
   { id: 'goals', label: 'Sprint Goals', icon: Target, description: 'Primary objectives.' },
   { id: 'milestones', label: 'Milestones', icon: Milestone, description: 'Project tracking.' },
   { id: 'demo', label: 'Sprint Demo', icon: Presentation, description: 'Demo plan and owner.' },
@@ -1123,7 +1127,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
             <div className="flex items-center gap-2 p-2 bg-white/20 dark:bg-[#121318]/50 backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-[24px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1),_0_0_0_1px_rgba(255,255,255,0.1)_inset]">
               
               <div className="flex items-center gap-1">
-                {PLANNING_SECTIONS.filter(s => ['general', 'team', 'priority', 'metrics', 'goals', 'milestones', 'demo'].includes(s.id)).map(section => {
+                {PLANNING_SECTIONS.filter(s => ['board', 'general', 'team', 'priority', 'metrics', 'goals', 'milestones', 'demo'].includes(s.id)).map(section => {
                   const Icon = section.icon;
                   const isActive = activeSection === section.id;
                   return (
@@ -1188,7 +1192,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                     {activeSection === 'general' ? 'Core Sprint Parameters' :
                       activeSection === 'team' ? 'Engineering Resources' :
                         activeSection === 'priority' ? 'Project Priority' :
-                          activeSection === 'metrics' ? 'Performance & Velocity Targets' :
                           PLANNING_SECTIONS.find(s => s.id === activeSection)?.label}
                   </h1>
                   <p className="text-slate-500 dark:text-slate-400 text-[15px] max-w-2xl font-medium leading-relaxed">
@@ -1293,191 +1296,180 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   </div>
                                 </div>
 
-                                {/* Tile 3: Ultimate Deployment Scope (Span 2) */}
-                                <div className="col-span-1 lg:col-span-2 bg-slate-900 dark:bg-black text-white relative overflow-hidden rounded-[2.5rem] p-10 shadow-2xl group border border-white/10">
-                                  <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 dark:bg-indigo-500/10 rounded-full blur-[100px] -mr-32 -mt-32 transition-transform duration-1000 group-hover:scale-125" />
-                                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-500/20 dark:bg-rose-500/10 rounded-full blur-[80px] -ml-20 -mb-20 transition-transform duration-1000 group-hover:scale-125" />
-                                  
-                                  <div className="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10 w-full">
-                                    <div className="space-y-4 max-w-lg">
-                                      <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                                          <Zap className="h-5 w-5 text-white" />
-                                        </div>
-                                        <h3 className="text-2xl font-black tracking-tight">Active Deployment Window</h3>
-                                      </div>
-                                      <p className="text-slate-400 text-sm font-medium leading-relaxed">
-                                        The automated release pipeline and velocity metrics will map explicitly against this operational duration, automatically excluding weekends and registered holidays.
-                                      </p>
-                                    </div>
-                                    <div className="flex items-baseline gap-3">
-                                      <span className="text-[5rem] leading-none font-black text-white mix-blend-overlay drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                                        {calculateSprintDays()}
-                                      </span>
-                                      <span className="text-lg font-black text-slate-500 uppercase tracking-widest">Op-Days</span>
-                                    </div>
-                                  </div>
-                                </div>
 
-                                {/* Tile 4: Service Platforms (Span 2) */}
-                                <div className="col-span-1 lg:col-span-2 bg-white/40 dark:bg-[#121318]/40 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                                  <div className="flex items-center justify-between mb-8">
+                                {/* Regional Impact Dashboard — Fresh Bento Layout */}
+                                <div className="col-span-1 lg:col-span-2 space-y-8">
+                                  <div className="flex items-center justify-between px-2">
                                     <div className="flex items-center gap-4">
-                                      <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                                        <LayoutDashboard className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                                      <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                                        <CalendarIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
                                       </div>
                                       <div>
-                                        <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Service Platforms</h4>
-                                        <p className="text-xs font-medium text-slate-500">Cross-functional engineering units.</p>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-6">
-                                    <div className="flex gap-4 items-center">
-                                      <div className="flex-1 relative">
-                                        <Input
-                                          placeholder="Initialize engineering unit (e.g. iOS Core, Infra Services)..."
-                                          value={newPlatformName}
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
-                                          className="h-16 bg-white/60 dark:bg-black/20 border-2 border-white/50 dark:border-white/5 focus-visible:ring-4 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-400 rounded-2xl text-lg font-black shadow-inner transition-all placeholder:text-slate-400"
-                                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
-                                        />
-                                      </div>
-                                      <Button
-                                        onClick={addPlatform}
-                                        disabled={!newPlatformName.trim()}
-                                        className="h-16 bg-slate-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-slate-200 rounded-2xl font-black text-sm uppercase tracking-[0.15em] px-8 shadow-xl shadow-black/10 transition-all active:scale-95"
-                                      >
-                                        <Plus className="h-5 w-5 mr-3" />
-                                        Register
-                                      </Button>
-                                    </div>
-
-                                    {platforms.length > 0 && (
-                                      <div className="flex flex-wrap gap-3 mt-6">
-                                        {platforms.map((p) => (
-                                          <div 
-                                            key={p.id} 
-                                            className="px-5 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-2xl flex items-center gap-4 group hover:border-emerald-200 dark:hover:border-emerald-500/30 transition-all shadow-sm"
-                                          >
-                                            <div className="flex items-center gap-3">
-                                              <div className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                <LayoutDashboard className="h-4 w-4 text-emerald-500" />
-                                              </div>
-                                              <span className="font-bold text-slate-900 dark:text-white text-sm">{p.name}</span>
-                                            </div>
-                                            <button 
-                                              onClick={() => deletePlatform(p.id)} 
-                                              className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all opacity-0 group-hover:opacity-100"
-                                            >
-                                              <Trash2 className="h-3 w-3" />
-                                            </button>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Tile 5: Regional Holidays (Span 2) */}
-                                <div className="col-span-1 lg:col-span-2 bg-white/40 dark:bg-[#121318]/40 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                                  <div className="flex items-center justify-between mb-8">
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-12 w-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                                        <CalendarIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                                      </div>
-                                      <div>
-                                        <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Regional Blocks & Holidays</h4>
-                                        <p className="text-xs font-medium text-slate-500">Global downtime coordination.</p>
+                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Regional Impact Dashboard</h4>
+                                        <p className="text-sm font-medium text-slate-500">Orchestrate global downtime & regional capacity metrics.</p>
                                       </div>
                                     </div>
                                     <Button
                                       onClick={addRegionalCluster}
-                                      className="rounded-2xl h-10 bg-white/60 border border-white/80 dark:bg-black/40 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest shadow-sm transition-all px-6"
+                                      className="rounded-2xl h-12 bg-slate-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-slate-200 font-black text-xs uppercase tracking-[0.2em] px-8 shadow-xl shadow-black/10 transition-all active:scale-95 group"
                                     >
-                                      <Plus className="h-4 w-4 mr-2" />
-                                      Add Region
+                                      <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
+                                      Register Region
                                     </Button>
                                   </div>
 
                                   {regionalClusters.length === 0 ? (
-                                    <div className="text-center py-10 border-2 border-dashed border-white/60 dark:border-white/10 rounded-[2rem] bg-white/20 dark:bg-black/10">
-                                      <p className="font-bold text-slate-400 text-sm tracking-wide">Global capacity is assumed at 100%.</p>
+                                    <div className="text-center py-20 border-2 border-dashed border-slate-200/60 dark:border-white/10 rounded-[3rem] bg-white/20 dark:bg-black/10 backdrop-blur-sm">
+                                      <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center mx-auto mb-6 shadow-xl border border-slate-100 dark:border-white/5">
+                                        <Globe className="h-10 w-10 text-slate-300" />
+                                      </div>
+                                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Global Coverage Active</h3>
+                                      <p className="font-bold text-slate-400 text-sm tracking-wide max-w-xs mx-auto">Global capacity is assumed at 100% across all operational zones.</p>
                                     </div>
                                   ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                                      {regionalClusters.map((cluster, idx) => (
-                                        <div key={cluster.id} className="relative group p-6 rounded-[2rem] border border-white/60 dark:border-white/10 bg-white/60 dark:bg-black/20 shadow-sm hover:shadow-lg transition-all duration-300">
-                                          <div className="flex justify-between items-start mb-6 w-full">
-                                            <Input
-                                              value={cluster.countryCode}
-                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRegionalCluster(cluster.id, 'countryCode', e.target.value)}
-                                              placeholder="Region Name..."
-                                              className="h-10 border-0 border-b-2 border-slate-200/50 dark:border-slate-800/50 bg-transparent px-0 font-black text-lg focus-visible:ring-0 focus-visible:border-amber-400 rounded-none w-[80%] placeholder:text-slate-300"
-                                            />
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              onClick={() => deleteRegionalCluster(cluster.id)}
-                                              className="h-8 w-8 rounded-full text-slate-300 hover:text-rose-500 hover:bg-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                                    <div className="space-y-4">
+                                      {regionalClusters.map((cluster, cIdx) => {
+                                        const totalDaysOff = cluster.holidays.reduce((sum, h) => sum + (h.days || 0), 0);
+                                        const sprintDays = calculateSprintDays() || 10;
+                                        
+                                        const impactLevel = totalDaysOff === 0 ? 'NONE' : totalDaysOff < 3 ? 'LOW' : totalDaysOff < 6 ? 'MEDIUM' : 'HIGH';
+                                        const impactColor = totalDaysOff === 0 ? 'from-slate-500 to-slate-600' : totalDaysOff < 3 ? 'from-emerald-500 to-emerald-700' : totalDaysOff < 6 ? 'from-amber-500 to-amber-700' : 'from-rose-500 to-rose-700';
+
+                                        return (
+                                          <div key={cluster.id} className="group flex flex-col bg-white/60 dark:bg-black/20 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[1.8rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
+                                            {/* HEADER ROW */}
+                                            <div 
+                                              onClick={() => setRegionalClusters(prev => prev.map(c => c.id === cluster.id ? { ...c, isExpanded: !c.isExpanded } : c))}
+                                              className="flex items-center gap-6 p-4 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors select-none"
                                             >
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </div>
-                                          
-                                          <div className="space-y-3">
-                                            {cluster.holidays.map((h, hIdx) => (
-                                              <div key={hIdx} className="flex items-center gap-2">
-                                                <Input 
-                                                  value={h.country}
-                                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                    const newHolidays = [...cluster.holidays];
-                                                    newHolidays[hIdx].country = e.target.value;
-                                                    updateRegionalCluster(cluster.id, 'holidays', newHolidays);
-                                                  }}
-                                                  placeholder="Holiday Name"
-                                                  className="h-9 border-0 bg-white dark:bg-black/40 rounded-xl text-xs font-bold w-[60%]"
-                                                />
-                                                <div className="flex-1 flex items-center bg-white dark:bg-black/40 rounded-xl px-2 h-9">
-                                                  <Input 
-                                                    type="number"
-                                                    value={h.days || ''}
-                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                      const newHolidays = [...cluster.holidays];
-                                                      newHolidays[hIdx].days = Number(e.target.value);
-                                                      updateRegionalCluster(cluster.id, 'holidays', newHolidays);
-                                                    }}
-                                                    placeholder="0"
-                                                    className="w-full border-0 bg-transparent text-xs font-black text-center focus-visible:ring-0 px-0"
-                                                  />
-                                                  <span className="text-[9px] font-black tracking-widest text-slate-400 select-none mr-2">D</span>
+                                              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/5 flex items-center justify-center shrink-0">
+                                                <span className="text-sm font-black text-slate-600 dark:text-slate-400">{cIdx + 1}</span>
+                                              </div>
+
+                                              <div className="flex-1 flex items-center gap-8">
+                                                  <div className="w-56" onClick={(e) => e.stopPropagation()}>
+                                                    <Input
+                                                      value={cluster.countryCode}
+                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRegionalCluster(cluster.id, 'countryCode', e.target.value)}
+                                                      placeholder="e.g. Europe (EMEA)..."
+                                                      className="h-11 px-4 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-xl font-black text-base transition-all placeholder:text-slate-300 shadow-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
+                                                    />
+                                                  </div>
+
+                                                <div className={cn(
+                                                  "px-4 py-1.5 rounded-full text-[9px] font-black tracking-[0.15em] text-white shadow-sm transition-all",
+                                                  "bg-gradient-to-r",
+                                                  impactColor
+                                                )}>
+                                                  {impactLevel} IMPACT
                                                 </div>
+
+                                                <div className="flex-1 text-xs font-bold text-slate-400 select-none hidden xl:block">
+                                                  Note regional holidays or specific blocking dates.
+                                                </div>
+
+                                                <div className="flex flex-col items-end min-w-[120px]">
+                                                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{totalDaysOff} / {sprintDays}</div>
+                                                  <div className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">TOTAL DAYS LOST</div>
+                                                </div>
+                                              </div>
+
+                                              <div className="flex items-center gap-2">
                                                 <Button
                                                   variant="ghost"
                                                   size="icon"
-                                                  onClick={() => {
-                                                    const newHolidays = cluster.holidays.filter((_, i) => i !== hIdx);
-                                                    updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteRegionalCluster(cluster.id);
                                                   }}
-                                                  className="h-7 w-7 rounded-lg text-slate-400 hover:text-rose-500 bg-white/50 dark:bg-white/5 hover:bg-white transition-all"
+                                                  className="h-9 w-9 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all opacity-0 group-hover:opacity-100"
                                                 >
-                                                  <Trash2 className="h-3 w-3" />
+                                                  <Trash2 className="h-4 w-4" />
                                                 </Button>
+                                                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 transition-transform duration-500", cluster.isExpanded && "rotate-180")}>
+                                                  <ChevronDown className="h-5 w-5" />
+                                                </div>
                                               </div>
-                                            ))}
-                                            <Button
-                                              variant="outline"
-                                              onClick={() => {
-                                                updateRegionalCluster(cluster.id, 'holidays', [...cluster.holidays, { id: Date.now().toString(), country: '', days: 0 }]);
-                                              }}
-                                              className="w-full rounded-xl border-dashed border-slate-300 dark:border-slate-700 bg-transparent hover:bg-white/50 h-9 text-[10px] uppercase tracking-widest font-black text-slate-500 mt-2"
-                                            >
-                                              <Plus className="h-3 w-3 mr-2" /> Block Day
-                                            </Button>
+                                            </div>
+
+                                            {/* EXPANDED CONTENT */}
+                                            {cluster.isExpanded && (
+                                              <div className="px-6 pb-6 pt-2 animate-in slide-in-from-top-2 duration-300">
+                                                <div className="rounded-2xl border border-slate-200/50 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-white/[0.02]">
+                                                  <div className="flex items-center px-6 py-3 border-b border-slate-200/30 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
+                                                    <span className="flex-1 text-[10px] uppercase tracking-widest font-black text-slate-500">Holiday / Event Name</span>
+                                                    <span className="w-32 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">Days Off</span>
+                                                    <span className="w-10" />
+                                                  </div>
+                                                  
+                                                  <div className="divide-y divide-slate-100/50 dark:divide-white/5">
+                                                    {cluster.holidays.map((h, hIdx) => (
+                                                      <div key={hIdx} className="flex items-center px-6 py-3 group/holiday">
+                                                        <div className="flex-1 flex items-center gap-3">
+                                                          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                          <Input
+                                                            value={h.country}
+                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                              const newHolidays = [...cluster.holidays];
+                                                              newHolidays[hIdx].country = e.target.value;
+                                                              updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                            }}
+                                                            placeholder="e.g. Bank Holiday..."
+                                                            className="h-11 px-4 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm transition-all placeholder:text-slate-300 shadow-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
+                                                          />
+                                                        </div>
+                                                        <div className="w-32 flex items-center justify-center gap-2">
+                                                          <Input
+                                                            type="number"
+                                                            value={h.days || ''}
+                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                              const newHolidays = [...cluster.holidays];
+                                                              newHolidays[hIdx].days = Number(e.target.value);
+                                                              updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                            }}
+                                                            placeholder="0"
+                                                            className="h-11 w-16 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 text-center text-sm font-black rounded-xl transition-all shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
+                                                          />
+                                                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">Days</span>
+                                                        </div>
+                                                        <div className="w-10 flex justify-end">
+                                                          <button
+                                                            onClick={() => {
+                                                              const newHolidays = cluster.holidays.filter((_, i) => i !== hIdx);
+                                                              updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                            }}
+                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover/holiday:opacity-100"
+                                                          >
+                                                            <Trash2 className="h-4 w-4" />
+                                                          </button>
+                                                        </div>
+                                                      </div>
+                                                    ))}
+                                                  </div>
+
+                                                  <div className="p-4 bg-slate-50/10 dark:bg-black/10 border-t border-slate-200/30 dark:border-white/5 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
+                                                        {cluster.holidays.length} TOTAL BLOCKS
+                                                      </div>
+                                                    </div>
+                                                    <Button
+                                                      onClick={() => {
+                                                        updateRegionalCluster(cluster.id, 'holidays', [...cluster.holidays, { id: Date.now().toString(), country: '', days: 0 }]);
+                                                      }}
+                                                      variant="outline"
+                                                      className="w-full h-12 rounded-2xl border-2 border-dashed border-[#e3d1d8] dark:border-[#382f33] bg-transparent hover:bg-[#fcfafb] dark:hover:bg-[#1a1618]/50 text-[#baa1ad] dark:text-[#a08f97] hover:text-[#524147] dark:hover:text-[#e3d1d8] font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-sm"
+                                                    >
+                                                      <Plus className="h-4 w-4 mr-2" />
+                                                      Add Block Day
+                                                    </Button>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   )}
                                 </div>
@@ -1575,15 +1567,33 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 ))}
                               </div>
 
-                              {platforms.length > 0 && (
-                                <div className="space-y-6 pt-10">
+                              <div className="space-y-6 pt-10">
                                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
                                     <div className="space-y-1 w-full sm:w-auto">
                                       <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Platform Resource Matrix</h3>
                                       <p className="text-sm font-medium text-slate-500">Global engineering allocation across active services.</p>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">{platforms.length} PLATFORMS ACTIVE</div>
+                                      <div className="flex gap-2 items-center">
+                                        <Input
+                                          placeholder="New platform name..."
+                                          value={newPlatformName}
+                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
+                                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
+                                          className="h-9 w-48 bg-white/60 dark:bg-black/20 border border-slate-200/50 dark:border-white/10 rounded-xl text-sm font-bold shadow-none focus-visible:ring-2 focus-visible:ring-slate-300/50 placeholder:text-slate-400 transition-all"
+                                        />
+                                        <Button
+                                          onClick={addPlatform}
+                                          disabled={!newPlatformName.trim()}
+                                          className="h-9 bg-slate-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-slate-200 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] px-4 shadow-sm transition-all active:scale-95"
+                                        >
+                                          <Plus className="h-3.5 w-3.5 mr-1.5" />
+                                          Add
+                                        </Button>
+                                      </div>
+                                      {platforms.length > 0 && (
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">{platforms.length} Active</div>
+                                      )}
                                     </div>
                                   </div>
 
@@ -1806,7 +1816,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               {regionalClusters.map(rc => {
                                                                 const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H` : 'None';
                                                                 return (
-                                                                  <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 px-3">
+                                                                  <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3">
                                                                     <div className="flex items-center justify-between gap-4 w-[120px]">
                                                                       <span className="font-bold">{rc.countryCode || 'Node'}</span>
                                                                       <span className="text-[9px] text-slate-400 font-black">{holidaySummary}</span>
@@ -1814,7 +1824,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                   </SelectItem>
                                                                 );
                                                               })}
-                                                              <SelectItem value="Other" className="rounded-lg text-xs font-black text-slate-400 py-1.5 px-3">OTHER</SelectItem>
+                                                              <SelectItem value="Other" className="rounded-lg text-xs font-black text-slate-400 py-1.5 pl-8 pr-3">OTHER</SelectItem>
                                                             </SelectContent>
                                                           </Select>
                                                         </div>
@@ -1861,7 +1871,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     ))}
                                   </div>
                                 </div>
-                              )}
                             </div>
                           )}
 
@@ -2113,187 +2122,6 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
 
 
-
-                          {activeSection === 'metrics' && (
-                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 w-full max-w-none px-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div className="h-14 w-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                    <BarChart3 className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
-                                  </div>
-                                  <div>
-                                    <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Performance Intelligence</h2>
-                                    <p className="text-slate-500 font-medium mt-1 text-sm">Configure story point capacities and throughput targets per engineering unit.</p>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Card className="border-0 rounded-[2.5rem] bg-white/40 dark:bg-slate-950/40 backdrop-blur-xl shadow-sm border border-white/50 dark:border-slate-800/50 overflow-hidden">
-                                <CardContent className="p-10 space-y-6">
-
-                                  {/* Platforms List */}
-                                  <div className="space-y-6">
-                                    {platforms.length === 0 ? (
-                                      <div className="text-center py-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/20 flex flex-col items-center gap-6 group">
-                                        <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800">
-                                          <LayoutDashboard className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors" />
-                                        </div>
-                                        <div className="space-y-2">
-                                          <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">No Active Platforms</h3>
-                                          <p className="text-slate-500 font-medium max-w-sm mx-auto">Configure your structural engineering platforms to define delivery metrics.</p>
-                                        </div>
-                                        
-                                      </div>
-                                    ) : (
-                                      platforms.map((platform, index) => {
-                                        const colors = [
-                                          'bg-indigo-500', 'bg-rose-500', 'bg-amber-500', 'bg-emerald-500', 'bg-violet-500'
-                                        ];
-                                        const colorClass = colors[index % colors.length];
-
-                                        return (
-                                          <div
-                                            key={platform.id}
-                                            className={cn(
-                                              "group relative rounded-[2.5rem] border-0 transition-all duration-500 overflow-hidden",
-                                              platform.isExpanded
-                                                ? "bg-white dark:bg-slate-950 shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800"
-                                                : "bg-slate-50/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 shadow-sm"
-                                            )}
-                                          >
-                                            {/* Platform Header */}
-                                            <div
-                                              className="flex items-center justify-between p-8 cursor-pointer select-none"
-                                              onClick={() => togglePlatform(platform.id)}
-                                            >
-                                              <div className="flex items-center gap-6">
-                                                <div className={cn("h-12 w-1.5 rounded-full transition-transform duration-500", colorClass, platform.isExpanded ? "scale-y-125" : "opacity-40")} />
-                                                <div>
-                                                  <h4 className={cn("text-xl font-black tracking-tight transition-colors duration-300",
-                                                    platform.isExpanded ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900"
-                                                  )}>
-                                                    {platform.name}
-                                                  </h4>
-                                                  <div className="flex items-center gap-3 mt-1.5">
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-tight">Engineering Platform</span>
-                                                    <div className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
-                                                    <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border-0">
-                                                      {platform.members.length} members
-                                                    </Badge>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                              <div className="flex items-center gap-6">
-                                                {!platform.isExpanded && (
-                                                  <div className="hidden md:flex items-center gap-8 mr-4 opacity-100 transition-opacity duration-300">
-                                                    <div className="flex flex-col items-end gap-0.5">
-                                                      <span className="text-sm font-bold text-slate-900 dark:text-white">{platform.totalStoryPoints || 0} SP</span>
-                                                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">SP Threshold</span>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-0.5">
-                                                      <span className="text-sm font-bold text-slate-900 dark:text-white">{platform.targetImprovement || 0}%</span>
-                                                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Improvement Goal</span>
-                                                    </div>
-                                                  </div>
-                                                )}
-                                                <div className="flex items-center gap-3">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  onClick={(e: React.MouseEvent) => {
-                                                    e.stopPropagation();
-                                                    confirmDelete(
-                                                      "Terminate Platform?",
-                                                      `Are you sure you want to remove sequence "${platform.name}"? All metrics and allocations will be permanently purged.`,
-                                                      () => deletePlatform(platform.id)
-                                                    );
-                                                  }}
-                                                  className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition-all text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100"
-                                                >
-                                                  <Trash2 className="h-5 w-5" />
-                                                </Button>
-                                                <div className={cn("h-10 w-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 transform transition-all duration-500", platform.isExpanded ? "rotate-180 bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40" : "")}>
-                                                  <ChevronDown className="h-6 w-6" />
-                                                </div>
-                                              </div>
-                                              </div>
-                                            </div>
-
-                                            {/* Platform Details Body */}
-                                            {platform.isExpanded && (
-                                              <div className="p-10 bg-slate-50/20 dark:bg-slate-900/10 animate-in slide-in-from-top-4 duration-500">
-
-
-                                                {/* Final Summary Table */}
-                                                <div className="p-8 bg-slate-900 dark:bg-black rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden relative group/summary">
-                                                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-rose-500/5 opacity-50" />
-                                                  <div className="relative z-10 space-y-6">
-                                                    <div className="flex items-center gap-4">
-                                                      <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10">
-                                                        <Activity className="h-6 w-6 text-indigo-400" />
-                                                      </div>
-                                                      <div>
-                                                        <h5 className="text-xl font-black text-white tracking-tight italic">Consolidated Temporal Impact</h5>
-                                                        <p className="text-xs text-slate-400 font-medium">Aggregated man-days of planned inactivity across the sequence.</p>
-                                                      </div>
-                                                    </div>
-
-                                                    <div className="rounded-2xl border border-white/5 overflow-hidden">
-                                                      <table className="w-full text-sm">
-                                                        <thead>
-                                                          <tr className="bg-white/5 text-left border-b border-white/5">
-                                                            <th className="p-4 font-black uppercase tracking-widest text-[10px] text-slate-500">Resource Unit</th>
-                                                            <th className="p-4 font-black uppercase tracking-widest text-[10px] text-slate-500 text-right">Inactivity Magnitude</th>
-                                                          </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-white/5">
-                                                          {platform.members.map((member, idx) => {
-                                                            const memberDetails = orgMembers.find(m => m.id === member);
-                                                            const memberName = memberDetails ? (memberDetails.display_name || memberDetails.email) : member;
-                                                            const details = platform.developerLeaves.find(d => d.name === member);
-                                                            const activeCluster = regionalClusters.find(rc => rc.id === details?.country || (rc.name || rc.id) === details?.country || rc.countryCode === details?.country);
-                                                            const holidayDays = activeCluster ? activeCluster.holidays.reduce((sum, h) => sum + h.days, 0) : 0;
-                                                            const leaveDays = details?.plannedLeave || 0;
-                                                            const totalOff = holidayDays + leaveDays;
-
-                                                            return (
-                                                              <tr key={idx} className="hover:bg-white/5 transition-colors">
-                                                                <td className="p-4 font-bold text-slate-300">{memberName}</td>
-                                                                <td className="p-4 text-right">
-                                                                  <div className="flex flex-col items-end">
-                                                                    <div className="flex items-center gap-2">
-                                                                      <span className="text-lg font-black text-white">{totalOff.toFixed(1)}</span>
-                                                                      <span className="text-[10px] font-bold text-slate-500 uppercase">Days</span>
-                                                                    </div>
-                                                                    {(leaveDays > 0 || holidayDays > 0) && (
-                                                                      <div className="text-[10px] text-indigo-400 font-bold tracking-tight">
-                                                                        {leaveDays > 0 && `${leaveDays}L`}
-                                                                        {leaveDays > 0 && holidayDays > 0 && " + "}
-                                                                        {holidayDays > 0 && `${holidayDays}H (${details?.country})`}
-                                                                      </div>
-                                                                    )}
-                                                                  </div>
-                                                                </td>
-                                                              </tr>
-                                                            );
-                                                          })}
-                                                        </tbody>
-                                                      </table>
-                                                    </div>
-                                                  </div>
-                                                </div>
-
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </div>
-                          )}
 
                           {activeSection === 'goals' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -4021,6 +3849,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               <p className="text-muted-foreground max-w-sm mt-2">
                                 This section is for security audit planning tasks. Form fields will be implemented here.
                               </p>
+                            </div>
+                          )}
+
+                          {activeSection === 'board' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-5 duration-700 h-[calc(100vh-250px)]">
+                              <SprintBoardClient sprintId={sprintId} sprint={sprint} isEmbedded={true} />
                             </div>
                           )}
                         </>

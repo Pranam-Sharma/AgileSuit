@@ -146,6 +146,76 @@ export async function getSprintsAction() {
     }));
 }
 
+/**
+ * Get all operational sprints (active or planning)
+ */
+export async function getOperationalSprintsAction(): Promise<any[]> {
+    try {
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('org_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.org_id) return [];
+
+        const { data, error } = await supabase
+            .from('sprints')
+            .select('id, name, sprint_number, status, start_date, end_date')
+            .eq('org_slug', profile.org_id)
+            .in('status', ['active', 'planning'])
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error in getOperationalSprintsAction:', error);
+        return [];
+    }
+}
+
+export async function getActiveSprintAction() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('org_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.org_id) return null;
+
+    const { createAdminClient } = await import('@/auth/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    // Find the most recent active or planning sprint
+    const { data: sprint, error } = await supabaseAdmin
+        .from('sprints')
+        .select('*')
+        .eq('org_slug', profile.org_id)
+        .in('status', ['active', 'planning', 'preparing'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (error || !sprint) return null;
+
+    return {
+        id: sprint.id,
+        sprintNumber: sprint.sprint_number,
+        sprintName: sprint.name,
+        projectName: sprint.project_name,
+        status: sprint.status,
+    };
+}
+
 export async function deleteSprintAction(sprintId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

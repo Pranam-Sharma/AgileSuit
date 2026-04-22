@@ -28,8 +28,10 @@ import {
     ChevronRight,
     PanelRightClose,
     PanelRightOpen,
-    AlertCircle
+    AlertCircle,
+    Sparkles
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { createClient } from '@/auth/supabase/client';
 import { Logo } from '@/components/layout/logo';
@@ -52,8 +54,9 @@ import type { Sprint } from '@/modules/dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/cn';
 import type { Story as DBStory } from '@/types/story';
-import { getStoriesBySprintId, moveStory, createStory, updateStory, deleteStory } from '@/backend/actions/stories.actions';
-import { getColumnsBySprintId, createColumn, updateColumn, deleteColumn, initializeDefaultColumns } from '@/backend/actions/columns.actions';
+import { getStoriesBySprintId, createStory, updateStory, moveStory, deleteStory } from '@/backend/actions/stories.actions';
+import { getColumnsBySprintId, initializeDefaultColumns, updateColumnTitle, deleteColumn } from '@/backend/actions/columns.actions';
+import { getCapacitySwapRecommendationAction } from '@/backend/actions/ai.actions';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -184,7 +187,7 @@ const defaultColumns: Column[] = [
     { id: 'done', title: 'Done', gradient: 'green', stories: [] }
 ];
 
-export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?: Sprint & { id: string }, sprintId: string }) {
+export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded = false }: { sprint?: Sprint & { id: string }, sprintId: string, isEmbedded?: boolean }) {
     const router = useRouter();
     const supabase = createClient();
     const { toast } = useToast();
@@ -217,6 +220,11 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     const [showCompletedStories, setShowCompletedStories] = React.useState(true);
     const [filterPriority, setFilterPriority] = React.useState<'all' | 'high' | 'medium' | 'low'>('all');
     const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee'>('none');
+    
+    // --- Quiet AI State ---
+    const [sprintPlanning, setSprintPlanning] = React.useState<any>(null);
+    const [aiRecommendation, setAiRecommendation] = React.useState<{ storyId: string; reason: string } | null>(null);
+    const [isQuietAiProcessing, setIsQuietAiProcessing] = React.useState(false);
 
     React.useEffect(() => {
         const checkUser = async () => {
@@ -351,8 +359,17 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                     };
                     setSprint(mappedSprint as any);
                 }
+
+                // Also fetch planning data for capacity
+                const { data: planningData } = await supabase
+                    .from('sprint_planning')
+                    .select('*')
+                    .eq('sprint_id', sprintId)
+                    .single();
+                setSprintPlanning(planningData);
+
             } catch (error) {
-                console.error("Failed to fetch sprint", error);
+                console.error("Failed to fetch sprint/planning", error);
             } finally {
                 setIsLoadingSprint(false);
             }
@@ -364,94 +381,97 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     }, [sprintId, sprint, initialSprint, supabase]);
 
     // Fetch stories from database
-    React.useEffect(() => {
-        async function fetchStories() {
-            if (!sprintId || isLoadingColumns) return;
+    const fetchStories = React.useCallback(async () => {
+        if (!sprintId || isLoadingColumns) return;
 
-            setIsLoadingStories(true);
-            try {
-                const { data: stories, error } = await getStoriesBySprintId(sprintId);
+        setIsLoadingStories(true);
+        try {
+            const { data: stories, error } = await getStoriesBySprintId(sprintId);
 
-                if (error) {
-                    console.error('Error fetching stories:', error);
-                    toast({
-                        title: 'Error loading stories',
-                        description: error,
-                        variant: 'destructive'
-                    });
-                    return;
-                }
-
-                if (stories) {
-                    // Group stories by column
-                    const storyMap = new Map<string, Story[]>();
-
-                    // Initialize all columns with empty arrays
-                    // We use the functional update pattern's previous value to ensure we have latest columns
-                    // But here we need to know the column IDs to initialize the map
-                    // Since we waited for isLoadingColumns, 'columns' should be up to date
-                    columns.forEach(col => {
-                        storyMap.set(col.id, []);
-                    });
-
-                    // Map database stories to component format and group by column
-                    stories.forEach(dbStory => {
-                        const story: Story = {
-                            id: dbStory.id,
-                            title: dbStory.title,
-                            description: dbStory.description || '',
-                            storyPoints: dbStory.story_points || undefined,
-                            completedStoryPoints: dbStory.completed_story_points || 0,
-                            assignee: dbStory.assignee || undefined,
-                            priority: dbStory.priority as 'low' | 'medium' | 'high' | 'critical',
-                            status: dbStory.status as Story['status'],
-                            tags: dbStory.tags || undefined,
-                            due_date: dbStory.due_date || undefined
-                        };
-
-                        // Use the column_id directly from the story
-                        const columnStories = storyMap.get(dbStory.column_id);
-                        if (columnStories) {
-                            columnStories.push(story);
-                        } else {
-                            // If the column doesn't exist in our current view (e.g. was deleted), 
-                            // we could potentially add it to a "Lost & Found" or just ignore/log it.
-                            // For now, let's try to map it if we can find the column, or create a new entry if feasible?
-                            // Actually, if we initialize map from columns, we only show stories for those columns.
-                            // If we want to show ALL stories, we should initialize map dynamically?
-                            // Let's stick to showing stories for known columns.
-                            // However, if we mistakenly used default columns, we might miss stories.
-                            // But since we wait for isLoadingColumns, we should have the real columns from DB.
-
-                            // Let's double check if we can add it to the map anyway so we don't lose it if column ID matches
-                            const newColStories = storyMap.get(dbStory.column_id) || [];
-                            newColStories.push(story);
-                            storyMap.set(dbStory.column_id, newColStories);
-                        }
-                    });
-
-                    // Update columns with fetched stories
-                    setColumns(prevColumns =>
-                        prevColumns.map(col => ({
-                            ...col,
-                            stories: storyMap.get(col.id) || []
-                        }))
-                    );
-                }
-            } catch (error) {
-                console.error('Error in fetchStories:', error);
+            if (error) {
+                console.error('Error fetching stories:', error);
                 toast({
                     title: 'Error loading stories',
-                    description: 'Failed to load stories. Please refresh the page.',
+                    description: error,
                     variant: 'destructive'
                 });
-            } finally {
-                setIsLoadingStories(false);
+                return;
             }
-        }
 
+            if (stories) {
+                // Group stories by column
+                const storyMap = new Map<string, Story[]>();
+
+                // Map database stories to component format and group by column
+                stories.forEach(dbStory => {
+                    const story: Story = {
+                        id: dbStory.id,
+                        title: dbStory.title,
+                        description: dbStory.description || '',
+                        storyPoints: dbStory.story_points || undefined,
+                        completedStoryPoints: dbStory.completed_story_points || 0,
+                        assignee: dbStory.assignee || undefined,
+                        priority: dbStory.priority as 'low' | 'medium' | 'high' | 'critical',
+                        status: dbStory.status as Story['status'],
+                        tags: dbStory.tags || undefined,
+                        due_date: dbStory.due_date || undefined
+                    };
+
+                    const columnStories = storyMap.get(dbStory.column_id) || [];
+                    columnStories.push(story);
+                    storyMap.set(dbStory.column_id, columnStories);
+                });
+
+                // Update columns with fetched stories
+                setColumns(prevColumns =>
+                    prevColumns.map(col => ({
+                        ...col,
+                        stories: storyMap.get(col.id) || []
+                    }))
+                );
+
+                // Quiet AI: Check for capacity overload
+                const sprintStories = stories.filter(s => s.column_id !== 'backlog' && s.column_id !== 'done');
+                const totalPoints = sprintStories.reduce((sum, s) => sum + (s.story_points || 0), 0);
+                
+                const capacity = sprintPlanning?.platforms?.reduce((sum: number, p: any) => sum + (p.total_story_points || 0), 0) || 100;
+
+                if (totalPoints > capacity && capacity > 0) {
+                  setIsQuietAiProcessing(true);
+                  getCapacitySwapRecommendationAction(sprintStories, totalPoints - capacity, capacity)
+                    .then(res => {
+                      if (res.success && res.recommendation) {
+                        setAiRecommendation(res.recommendation);
+                      }
+                    })
+                    .finally(() => setIsQuietAiProcessing(false));
+                } else {
+                  setAiRecommendation(null);
+                }
+            }
+        } catch (error) {
+            console.error('Error in fetchStories:', error);
+            toast({
+                title: 'Error loading stories',
+                description: 'Failed to load stories. Please refresh the page.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoadingStories(false);
+        }
+    }, [sprintId, toast, isLoadingColumns, sprintPlanning]);
+
+    React.useEffect(() => {
         fetchStories();
-    }, [sprintId, toast, isLoadingColumns]);
+    }, [fetchStories]);
+
+    React.useEffect(() => {
+        const handleRefresh = () => {
+            fetchStories();
+        };
+        window.addEventListener('refresh-board', handleRefresh);
+        return () => window.removeEventListener('refresh-board', handleRefresh);
+    }, [fetchStories]);
 
     const handleColumnTitleClick = (columnId: string, currentTitle: string) => {
         setEditingColumnId(columnId);
@@ -1185,42 +1205,93 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
     }
 
     return (
-        <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-zinc-950 dark:via-purple-950/20 dark:to-zinc-950 font-sans">
-            {/* Header */}
-            <header className="sticky top-0 z-50 w-full border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-950/60">
-                <div className="flex h-16 items-center justify-between px-6 lg:px-12">
-                    <div className="flex items-center gap-6">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-10 w-10 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all hover:scale-105"
-                            onClick={() => router.push(`/sprint/${sprintId}`)}
-                        >
-                            <ChevronLeft className="h-5 w-5" />
-                            <span className="sr-only">Back to Sprint</span>
-                        </Button>
-                        <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
-                        <Logo />
-                        <div className="hidden md:flex flex-col">
-                            <h1 className="text-lg font-bold text-zinc-900 dark:text-white">
-                                {sprint.sprintName}
-                            </h1>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-400">Track Board</p>
+        <div className={cn("min-h-screen bg-slate-50 dark:bg-[#09090b] flex flex-col", isEmbedded && "min-h-0 bg-transparent")}>
+            {!isEmbedded && (
+                <header className="h-16 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+                    <div className="h-full px-4 lg:px-6 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => router.back()}
+                                className="h-9 w-9 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                                <span className="sr-only">Back to Sprint</span>
+                            </Button>
+                            <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
+                            <Logo />
+                            <div className="hidden md:flex flex-col">
+                                <h1 className="text-lg font-bold text-zinc-900 dark:text-white">
+                                    {sprint?.sprintName || 'Sprint Board'}
+                                </h1>
+                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Track Board</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {user && <UserNav user={user} />}
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        {user && <UserNav user={user} />}
-                    </div>
-                </div>
-            </header>
+                </header>
+            )}
 
             {/* Main Content with Sidebar */}
-            <div className="flex flex-1 overflow-hidden">
+            {/* Quiet AI Capacity Prompt */}
+            <AnimatePresence>
+                {aiRecommendation && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] w-full max-w-lg px-4"
+                    >
+                        <div className="bg-zinc-900/90 dark:bg-zinc-100/90 backdrop-blur-2xl p-5 rounded-[2rem] border border-white/20 dark:border-zinc-800/20 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center animate-pulse">
+                                    <Sparkles className="h-6 w-6 text-indigo-400 dark:text-indigo-600" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-600 mb-1">Sprint Overloaded</div>
+                                    <div className="text-sm font-bold text-white dark:text-zinc-900 leading-tight">
+                                        Bump <span className="text-indigo-400">"{columns.flatMap(c => c.stories).find(s => s.id === aiRecommendation.storyId)?.title.slice(0, 20)}..."</span> to backlog?
+                                    </div>
+                                    <div className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 mt-1">{aiRecommendation.reason}</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button 
+                                    onClick={() => setAiRecommendation(null)}
+                                    variant="ghost" 
+                                    className="h-10 px-4 rounded-xl text-zinc-400 hover:text-white dark:hover:text-zinc-900"
+                                >
+                                    Ignore
+                                </Button>
+                                <Button 
+                                    onClick={async () => {
+                                        const story = columns.flatMap(c => c.stories).find(s => s.id === aiRecommendation.storyId);
+                                        if (story) {
+                                            await moveStory(story.id, { column_id: 'backlog', status: 'todo' });
+                                            setAiRecommendation(null);
+                                            router.refresh();
+                                        }
+                                    }}
+                                    className="h-10 px-6 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest text-[10px]"
+                                >
+                                    Press Enter
+                                </Button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div className={cn("flex flex-1 overflow-hidden", isEmbedded && "flex-col")}>
                 {/* Sidebar */}
-                <aside className={cn(
-                    "border-r border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-all duration-300 flex flex-col",
-                    isSidebarExpanded ? "w-64" : "w-16"
-                )}>
+                {!isEmbedded && (
+                    <aside className={cn(
+                        "border-r border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-all duration-300 flex flex-col",
+                        isSidebarExpanded ? "w-64" : "w-16"
+                    )}>
                     {/* Sidebar Header */}
                     <div className="flex items-center justify-between p-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
                         {isSidebarExpanded && (
@@ -1410,9 +1481,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                         </div>
                     )}
                 </aside>
+            )}
 
                 {/* Kanban Board */}
-                <main className="flex-1 overflow-x-auto p-4 lg:p-6">
+                <main className={cn("flex-1 overflow-x-auto p-4 lg:p-6", isEmbedded && "p-0")}>
                     {/* Warning Banner for Completed/Archived Sprints */}
                     {(sprint.status === 'completed' || sprint.status === 'archived') && (
                         <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg">
@@ -1432,7 +1504,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId }: { sprint?
                         </div>
                     )}
 
-                    <div className="flex gap-3 min-h-[calc(100vh-7rem)]">
+                    <div className={cn("flex gap-3 min-h-[calc(100vh-7rem)]", isEmbedded && "min-h-0 h-full")}>
                         {columns.map((column) => {
                             const theme = columnThemes[column.gradient] || columnThemes['slate'];
                             const filteredStories = filterAndSortStories(column.stories);
