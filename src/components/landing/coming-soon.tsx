@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { doc, setDoc, getDoc, increment, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import {
   Loader2,
@@ -131,23 +131,21 @@ function TeamCard() {
 
 // ─── Constants ─────────────────────────────────────────────────────
 const TOTAL_SPOTS = 100;
-const COUNTER_DOC = 'waitlist_meta/stats';
 
 // ─── Dynamic Counter ───────────────────────────────────────────────
 function SpotsCounter({ firestore }: { firestore: ReturnType<typeof useFirestore> }) {
   const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    // Listen for real-time updates to the counter document
+    // Listen for real-time updates to the actual waitlist_emails collection
     const unsubscribe = onSnapshot(
-      doc(firestore, COUNTER_DOC),
-      (snap) => {
-        const data = snap.data();
-        const signupCount = data?.count ?? 0;
+      collection(firestore, 'waitlist_emails'),
+      (snapshot) => {
+        const signupCount = snapshot.size;
         setSpotsLeft(Math.max(0, TOTAL_SPOTS - signupCount));
       },
       (err) => {
-        console.warn('SpotsCounter: could not read counter, using fallback', err);
+        console.warn('SpotsCounter: could not read collection, using fallback', err);
         setSpotsLeft(TOTAL_SPOTS); // fallback
       }
     );
@@ -223,11 +221,6 @@ export function ComingSoonPage() {
         email: normalizedEmail,
         updated_at: serverTimestamp(),
         source: 'coming_soon_page',
-      }, { merge: true });
-
-      // Increment the global signup counter
-      await setDoc(doc(firestore, COUNTER_DOC), {
-        count: increment(1),
       }, { merge: true });
       
       history.push(normalizedEmail);
