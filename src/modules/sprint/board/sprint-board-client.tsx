@@ -1270,7 +1270,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     onClick={async () => {
                                         const story = columns.flatMap(c => c.stories).find(s => s.id === aiRecommendation.storyId);
                                         if (story) {
-                                            await moveStory(story.id, { column_id: 'backlog', status: 'todo' });
+                                            await moveStory(story.id, { column_id: 'backlog', status: 'todo', position: 0 });
                                             setAiRecommendation(null);
                                             router.refresh();
                                         }
