@@ -39,6 +39,22 @@ service cloud.firestore {
        allow read: if request.auth != null && resource.data.userId == request.auth.uid;
        allow list: if request.auth != null && request.query.userId == request.auth.uid;
     }
+
+    // Waitlist:
+    // - Anyone can sign up for the waitlist
+    // - We only allow creating documents, not reading or updating existing ones (except incrementing the counter)
+    match /waitlist_emails/{email} {
+      allow create: if true;
+      allow get: if false;
+      allow list: if false;
+      allow update, delete: if false;
+    }
+
+    match /waitlist_meta/stats {
+      allow get: if true;
+      allow create, update: if true; // Allow updating the counter
+      allow list, delete: if false;
+    }
     
     // Default deny for other collections
     match /{document=**} {

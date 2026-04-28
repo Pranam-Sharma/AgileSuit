@@ -235,8 +235,10 @@ export function ComingSoonPage() {
       
       setIsSubmitted(true);
       setEmail('');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save email:', err);
+      // Log the full error for easier debugging of things like permission issues
+      if (err.code) console.error('Error Code:', err.code);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
