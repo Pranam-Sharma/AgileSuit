@@ -1,14 +1,59 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow users to read and write their own sprints.
+    // Sprints:
+    // - Read: Any authenticated user (Shared Workspace)
+    // - Create/Update: Authenticated users
+    // - Delete: Authenticated users (Consider restricting to owner/admin later)
     match /sprints/{sprintId} {
-      // A user can create a sprint if the document's userId matches their own uid.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      
-      // A user can read, update, or delete a sprint if they are the owner.
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // Users: Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Organizations: 
+    // - Read: Authenticated users (for now, to simplify dashboard fetching)
+    // - Write: Deny (handled by Server Actions)
+    match /organizations/{orgId} {
+      allow read: if request.auth != null;
+      allow write: if false; 
+    }
+
+    // Organization Members:
+    // - Read: Authenticated users can read valid memberships (or ideally just their own)
+    // - Write: Deny (handled by Server Actions)
+    match /organizationMembers/{memberId} {
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || request.auth.uid == resource.data.userId); 
+       // Note: In queries, the resource.data isn't available for filtering, so we rely on query constraints.
+       // Allow querying where userId == auth.uid
+      allow list: if request.auth != null && request.query.limit <= 100 && request.query.userId == request.auth.uid; 
+      allow write: if false;
+    }
+
+    // Subscriptions:
+    // - Read: Users can read their own subscriptions
+    match /subscriptions/{subId} {
+       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+       allow list: if request.auth != null && request.query.userId == request.auth.uid;
+    }
+
+    // Waitlist:
+    // - Anyone can sign up for the waitlist
+    // - Allow both read and write to ensure setDoc and increment work correctly
+    match /waitlist_emails/{email} {
+      allow read, write: if true;
+    }
+
+    match /waitlist_meta/stats {
+      allow read, write: if true;
+    }
+    
+    // Default deny for other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
