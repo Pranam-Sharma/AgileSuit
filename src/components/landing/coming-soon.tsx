@@ -7,123 +7,93 @@ import {
   Loader2,
   ArrowRight,
   CheckCircle2,
-  Zap,
-  Users,
-  CalendarDays,
   TrendingUp,
-  Star,
-  Rocket,
-  Mail,
+  Zap,
+  Sun,
+  Sparkles,
+  ShieldCheck,
+  Pencil,
 } from 'lucide-react';
 
-// ─── Floating UI Card Components ────────────────────────────────────
+// ─── Floating UI Card Components (Sahara Theme) ────────────────────
 
-function SprintCard() {
+function SprintProgressCard() {
   return (
-    <div className="absolute top-4 right-0 w-72 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(99,102,241,0.15)] p-6 rotate-3 animate-float-card-1 border border-indigo-100/60">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <CalendarDays className="h-5 w-5 text-white" />
+    <div className="col-span-2 md:col-span-1 bg-white p-8 rounded-[2rem] shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/30 flex flex-col gap-6 animate-float-card-1">
+      <div className="flex justify-between items-center">
+        <h3 className="font-body font-bold text-[#3a302a] uppercase tracking-widest text-xs">Sprint Progress</h3>
+        <TrendingUp className="h-5 w-5 text-[#c2652a]" />
+      </div>
+      <div className="flex items-end gap-2">
+        <span className="text-5xl font-headline text-[#3a302a]">84%</span>
+        <span className="text-sm font-body text-[#c2652a] mb-2">+12% this week</span>
+      </div>
+      <div className="w-full h-2 bg-[#eae2da] rounded-full overflow-hidden">
+        <div className="bg-[#c2652a] h-full rounded-full animate-shimmer-bar" style={{ width: '84%' }} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-3 bg-[#f6f0e8] rounded-xl">
+          <p className="text-[10px] font-body text-[#605850] uppercase">Tasks</p>
+          <p className="text-lg font-headline text-[#3a302a]">42 / 50</p>
         </div>
-        <div>
-          <p className="text-sm font-extrabold text-slate-900">Sprint 24</p>
-          <p className="text-[11px] text-slate-400 font-medium">2 weeks · 8 members</p>
+        <div className="p-3 bg-[#f6f0e8] rounded-xl">
+          <p className="text-[10px] font-body text-[#605850] uppercase">Time Left</p>
+          <p className="text-lg font-headline text-[#3a302a]">3 Days</p>
         </div>
       </div>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-600">Velocity</span>
-          <span className="text-xs font-extrabold text-emerald-500 flex items-center gap-1">
-            <TrendingUp className="h-3 w-3" /> 42 pts
-          </span>
+    </div>
+  );
+}
+
+function TeamVelocityCard() {
+  return (
+    <div className="col-span-2 md:col-span-1 bg-[#ece6dc] p-8 rounded-[2rem] shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/30 flex flex-col justify-between animate-float-card-2">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-body font-bold text-[#3a302a] uppercase tracking-widest text-xs mb-1">Team Velocity</h3>
+          <p className="text-[#605850] text-xs font-body">Consistent performance</p>
         </div>
-        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full w-3/4 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 rounded-full animate-shimmer-bar" />
-        </div>
-        <div className="flex gap-2 mt-4">
-          {[
-            { label: 'To Do', count: '4', color: 'bg-slate-50 text-slate-500 border-slate-200' },
-            { label: 'In Progress', count: '6', color: 'bg-amber-50 text-amber-600 border-amber-200' },
-            { label: 'Done', count: '12', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
-          ].map(({ label, count, color }) => (
-            <div key={label} className={`flex-1 py-2 rounded-xl text-center text-[10px] font-bold border ${color}`}>
-              <span className="block text-lg font-black leading-none mb-0.5">{count}</span>
-              {label}
-            </div>
+        <Zap className="h-5 w-5 text-[#8c3c3c]" />
+      </div>
+      <div className="flex items-baseline gap-1 mt-8">
+        <div className="w-full flex items-end justify-between h-24 gap-1">
+          {[40, 60, 55, 85, 70, 95].map((h, i) => (
+            <div
+              key={i}
+              className="w-3 rounded-t-full transition-all duration-500"
+              style={{
+                height: `${h}%`,
+                backgroundColor: `rgba(194, 101, 42, ${0.2 + i * 0.16})`,
+              }}
+            />
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-function AnalyticsCard() {
-  return (
-    <div className="absolute top-56 right-20 w-64 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(139,92,246,0.15)] p-6 -rotate-2 animate-float-card-2 border border-violet-100/60 z-10">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <TrendingUp className="h-4 w-4 text-white" />
-          </div>
-          <p className="text-sm font-extrabold text-slate-900">AI Insights</p>
-        </div>
-        <div className="h-7 w-7 rounded-lg bg-amber-50 flex items-center justify-center">
-          <Zap className="h-3.5 w-3.5 text-amber-500" />
-        </div>
-      </div>
-      <div className="flex items-end gap-1.5 h-20 px-1">
-        {[35, 55, 40, 75, 50, 85, 65, 90].map((h, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-lg bg-gradient-to-t from-indigo-500 to-violet-400 transition-all duration-500"
-            style={{
-              height: `${h}%`,
-              opacity: 0.7 + (i * 0.04),
-              animationDelay: `${i * 100}ms`,
-            }}
-          />
-        ))}
-      </div>
-      <div className="mt-4 flex items-center gap-2">
-        <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-        <p className="text-[11px] text-slate-500 font-semibold">Throughput +23% this quarter</p>
+      <div className="mt-8 pt-6 border-t border-[#d8d0c8]/60 flex justify-between items-center">
+        <span className="text-sm font-body font-bold text-[#3a302a]">Avg. Score</span>
+        <span className="text-lg font-headline text-[#8c3c3c]">9.2</span>
       </div>
     </div>
   );
 }
 
-function TeamCard() {
+function ActivityFeedCard() {
   return (
-    <div className="absolute bottom-8 right-8 w-64 bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(236,72,153,0.12)] p-6 rotate-1 animate-float-card-3 border border-pink-100/60">
-      <div className="flex items-center gap-2.5 mb-4">
-        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
-          <Users className="h-4 w-4 text-white" />
+    <div className="col-span-2 bg-white/60 backdrop-blur-sm p-6 rounded-[2rem] border border-[#d8d0c8]/20 shadow-sm animate-float-card-3">
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full bg-[#fbe8d8] flex items-center justify-center shrink-0">
+          <Pencil className="h-4 w-4 text-[#8a4518]" />
         </div>
-        <p className="text-sm font-extrabold text-slate-900">Team Capacity</p>
-      </div>
-      <div className="flex -space-x-2.5 mb-4">
-        {[
-          'from-rose-400 to-orange-400',
-          'from-indigo-400 to-purple-400',
-          'from-emerald-400 to-teal-400',
-          'from-amber-400 to-yellow-400',
-          'from-pink-400 to-fuchsia-400',
-        ].map((gradient, i) => (
-          <div key={i} className={`h-9 w-9 rounded-full bg-gradient-to-br ${gradient} border-[3px] border-white flex items-center justify-center text-[10px] font-bold text-white shadow-md`}>
-            {['PS', 'AK', 'RJ', 'MK', 'DV'][i]}
-          </div>
-        ))}
-        <div className="h-9 w-9 rounded-full bg-slate-100 border-[3px] border-white flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-md">
+        <div className="flex-grow">
+          <p className="text-sm font-body font-medium text-[#3a302a]">
+            <span className="font-bold">Alex Chen</span> updated the{' '}
+            <span className="text-[#c2652a] italic">AgileSuit Brand System</span>
+          </p>
+          <p className="text-[11px] font-body text-[#605850] uppercase tracking-wide">2 minutes ago</p>
+        </div>
+        <div className="w-6 h-6 rounded-full border border-white bg-[#8c3c3c]/10 flex items-center justify-center text-[10px] text-[#8c3c3c] font-bold">
           +3
         </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-0.5">
-          {[1, 2, 3, 4, 5].map(i => (
-            <Star key={i} className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-          ))}
-        </div>
-        <span className="text-[10px] text-emerald-500 font-extrabold uppercase tracking-wide">Excellent</span>
       </div>
     </div>
   );
@@ -154,21 +124,20 @@ function SpotsCounter({ firestore }: { firestore: ReturnType<typeof useFirestore
 
   if (spotsLeft === null) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
-        <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
-        <span className="text-[11px] font-bold">checking spots…</span>
+      <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#fce0e0] text-[#6e3030] rounded-lg text-xs font-bold uppercase tracking-wider">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span>checking spots…</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+    <span className="inline-flex items-center gap-2 px-3 py-1 bg-[#fce0e0] text-[#6e3030] rounded-lg text-xs font-bold uppercase tracking-wider animate-pulse">
       <span className="relative flex h-2 w-2">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c2652a] opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c2652a]" />
       </span>
-      <span className="text-[11px] font-extrabold tabular-nums">{spotsLeft}</span>
-      <span className="text-[11px] font-bold">{spotsLeft === 1 ? 'spot left' : 'spots left'}</span>
+      <span>Only {spotsLeft} {spotsLeft === 1 ? 'spot' : 'spots'} left in this batch</span>
     </span>
   );
 }
@@ -184,7 +153,7 @@ export function ComingSoonPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Staggered reveal
-  const [show, setShow] = useState({ label: false, headline: false, sub: false, cta: false, cards: false });
+  const [show, setShow] = useState({ label: false, headline: false, sub: false, cta: false, cards: false, philosophy: false });
 
   useEffect(() => {
     const timers = [
@@ -193,6 +162,7 @@ export function ComingSoonPage() {
       setTimeout(() => setShow(s => ({ ...s, sub: true })), 900),
       setTimeout(() => setShow(s => ({ ...s, cta: true })), 1300),
       setTimeout(() => setShow(s => ({ ...s, cards: true })), 600),
+      setTimeout(() => setShow(s => ({ ...s, philosophy: true })), 1800),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -239,147 +209,200 @@ export function ComingSoonPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#fafbff] overflow-hidden flex flex-col">
+    <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ backgroundColor: '#faf5ee', fontFamily: "'Manrope', sans-serif" }}>
 
-      {/* Animated Gradient Blobs */}
-      <div className="absolute -top-40 -right-40 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-200/80 via-violet-200/60 to-purple-200/40 blur-[100px] pointer-events-none animate-blob-1" />
-      <div className="absolute top-1/3 -left-60 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-amber-100/60 via-orange-100/40 to-rose-100/30 blur-[80px] pointer-events-none animate-blob-2" />
-      <div className="absolute -bottom-40 right-1/3 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-cyan-100/40 via-sky-100/30 to-indigo-100/20 blur-[80px] pointer-events-none animate-blob-3" />
+      {/* Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
 
-      {/* Subtle dot grid */}
-      <div className="absolute inset-0 dotted-bg opacity-30 pointer-events-none" />
+      {/* Warm Decorative Blobs */}
+      <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#fbe8d8] opacity-20 blur-[100px] rounded-full pointer-events-none animate-blob-1" />
+      <div className="absolute top-1/3 -left-40 w-60 h-60 bg-[#fce0e0] opacity-20 blur-[80px] rounded-full pointer-events-none animate-blob-2" />
+      <div className="absolute -bottom-20 right-1/3 w-60 h-60 bg-[#fbe8d8] opacity-15 blur-[80px] rounded-full pointer-events-none animate-blob-3" />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 flex items-center">
-        <div className="w-full max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-16 lg:py-0">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-12 items-center min-h-[85vh]">
+      <main className="relative z-10 flex-1 pt-24 pb-32">
+        <section className="max-w-7xl mx-auto px-8 lg:flex items-center gap-16">
 
-            {/* Left: Text Content */}
-            <div className="flex flex-col justify-center max-w-lg">
+          {/* Left: Hero Content */}
+          <div className="lg:w-1/2 flex flex-col items-start gap-8">
 
-              {/* Badge */}
-              <div className={`transition-all duration-700 ease-out ${show.label ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-8">
-                  <Rocket className="h-4 w-4 text-indigo-500" />
-                  <span className="text-xs font-bold text-indigo-600 tracking-wide uppercase">Coming Soon</span>
+            {/* Badge */}
+            <div className={`transition-all duration-700 ease-out ${show.label ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <div className="inline-flex items-center px-4 py-1.5 bg-[#fbe8d8] text-[#8a4518] rounded-full text-[10px] font-bold tracking-[0.2em] uppercase font-body">
+                <span className="mr-2">Coming Soon</span>
+                <Sparkles className="h-3.5 w-3.5" />
+                <div className="ml-4 pl-4 border-l border-[#8a4518]/20 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#c2652a] animate-pulse" />
+                  <span>Limited Availability</span>
                 </div>
               </div>
-
-              {/* Headline */}
-              <h1 className={`text-[3.5rem] sm:text-6xl lg:text-[4.25rem] font-black leading-[1.08] tracking-[-0.03em] transition-all duration-1000 ease-out ${show.headline ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-                <span className="text-slate-900">Get Notified</span>
-                <br />
-                <span className="text-slate-900">When we </span>
-                <span className="relative inline-block">
-                  <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-purple-600 bg-clip-text text-transparent">Launch</span>
-                  <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
-                    <path d="M2 8C40 2 70 2 100 6C130 10 170 4 198 8" stroke="url(#underline-grad)" strokeWidth="3" strokeLinecap="round" className="animate-draw-line" />
-                    <defs>
-                      <linearGradient id="underline-grad" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#6366f1" />
-                        <stop offset="0.5" stopColor="#8b5cf6" />
-                        <stop offset="1" stopColor="#a855f7" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </span>
-              </h1>
-
-              {/* Subtext */}
-              <p className={`mt-7 text-[17px] text-slate-500 leading-relaxed font-medium transition-all duration-1000 delay-100 ease-out ${show.sub ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-                Project management shouldn&apos;t feel like a second job.
-                We&apos;re building something{' '}
-                <span className="text-slate-800 font-bold">lightning-fast</span>,{' '}
-                <span className="text-slate-800 font-bold">zero-bloat</span>, and powered by{' '}
-                <span className="text-slate-800 font-bold">AI</span>
-                &nbsp;&mdash; for teams that actually ship.
-              </p>
-
-              {/* CTA */}
-              <div className={`mt-10 transition-all duration-1000 delay-300 ease-out ${show.cta ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
-                {isAlreadySubscribed ? (
-                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-indigo-50 border-2 border-indigo-200 shadow-lg shadow-indigo-100/50">
-                    <div className="h-12 w-12 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="h-6 w-6 text-indigo-600" />
-                    </div>
-                    <div>
-                      <p className="text-base font-extrabold text-indigo-800">You're already on the list!</p>
-                      <p className="text-sm text-indigo-600 mt-1 font-medium">Keep an eye on your inbox for updates.</p>
-                      <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); }} className="mt-3 text-xs font-bold text-indigo-600 underline hover:text-indigo-800 transition-colors">Enter a different email</button>
-                    </div>
-                  </div>
-                ) : isSubmitted ? (
-                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-lg shadow-emerald-100/50">
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-base font-extrabold text-emerald-800">You're on the list! 🎉</p>
-                      <p className="text-sm text-emerald-600 mt-1 font-medium">We'll send you an invite when early access opens.</p>
-                      <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    <form onSubmit={handleSubmit}>
-                      <div className="relative group">
-                        {/* Animated gradient border */}
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl sm:rounded-full opacity-0 group-focus-within:opacity-100 blur-sm transition-opacity duration-500" />
-
-                        <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 p-2 rounded-2xl sm:rounded-full border-2 border-slate-200 bg-white shadow-xl shadow-slate-200/40 group-focus-within:border-transparent group-focus-within:shadow-indigo-200/30 transition-all duration-300">
-                          <div className="flex items-center flex-1 min-w-0">
-                            <Mail className="h-5 w-5 text-slate-300 ml-3 sm:ml-4 shrink-0" />
-                            <input
-                              ref={inputRef}
-                              type="email"
-                              value={email}
-                              onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                              placeholder="Enter your email address"
-                              className="flex-1 min-w-0 bg-transparent border-0 outline-none px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-[15px] font-medium"
-                              disabled={isSubmitting}
-                            />
-                          </div>
-                          <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="shrink-0 inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl sm:rounded-full bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.03] hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.97]"
-                          >
-                            {isSubmitting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                Notify Me
-                                <ArrowRight className="h-4 w-4" />
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {error && (
-                        <p className="mt-2 text-xs text-red-500 font-semibold pl-6">{error}</p>
-                      )}
-                    </form>
-
-                    {/* Trust indicators */}
-                    <div className="flex items-center gap-4 pl-1">
-                      <SpotsCounter firestore={firestore} />
-                      <span className="text-[11px] text-slate-400 font-medium">No spam, ever. Unsubscribe anytime.</span>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
-            {/* Right: Floating UI Cards */}
-            <div className={`relative hidden lg:block h-[580px] transition-all duration-1200 delay-200 ease-out ${show.cards ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-              <SprintCard />
-              <AnalyticsCard />
-              <TeamCard />
+            {/* Headline */}
+            <h1
+              className={`text-6xl md:text-8xl leading-[0.9] tracking-tight transition-all duration-1000 ease-out ${show.headline ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              style={{ fontFamily: "'EB Garamond', serif", color: '#3a302a' }}
+            >
+              Elevate Your <br />
+              <span className="italic" style={{ color: '#c2652a' }}>Workflow</span>
+            </h1>
+
+            {/* Subtext */}
+            <p
+              className={`text-xl md:text-2xl max-w-lg leading-relaxed transition-all duration-1000 delay-100 ease-out ${show.sub ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+              style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}
+            >
+              Experience lightning-fast project management designed for modern teams who value sun-baked simplicity and focused execution.
+            </p>
+
+            {/* CTA */}
+            <div className={`w-full max-w-md space-y-3 transition-all duration-1000 delay-300 ease-out ${show.cta ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
+
+              {isAlreadySubscribed ? (
+                <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#fbe8d8] border-2 border-[#c2652a]/30 shadow-lg">
+                  <div className="h-12 w-12 rounded-2xl bg-[#c2652a]/10 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="h-6 w-6 text-[#c2652a]" />
+                  </div>
+                  <div>
+                    <p className="text-base font-extrabold" style={{ color: '#3a302a', fontFamily: "'Manrope', sans-serif" }}>You&apos;re already on the list!</p>
+                    <p className="text-sm mt-1 font-medium" style={{ color: '#8a4518' }}>Keep an eye on your inbox for updates.</p>
+                    <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); }} className="mt-3 text-xs font-bold underline transition-colors" style={{ color: '#c2652a' }}>Enter a different email</button>
+                  </div>
+                </div>
+              ) : isSubmitted ? (
+                <div className="flex items-center gap-4 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-lg">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-base font-extrabold text-emerald-800" style={{ fontFamily: "'Manrope', sans-serif" }}>You&apos;re on the list! 🎉</p>
+                    <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
+                    <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <SpotsCounter firestore={firestore} />
+
+                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
+                    <input
+                      ref={inputRef}
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                      placeholder="Enter your work email"
+                      className="flex-grow h-14 px-6 rounded-xl border border-[#d8d0c8] bg-white focus:ring-2 focus:ring-[#c2652a] focus:border-transparent outline-none transition-all text-[#3a302a] placeholder-[#9a9088]"
+                      style={{ fontFamily: "'Manrope', sans-serif" }}
+                      disabled={isSubmitting}
+                    />
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="h-14 px-8 rounded-xl font-bold text-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:shadow-lg active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                      style={{
+                        backgroundColor: '#c2652a',
+                        fontFamily: "'Manrope', sans-serif",
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          Join the Waitlist
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {error && (
+                    <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
+                  )}
+
+                  <div className="flex items-center gap-2 px-1">
+                    <ShieldCheck className="h-3.5 w-3.5 text-[#9a9088]" />
+                    <p className="text-[11px] uppercase tracking-wider" style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}>
+                      Privacy Guaranteed · Secure Onboarding
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      </div>
 
+          {/* Right: UI Cards Visualization */}
+          <div className={`lg:w-1/2 mt-20 lg:mt-0 relative transition-all duration-1000 delay-200 ease-out ${show.cards ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+            {/* Decorative blobs behind cards */}
+            <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#fbe8d8] opacity-20 blur-[100px] rounded-full -z-10" />
+            <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-[#fce0e0] opacity-20 blur-[80px] rounded-full -z-10" />
+
+            <div className="grid grid-cols-2 gap-6 relative z-10">
+              <SprintProgressCard />
+              <TeamVelocityCard />
+              <ActivityFeedCard />
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Product Philosophy Section ─── */}
+        <section className={`max-w-7xl mx-auto px-8 mt-48 transition-all duration-1000 ease-out ${show.philosophy ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2
+              className="text-4xl md:text-5xl mb-6"
+              style={{ fontFamily: "'EB Garamond', serif", color: '#3a302a' }}
+            >
+              Designed for Focus
+            </h2>
+            <p
+              className="leading-relaxed text-lg italic"
+              style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}
+            >
+              &ldquo;Complexity is the enemy of execution. AgileSuit strips away the noise, leaving only what moves you forward.&rdquo;
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
+            <div className="space-y-4">
+              <Sun className="h-10 w-10 text-[#c2652a] mx-auto md:mx-0" />
+              <h4
+                className="text-xl font-bold"
+                style={{ fontFamily: "'EB Garamond', serif", color: '#3a302a' }}
+              >
+                Linen Workspace
+              </h4>
+              <p className="text-sm leading-relaxed" style={{ color: '#605850' }}>
+                A warm, calm environment that reduces eye strain and helps you maintain deep focus for longer periods.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <Zap className="h-10 w-10 text-[#c2652a] mx-auto md:mx-0" />
+              <h4
+                className="text-xl font-bold"
+                style={{ fontFamily: "'EB Garamond', serif", color: '#3a302a' }}
+              >
+                Sub-100ms Feel
+              </h4>
+              <p className="text-sm leading-relaxed" style={{ color: '#605850' }}>
+                Optimized interactions and instant updates so the software never gets in the way of your thinking speed.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <Sparkles className="h-10 w-10 text-[#c2652a] mx-auto md:mx-0" />
+              <h4
+                className="text-xl font-bold"
+                style={{ fontFamily: "'EB Garamond', serif", color: '#3a302a' }}
+              >
+                Smart Prioritization
+              </h4>
+              <p className="text-sm leading-relaxed" style={{ color: '#605850' }}>
+                Let AgileSuit&apos;s intuitive engine surface what matters most, so you don&apos;t waste time sorting lists.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
