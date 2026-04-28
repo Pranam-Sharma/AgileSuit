@@ -42,18 +42,13 @@ service cloud.firestore {
 
     // Waitlist:
     // - Anyone can sign up for the waitlist
-    // - We only allow creating documents, not reading or updating existing ones (except incrementing the counter)
+    // - Allow both read and write to ensure setDoc and increment work correctly
     match /waitlist_emails/{email} {
-      allow create: if true;
-      allow get: if false;
-      allow list: if false;
-      allow update, delete: if false;
+      allow read, write: if true;
     }
 
     match /waitlist_meta/stats {
-      allow get: if true;
-      allow create, update: if true; // Allow updating the counter
-      allow list, delete: if false;
+      allow read, write: if true;
     }
     
     // Default deny for other collections
