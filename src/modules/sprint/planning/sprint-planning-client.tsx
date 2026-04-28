@@ -263,8 +263,8 @@ const DEMO_STATUS_CONFIG: Record<DemoStatus, { label: string; color: string; bgC
 function SectionLoadingSkeleton() {
   return (
     <div className="space-y-6">
-      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <CardHeader className="pb-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+      <Card className="border-[#d8d0c8]/40 shadow-sm overflow-hidden">
+        <CardHeader className="pb-4 border-b border-[#d8d0c8]/30 bg-[#f2ece4]/50">
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-xl" />
             <div className="flex-1 space-y-2">
@@ -357,7 +357,7 @@ function ChecklistSidebar({ checklist, onToggle }: { checklist: ChecklistState, 
           </CardTitle>
           <span className="text-xs font-bold text-primary">{progress}%</span>
         </div>
-        <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+        <div className="h-1.5 w-full bg-[#f2ece4] bg-[#ece6dc] rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
@@ -372,15 +372,15 @@ function ChecklistSidebar({ checklist, onToggle }: { checklist: ChecklistState, 
             className={cn(
               "flex items-center w-full gap-3 p-2 rounded-md text-sm transition-all text-left group",
               checklist[item.id]
-                ? "text-zinc-600 dark:text-zinc-400"
-                : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+                ? "text-zinc-600"
+                : "text-zinc-500 hover:bg-[#f2ece4] hover:bg-[#ece6dc]"
             )}
           >
             <div className={cn(
               "h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors",
               checklist[item.id]
                 ? "border-green-500 bg-green-500 text-white border-transparent"
-                : "border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-400"
+                : "border-[#d8d0c8] border-[#d8d0c8] group-hover:border-[#9a9088]"
             )}>
               {checklist[item.id] && <CheckCircle2 className="h-3.5 w-3.5" />}
             </div>
@@ -494,7 +494,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   // Force Composition State
   const [forceRoles, setForceRoles] = React.useState<any[]>([
     { id: 'po', label: 'Product Owners', icon: Crown, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', desc: '' },
-    { id: 'sm', label: 'Scrum Masters', icon: ShieldCheck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100', desc: '' }
+    { id: 'sm', label: 'Scrum Masters', icon: ShieldCheck, color: 'text-[#c2652a]', bg: 'bg-[#fbe8d8]', border: 'border-[#f0a878]/40', desc: '' }
   ]);
   const [editingRoleId, setEditingRoleId] = React.useState<string | null>(null);
 
@@ -503,8 +503,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       id: Date.now().toString(),
       label: '',
       icon: Users,
-      color: 'text-slate-600',
-      bg: 'bg-slate-50',
+      color: 'text-[#605850]',
+      bg: 'bg-[#f6f0e8]',
       border: 'border-slate-100',
       desc: ''
     };
@@ -1068,7 +1068,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
   if (isUserLoading || isLoading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 bg-white">
         <Loader2 className="h-12 w-12 animate-spin text-primary opacity-50" />
       </div>
     );
@@ -1077,41 +1077,46 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   if (!sprint) return null;
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] font-sans selection:bg-rose-100 text-slate-900 overflow-x-hidden">
-      {/* Background elements - Enterprise Theme */}
+    <div className="min-h-screen w-full bg-[#faf5ee] font-sans selection:bg-[#fbe8d8] text-[#3a302a] overflow-x-hidden">
+      {/* Google Fonts - Sahara Theme */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+
+      {/* Background elements - Sahara Theme */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-[#8b2635]/15 to-[#6d1d2b]/15 blur-[130px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#a63d40]/10 to-[#8b2635]/10 blur-[160px]" />
-        <div className="absolute top-[20%] right-[10%] w-[35%] h-[35%] rounded-full bg-[#8b2635]/8 blur-[120px]" />
-        <div className="absolute bottom-[20%] left-[10%] w-[45%] h-[45%] rounded-full bg-[#6d1d2b]/10 blur-[140px]" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] mix-blend-overlay" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-[#fbe8d8]/40 to-[#f0a878]/20 blur-[130px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tr from-[#fce0e0]/30 to-[#fbe8d8]/20 blur-[160px]" />
+        <div className="absolute top-[20%] right-[10%] w-[35%] h-[35%] rounded-full bg-[#f0a878]/15 blur-[120px]" />
+        <div className="absolute bottom-[20%] left-[10%] w-[45%] h-[45%] rounded-full bg-[#fbe8d8]/20 blur-[140px]" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen transition-all duration-500">
         {/* Navigation Bar - Refined Glassmorphism */}
-        <header className="sticky top-0 z-50 w-full border-b border-white/20 bg-white/70 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.03)]">
+        <header className="sticky top-0 z-50 w-full border-b border-[#d8d0c8]/60 bg-[#faf5ee]/80 backdrop-blur-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)]">
           <div className="max-w-[1600px] mx-auto flex h-16 items-center justify-between px-6 lg:px-12">
             <div className="flex items-center gap-6">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-500 hover:text-slate-900 hover:bg-slate-100/50 transition-all" onClick={() => router.back()}>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-[#605850] hover:text-[#3a302a] hover:bg-[#f2ece4] transition-all" onClick={() => router.back()}>
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <Logo />
-              <div className="h-6 w-px bg-slate-200/60" />
+              <div className="h-6 w-px bg-[#d8d0c8]/60" />
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className="bg-indigo-50/50 text-indigo-700 border-indigo-100 px-2 py-0.5 text-[10px] uppercase tracking-tighter font-bold shadow-none">
+                <Badge variant="outline" className="bg-[#fbe8d8]/50 text-[#8a4518] border-[#f0a878]/40 px-2 py-0.5 text-[10px] uppercase tracking-tighter font-bold shadow-none">
                   Beta
                 </Badge>
-                <div className="h-1 w-1 rounded-full bg-slate-300" />
-                <span className="text-sm font-semibold text-slate-600">Strategy Module</span>
+                <div className="h-1 w-1 rounded-full bg-[#d8d0c8]" />
+                <span className="text-sm font-semibold text-[#605850]">Strategy Module</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-md rounded-full border border-white/40 shadow-sm transition-all hover:shadow-md group">
-                <Target className="h-3.5 w-3.5 text-indigo-600 transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-slate-700">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-md rounded-full border border-[#d8d0c8]/40 shadow-sm transition-all hover:shadow-md group">
+                <Target className="h-3.5 w-3.5 text-[#c2652a] transition-transform group-hover:scale-110" />
+                <span className="text-xs font-bold text-[#3a302a]">
                   {sprint ? sprint.sprintName : 'Loading...'}
                 </span>
-                <Badge className="ml-1 bg-slate-900 text-white text-[9px] hover:bg-slate-900 shadow-none px-1.5 h-4">
+                <Badge className="ml-1 bg-[#3a302a] text-white text-[9px] hover:bg-[#3a302a] shadow-none px-1.5 h-4">
                   #{sprint?.sprintNumber}
                 </Badge>
               </div>
@@ -1124,7 +1129,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           
           {/* Floating Command Dock - Premium OS-Level Navigation */}
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-700">
-            <div className="flex items-center gap-2 p-2 bg-white/20 dark:bg-[#121318]/50 backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-[24px] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1),_0_0_0_1px_rgba(255,255,255,0.1)_inset]">
+            <div className="flex items-center gap-2 p-2 bg-[#3a302a]/95 backdrop-blur-2xl border border-white/10 rounded-[24px] shadow-[0_20px_40px_-15px_rgba(58,48,42,0.3),_0_0_0_1px_rgba(255,255,255,0.05)_inset]">
               
               <div className="flex items-center gap-1">
                 {PLANNING_SECTIONS.filter(s => ['board', 'general', 'team', 'priority', 'metrics', 'goals', 'milestones', 'demo'].includes(s.id)).map(section => {
@@ -1137,21 +1142,21 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                       className={cn(
                         "relative flex flex-col items-center justify-center w-[60px] h-[60px] rounded-[18px] transition-all duration-300 group",
                         isActive
-                          ? "bg-white/40 dark:bg-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)_inset]" 
-                          : "hover:bg-white/20 dark:hover:bg-white/5 active:scale-95"
+                          ? "bg-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)_inset]" 
+                          : "hover:bg-white/5 active:scale-95"
                       )}
                     >
                       <Icon className={cn(
                         "h-6 w-6 transition-transform duration-500", 
-                        isActive ? "text-indigo-600 dark:text-indigo-400 scale-110 drop-shadow-sm" : "text-slate-600 dark:text-slate-400 group-hover:-translate-y-1"
+                        isActive ? "text-[#f0a878] scale-110 drop-shadow-sm" : "text-[#fbe8d8]/70 group-hover:-translate-y-1 group-hover:text-[#fbe8d8]"
                       )} />
                       {isActive && (
-                        <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-indigo-500" />
+                        <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-[#c2652a]" />
                       )}
                       
                       {/* Tooltip on Hover */}
                       {!isActive && (
-                        <div className="absolute -top-10 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none px-3 py-1.5 bg-slate-900 dark:bg-black text-white text-[10px] font-black tracking-widest uppercase rounded-lg shadow-xl outline outline-1 outline-white/10">
+                        <div className="absolute -top-10 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none px-3 py-1.5 bg-[#3a302a] text-[#fbe8d8] text-[10px] font-black tracking-widest uppercase rounded-lg shadow-xl outline outline-1 outline-white/10">
                           {section.label}
                         </div>
                       )}
@@ -1160,19 +1165,19 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                 })}
               </div>
 
-              <div className="w-px h-10 bg-white/30 dark:bg-white/10 mx-1" />
+              <div className="w-px h-10 bg-white/10 mx-1" />
 
               <div className="flex items-center gap-1.5 px-2">
                 <Button
                   variant="outline"
-                  className="rounded-[16px] h-[48px] w-[48px] p-0 border-white/30 dark:border-white/10 bg-transparent hover:bg-white/20 dark:hover:bg-white/10 shadow-none transition-all text-slate-700 dark:text-slate-300"
+                  className="rounded-[16px] h-[48px] w-[48px] p-0 border-white/10 bg-transparent hover:bg-white/10 shadow-none transition-all text-[#fbe8d8]/70 hover:text-[#fbe8d8]"
                 >
                   <Activity className="h-5 w-5" />
                 </Button>
                 <Button
                   onClick={handleSaveAll}
                   disabled={isSaving}
-                  className="rounded-[16px] h-[48px] px-6 bg-slate-900 hover:bg-black dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white shadow-[0_8px_16px_rgba(0,0,0,0.1)] transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest active:scale-95"
+                  className="rounded-[16px] h-[48px] px-6 bg-[#c2652a] hover:bg-[#e08850] text-white shadow-[0_8px_16px_rgba(194,101,42,0.3)] transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest active:scale-95"
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Deploy
@@ -1186,26 +1191,27 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           <main className="w-full h-full lg:pt-12 lg:px-20 pb-40 p-6 flex justify-center">
             <div className="w-full max-w-[1200px]">
               {/* Premium Header Section */}
-              <div className="mb-8 space-y-3 gsap-stagger-item border-b border-slate-200/40 dark:border-slate-800/40 pb-6">
-                <div className="space-y-1">
-                  <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight drop-shadow-sm">
-                    {activeSection === 'general' ? 'Core Sprint Parameters' :
-                      activeSection === 'team' ? 'Engineering Resources' :
+              {activeSection !== 'team' && (
+                <div className="mb-8 space-y-4 gsap-stagger-item border-b border-[#d8d0c8]/40 pb-6">
+                  <div className="space-y-2">
+                    <h1 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight italic" style={{ fontFamily: "'EB Garamond', serif" }}>
+                      {activeSection === 'general' ? 'Core Sprint Parameters' :
                         activeSection === 'priority' ? 'Project Priority' :
                           PLANNING_SECTIONS.find(s => s.id === activeSection)?.label}
-                  </h1>
-                  <p className="text-slate-500 dark:text-slate-400 text-[15px] max-w-2xl font-medium leading-relaxed">
-                    {PLANNING_SECTIONS.find(s => s.id === activeSection)?.description} Orchestrate your team's collective brilliance in this tactical planning phase.
-                  </p>
+                    </h1>
+                    <p className="text-[14px] text-[#605850] max-w-3xl leading-relaxed" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                      {PLANNING_SECTIONS.find(s => s.id === activeSection)?.description} Orchestrate your team's collective brilliance in this tactical planning phase.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="w-full">
                 <div className="space-y-10">
                   <div className="gsap-stagger-item">
 
 
-                    <Separator />
+                    {activeSection !== 'team' && <Separator />}
 
                     {/* Content Switcher */}
                     <div className="min-h-[400px]">
@@ -1218,33 +1224,41 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               {/* BENTO GRID: Core Parameters */}
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 
-                                {/* Tile 1: Start Date */}
-                                <div className="col-span-1 bg-white/40 dark:bg-[#121318]/40 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between group hover:bg-white/50 transition-all duration-500">
-                                  <div className="space-y-6">
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                                        <CalendarIcon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                                      </div>
-                                      <div>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Inception</h3>
-                                        <p className="text-[11px] font-medium text-slate-500">Sprint Start Engine</p>
-                                      </div>
-                                    </div>
-                                    
+                                {/* Tile 1: Start Date — Sahara Card */}
+                                <div className="col-span-1 bg-white p-8 rounded-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/40 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_4px_20px_rgba(58,48,42,0.08)]">
+                                  <div>
+                                    <span className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#c2652a]/70" style={{ fontFamily: "'Manrope', sans-serif" }}>Sprint Start</span>
+                                    <h3 className="text-2xl mt-1 mb-6 text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>INCEPTION</h3>
+                                  </div>
+                                  <div className="flex items-end justify-between">
                                     <Popover>
                                       <PopoverTrigger asChild>
-                                        <Button
-                                          variant="outline"
-                                          className={cn(
-                                            "w-full h-16 justify-start text-left font-black border-2 border-white/50 dark:border-white/5 rounded-2xl bg-white/60 dark:bg-black/20 hover:bg-white dark:hover:bg-white/5 hover:border-indigo-300 transition-all shadow-sm text-lg",
-                                            !date?.from && "text-slate-400"
-                                          )}
-                                        >
-                                          <div className="w-2 h-2 rounded-full bg-indigo-500 mr-4" />
-                                          {date?.from ? format(date.from, "PPP") : <span>Select Origin Date</span>}
-                                        </Button>
+                                        <button className="text-left group/date cursor-pointer">
+                                          <p className="text-3xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>
+                                            {date?.from ? format(date.from, "dd MMM yyyy") : <span className="text-[#9a9088]">Select Date</span>}
+                                          </p>
+                                          <p className="text-xs text-[#78706a] mt-1" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                            {date?.from ? format(date.from, "EEEE") : ''} {date?.from ? '• 09:00 AM' : ''}
+                                          </p>
+                                        </button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-0 rounded-3xl border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                      <PopoverContent className="w-auto p-0 rounded-xl border border-[#d8d0c8]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                        <Calendar
+                                          mode="single"
+                                          selected={date?.from}
+                                          onSelect={(selected: Date | undefined) => setDate(prev => ({ ...prev, from: selected, to: prev?.to }))}
+                                          initialFocus
+                                          className="p-4"
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <button className="p-2 bg-[#f2ece4] text-[#c2652a] rounded-lg hover:bg-[#c2652a]/10 transition-colors">
+                                          <CalendarIcon className="h-5 w-5" />
+                                        </button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0 rounded-xl border border-[#d8d0c8]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                                         <Calendar
                                           mode="single"
                                           selected={date?.from}
@@ -1257,33 +1271,41 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   </div>
                                 </div>
 
-                                {/* Tile 2: End Date */}
-                                <div className="col-span-1 bg-white/40 dark:bg-[#121318]/40 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-between group hover:bg-white/50 transition-all duration-500">
-                                  <div className="space-y-6">
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-12 w-12 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
-                                        <CalendarIcon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                                      </div>
-                                      <div>
-                                        <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Conclusion</h3>
-                                        <p className="text-[11px] font-medium text-slate-500">Sprint Termination</p>
-                                      </div>
-                                    </div>
-                                    
+                                {/* Tile 2: End Date — Sahara Card */}
+                                <div className="col-span-1 bg-white p-8 rounded-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/40 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_4px_20px_rgba(58,48,42,0.08)]">
+                                  <div>
+                                    <span className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#8c3c3c]/70" style={{ fontFamily: "'Manrope', sans-serif" }}>Sprint Deadline</span>
+                                    <h3 className="text-2xl mt-1 mb-6 text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>CONCLUSION</h3>
+                                  </div>
+                                  <div className="flex items-end justify-between">
                                     <Popover>
                                       <PopoverTrigger asChild>
-                                        <Button
-                                          variant="outline"
-                                          className={cn(
-                                            "w-full h-16 justify-start text-left font-black border-2 border-white/50 dark:border-white/5 rounded-2xl bg-white/60 dark:bg-black/20 hover:bg-white dark:hover:bg-white/5 hover:border-rose-300 transition-all shadow-sm text-lg",
-                                            !date?.to && "text-slate-400"
-                                          )}
-                                        >
-                                          <div className="w-2 h-2 rounded-full bg-rose-500 mr-4" />
-                                          {date?.to ? format(date.to, "PPP") : <span>Select Horizon Date</span>}
-                                        </Button>
+                                        <button className="text-left group/date cursor-pointer">
+                                          <p className="text-3xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>
+                                            {date?.to ? format(date.to, "dd MMM yyyy") : <span className="text-[#9a9088]">Select Date</span>}
+                                          </p>
+                                          <p className="text-xs text-[#78706a] mt-1" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                            {date?.to ? format(date.to, "EEEE") : ''} {date?.to ? '• 06:00 PM' : ''}
+                                          </p>
+                                        </button>
                                       </PopoverTrigger>
-                                      <PopoverContent className="w-auto p-0 rounded-3xl border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                      <PopoverContent className="w-auto p-0 rounded-xl border border-[#d8d0c8]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                        <Calendar
+                                          mode="single"
+                                          selected={date?.to}
+                                          onSelect={(selected: Date | undefined) => setDate(prev => ({ ...prev, to: selected, from: prev?.from }))}
+                                          initialFocus
+                                          className="p-4"
+                                        />
+                                      </PopoverContent>
+                                    </Popover>
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <button className="p-2 bg-[#f2ece4] text-[#8c3c3c] rounded-lg hover:bg-[#8c3c3c]/10 transition-colors">
+                                          <CalendarIcon className="h-5 w-5" />
+                                        </button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-auto p-0 rounded-xl border border-[#d8d0c8]/40 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
                                         <Calendar
                                           mode="single"
                                           selected={date?.to}
@@ -1297,34 +1319,30 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 </div>
 
 
-                                {/* Regional Impact Dashboard — Fresh Bento Layout */}
-                                <div className="col-span-1 lg:col-span-2 space-y-8">
-                                  <div className="flex items-center justify-between px-2">
-                                    <div className="flex items-center gap-4">
-                                      <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                                        <CalendarIcon className="h-7 w-7 text-amber-600 dark:text-amber-400" />
-                                      </div>
-                                      <div>
-                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Regional Impact Dashboard</h4>
-                                        <p className="text-sm font-medium text-slate-500">Orchestrate global downtime & regional capacity metrics.</p>
-                                      </div>
+                                {/* Regional Impact Dashboard — Sahara Design */}
+                                <div className="col-span-1 lg:col-span-2 space-y-6">
+                                  <div className="flex justify-between items-end border-b border-[#d8d0c8]/40 pb-4">
+                                    <div>
+                                      <h2 className="text-2xl leading-tight text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>Regional Impact Dashboard</h2>
+                                      <p className="text-sm text-[#605850] mt-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Global availability management across delivery hubs.</p>
                                     </div>
-                                    <Button
+                                    <button
                                       onClick={addRegionalCluster}
-                                      className="rounded-2xl h-12 bg-slate-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-slate-200 font-black text-xs uppercase tracking-[0.2em] px-8 shadow-xl shadow-black/10 transition-all active:scale-95 group"
+                                      className="flex items-center gap-2 bg-[#f2ece4] text-[#c2652a] px-5 py-2 rounded-lg font-medium text-xs shadow-sm hover:bg-[#c2652a]/10 transition-all active:scale-95"
+                                      style={{ fontFamily: "'Manrope', sans-serif" }}
                                     >
-                                      <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform" />
-                                      Register Region
-                                    </Button>
+                                      <Plus className="h-4 w-4" />
+                                      <span className="uppercase tracking-widest font-bold text-[10px]">Register Region</span>
+                                    </button>
                                   </div>
 
                                   {regionalClusters.length === 0 ? (
-                                    <div className="text-center py-20 border-2 border-dashed border-slate-200/60 dark:border-white/10 rounded-[3rem] bg-white/20 dark:bg-black/10 backdrop-blur-sm">
-                                      <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center mx-auto mb-6 shadow-xl border border-slate-100 dark:border-white/5">
-                                        <Globe className="h-10 w-10 text-slate-300" />
+                                    <div className="text-center py-20 border-2 border-dashed border-[#d8d0c8]/40 rounded-xl bg-[#f6f0e8]/30">
+                                      <div className="h-16 w-16 rounded-full bg-[#ece6dc] flex items-center justify-center mx-auto mb-4">
+                                        <Globe className="h-8 w-8 text-[#9a9088]" />
                                       </div>
-                                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Global Coverage Active</h3>
-                                      <p className="font-bold text-slate-400 text-sm tracking-wide max-w-xs mx-auto">Global capacity is assumed at 100% across all operational zones.</p>
+                                      <h3 className="text-xl text-[#3a302a] mb-2" style={{ fontFamily: "'EB Garamond', serif" }}>Global Coverage Active</h3>
+                                      <p className="text-sm text-[#9a9088] max-w-xs mx-auto" style={{ fontFamily: "'Manrope', sans-serif" }}>Global capacity is assumed at 100% across all operational zones.</p>
                                     </div>
                                   ) : (
                                     <div className="space-y-4">
@@ -1332,81 +1350,77 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         const totalDaysOff = cluster.holidays.reduce((sum, h) => sum + (h.days || 0), 0);
                                         const sprintDays = calculateSprintDays() || 10;
                                         
-                                        const impactLevel = totalDaysOff === 0 ? 'NONE' : totalDaysOff < 3 ? 'LOW' : totalDaysOff < 6 ? 'MEDIUM' : 'HIGH';
-                                        const impactColor = totalDaysOff === 0 ? 'from-slate-500 to-slate-600' : totalDaysOff < 3 ? 'from-emerald-500 to-emerald-700' : totalDaysOff < 6 ? 'from-amber-500 to-amber-700' : 'from-rose-500 to-rose-700';
+                                        const impactLevel = totalDaysOff === 0 ? 'NO IMPACT' : totalDaysOff < 3 ? 'LOW IMPACT' : totalDaysOff < 6 ? 'MEDIUM' : 'HIGH IMPACT';
+                                        const impactTextColor = totalDaysOff === 0 ? 'text-[#78706a]' : totalDaysOff < 3 ? 'text-[#c2652a]' : totalDaysOff < 6 ? 'text-amber-600' : 'text-[#8c3c3c]';
 
                                         return (
-                                          <div key={cluster.id} className="group flex flex-col bg-white/60 dark:bg-black/20 backdrop-blur-2xl border border-white/60 dark:border-white/10 rounded-[1.8rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
-                                            {/* HEADER ROW */}
+                                          <div key={cluster.id} className="group bg-[#f6f0e8] rounded-xl border border-[#d8d0c8]/60 overflow-hidden transition-all duration-300">
+                                            {/* Card Header */}
                                             <div 
                                               onClick={() => setRegionalClusters(prev => prev.map(c => c.id === cluster.id ? { ...c, isExpanded: !c.isExpanded } : c))}
-                                              className="flex items-center gap-6 p-4 cursor-pointer hover:bg-white/40 dark:hover:bg-white/5 transition-colors select-none"
+                                              className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/30 transition-colors"
                                             >
-                                              <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/5 flex items-center justify-center shrink-0">
-                                                <span className="text-sm font-black text-slate-600 dark:text-slate-400">{cIdx + 1}</span>
-                                              </div>
-
-                                              <div className="flex-1 flex items-center gap-8">
-                                                  <div className="w-56" onClick={(e) => e.stopPropagation()}>
-                                                    <Input
-                                                      value={cluster.countryCode}
-                                                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRegionalCluster(cluster.id, 'countryCode', e.target.value)}
-                                                      placeholder="e.g. Europe (EMEA)..."
-                                                      className="h-11 px-4 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-xl font-black text-base transition-all placeholder:text-slate-300 shadow-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
-                                                    />
-                                                  </div>
-
-                                                <div className={cn(
-                                                  "px-4 py-1.5 rounded-full text-[9px] font-black tracking-[0.15em] text-white shadow-sm transition-all",
-                                                  "bg-gradient-to-r",
-                                                  impactColor
-                                                )}>
-                                                  {impactLevel} IMPACT
+                                              <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-[#e08850] flex items-center justify-center text-white shrink-0">
+                                                  <Globe className="h-5 w-5" />
                                                 </div>
-
-                                                <div className="flex-1 text-xs font-bold text-slate-400 select-none hidden xl:block">
-                                                  Note regional holidays or specific blocking dates.
-                                                </div>
-
-                                                <div className="flex flex-col items-end min-w-[120px]">
-                                                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{totalDaysOff} / {sprintDays}</div>
-                                                  <div className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">TOTAL DAYS LOST</div>
+                                                <div onClick={(e) => e.stopPropagation()}>
+                                                  <Input
+                                                    value={cluster.countryCode}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateRegionalCluster(cluster.id, 'countryCode', e.target.value)}
+                                                    placeholder="e.g. India"
+                                                    className="h-8 px-0 bg-transparent border-none shadow-none text-xl md:text-xl text-[#3a302a] placeholder:text-[#d8d0c8] font-medium focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none"
+                                                    style={{ fontFamily: "'EB Garamond', serif" }}
+                                                  />
+                                                  <p className="text-xs uppercase tracking-widest text-[#78706a]" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                                    {cluster.name || 'Delivery Hub'}
+                                                  </p>
                                                 </div>
                                               </div>
-
-                                              <div className="flex items-center gap-2">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteRegionalCluster(cluster.id);
-                                                  }}
-                                                  className="h-9 w-9 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all opacity-0 group-hover:opacity-100"
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                                <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 transition-transform duration-500", cluster.isExpanded && "rotate-180")}>
-                                                  <ChevronDown className="h-5 w-5" />
+                                              <div className="flex items-center gap-12">
+                                                <div className="text-right">
+                                                  <p className="text-[10px] font-bold text-[#9a9088] uppercase tracking-tighter">Impact Level</p>
+                                                  <span className={cn("text-sm font-semibold", impactTextColor)}>{impactLevel}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                  <p className="text-[10px] font-bold text-[#9a9088] uppercase tracking-tighter">Capacity Loss</p>
+                                                  <span className="text-sm font-semibold text-[#3a302a]">{totalDaysOff} DAYS</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      deleteRegionalCluster(cluster.id);
+                                                    }}
+                                                    className="h-8 w-8 rounded-lg text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover:opacity-100"
+                                                  >
+                                                    <Trash2 className="h-4 w-4" />
+                                                  </Button>
+                                                  <ChevronDown className={cn("h-5 w-5 text-[#78706a] transition-transform duration-300", cluster.isExpanded && "rotate-180")} />
                                                 </div>
                                               </div>
                                             </div>
 
-                                            {/* EXPANDED CONTENT */}
+                                            {/* Expanded Content */}
                                             {cluster.isExpanded && (
-                                              <div className="px-6 pb-6 pt-2 animate-in slide-in-from-top-2 duration-300">
-                                                <div className="rounded-2xl border border-slate-200/50 dark:border-white/10 overflow-hidden bg-white/40 dark:bg-white/[0.02]">
-                                                  <div className="flex items-center px-6 py-3 border-b border-slate-200/30 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-                                                    <span className="flex-1 text-[10px] uppercase tracking-widest font-black text-slate-500">Holiday / Event Name</span>
-                                                    <span className="w-32 text-center text-[10px] uppercase tracking-widest font-black text-slate-500">Days Off</span>
+                                              <div className="px-8 pb-8 pt-2 animate-in slide-in-from-top-2 duration-300">
+                                                <div className="border-t border-[#d8d0c8]/30 pt-6">
+                                                  <h5 className="text-sm font-bold uppercase tracking-wider text-[#78706a] mb-4" style={{ fontFamily: "'Manrope', sans-serif" }}>Availability Adjustments</h5>
+                                                  
+                                                  {/* Table Header */}
+                                                  <div className="flex items-center px-2 pb-2 text-[10px] font-bold text-[#9a9088] uppercase tracking-widest">
+                                                    <span className="flex-1">Holiday / Event Name</span>
+                                                    <span className="w-32 text-right">Days Off</span>
                                                     <span className="w-10" />
                                                   </div>
-                                                  
-                                                  <div className="divide-y divide-slate-100/50 dark:divide-white/5">
+
+                                                  {/* Table Rows */}
+                                                  <div className="space-y-2">
                                                     {cluster.holidays.map((h, hIdx) => (
-                                                      <div key={hIdx} className="flex items-center px-6 py-3 group/holiday">
-                                                        <div className="flex-1 flex items-center gap-3">
-                                                          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                                                      <div key={hIdx} className="group/holiday bg-white rounded-xl p-5 flex items-center transition-all duration-200 hover:shadow-sm border border-transparent focus-within:border-[#c2652a]/40 focus-within:shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] focus-within:bg-white">
+                                                        <div className="flex-1">
                                                           <Input
                                                             value={h.country}
                                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1414,23 +1428,26 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               newHolidays[hIdx].country = e.target.value;
                                                               updateRegionalCluster(cluster.id, 'holidays', newHolidays);
                                                             }}
-                                                            placeholder="e.g. Bank Holiday..."
-                                                            className="h-11 px-4 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 rounded-xl font-bold text-sm transition-all placeholder:text-slate-300 shadow-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
+                                                            placeholder="e.g. Diwali Festival"
+                                                            className="h-10 px-0 bg-transparent border-none shadow-none text-xl md:text-xl text-[#3a302a] placeholder:text-[#d8d0c8] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none"
+                                                            style={{ fontFamily: "'EB Garamond', serif" }}
                                                           />
                                                         </div>
-                                                        <div className="w-32 flex items-center justify-center gap-2">
-                                                          <Input
-                                                            type="number"
-                                                            value={h.days || ''}
-                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                              const newHolidays = [...cluster.holidays];
-                                                              newHolidays[hIdx].days = Number(e.target.value);
-                                                              updateRegionalCluster(cluster.id, 'holidays', newHolidays);
-                                                            }}
-                                                            placeholder="0"
-                                                            className="h-11 w-16 bg-white dark:bg-black/40 border-2 border-slate-200 dark:border-white/10 text-center text-sm font-black rounded-xl transition-all shadow-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)]"
-                                                          />
-                                                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest shrink-0">Days</span>
+                                                        <div className="w-36 flex items-center justify-end gap-2">
+                                                          <div className="inline-flex items-center bg-[#f2ece4] px-4 py-2 rounded-lg border border-[#d8d0c8]/40 transition-all duration-200 focus-within:bg-[#c2652a]/10 focus-within:border-[#c2652a]/40 focus-within:shadow-[0_2px_8px_rgba(194,101,42,0.1)] cursor-text">
+                                                            <Input
+                                                              type="number"
+                                                              value={h.days || ''}
+                                                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                                const newHolidays = [...cluster.holidays];
+                                                                newHolidays[hIdx].days = Number(e.target.value);
+                                                                updateRegionalCluster(cluster.id, 'holidays', newHolidays);
+                                                              }}
+                                                              placeholder="0"
+                                                              className="w-10 h-8 px-0 bg-transparent border-none shadow-none text-center text-base font-bold text-[#c2652a] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none"
+                                                            />
+                                                            <span className="text-[11px] text-[#78706a] ml-1.5 uppercase font-bold">Days</span>
+                                                          </div>
                                                         </div>
                                                         <div className="w-10 flex justify-end">
                                                           <button
@@ -1438,7 +1455,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               const newHolidays = cluster.holidays.filter((_, i) => i !== hIdx);
                                                               updateRegionalCluster(cluster.id, 'holidays', newHolidays);
                                                             }}
-                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover/holiday:opacity-100"
+                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/holiday:opacity-100"
                                                           >
                                                             <Trash2 className="h-4 w-4" />
                                                           </button>
@@ -1447,22 +1464,28 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     ))}
                                                   </div>
 
-                                                  <div className="p-4 bg-slate-50/10 dark:bg-black/10 border-t border-slate-200/30 dark:border-white/5 space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">
-                                                        {cluster.holidays.length} TOTAL BLOCKS
-                                                      </div>
+                                                  {/* Add Custom Exclusion */}
+                                                  <button
+                                                    onClick={() => {
+                                                      updateRegionalCluster(cluster.id, 'holidays', [...cluster.holidays, { id: Date.now().toString(), country: '', days: 0 }]);
+                                                    }}
+                                                    className="flex items-center gap-2 text-xs font-bold text-[#c2652a]/60 hover:text-[#c2652a] transition-colors uppercase tracking-widest px-2 pt-4"
+                                                    style={{ fontFamily: "'Manrope', sans-serif" }}
+                                                  >
+                                                    <Plus className="h-4 w-4" />
+                                                    Add Custom Exclusion
+                                                  </button>
+
+                                                  {/* Summary Stats */}
+                                                  <div className="grid grid-cols-2 gap-4 mt-6">
+                                                    <div className="bg-white/40 p-4 rounded-lg border border-dashed border-[#d8d0c8] flex flex-col items-center justify-center text-center">
+                                                      <p className="text-[10px] font-bold text-[#78706a] uppercase tracking-tighter">Total Days Lost</p>
+                                                      <p className="text-2xl text-[#c2652a]" style={{ fontFamily: "'EB Garamond', serif" }}>{String(totalDaysOff).padStart(2, '0')}</p>
                                                     </div>
-                                                    <Button
-                                                      onClick={() => {
-                                                        updateRegionalCluster(cluster.id, 'holidays', [...cluster.holidays, { id: Date.now().toString(), country: '', days: 0 }]);
-                                                      }}
-                                                      variant="outline"
-                                                      className="w-full h-12 rounded-2xl border-2 border-dashed border-[#e3d1d8] dark:border-[#382f33] bg-transparent hover:bg-[#fcfafb] dark:hover:bg-[#1a1618]/50 text-[#baa1ad] dark:text-[#a08f97] hover:text-[#524147] dark:hover:text-[#e3d1d8] font-black text-[10px] tracking-[0.2em] uppercase transition-all shadow-sm"
-                                                    >
-                                                      <Plus className="h-4 w-4 mr-2" />
-                                                      Add Block Day
-                                                    </Button>
+                                                    <div className="bg-white/40 p-4 rounded-lg border border-dashed border-[#d8d0c8] flex flex-col items-center justify-center text-center">
+                                                      <p className="text-[10px] font-bold text-[#78706a] uppercase tracking-tighter">Regional Net Capacity</p>
+                                                      <p className="text-2xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{sprintDays - totalDaysOff} Days</p>
+                                                    </div>
                                                   </div>
                                                 </div>
                                               </div>
@@ -1479,24 +1502,29 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                           {activeSection === 'team' && (
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                              <div className="flex items-center justify-between px-2">
-                                <div className="space-y-1">
-                                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Core Strategic Roles</h3>
-                                  <p className="text-sm font-medium text-slate-500">Define primary accountability roles for this execution cycle.</p>
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="space-y-2">
+                                  <h3 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight italic" style={{ fontFamily: "'EB Garamond', serif" }}>Engineering Resources</h3>
+                                  <p className="text-[14px] text-[#605850] max-w-3xl leading-relaxed" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                    Strategic orchestration of team availability and resource distribution across core<br/>
+                                    platform domains. Managing velocity and global talent alignment.
+                                  </p>
                                 </div>
-                                <Button onClick={addForceRole} className="rounded-2xl h-12 bg-white/60 dark:bg-black/40 border border-white/80 dark:border-white/10 hover:bg-white dark:hover:bg-white/5 text-slate-900 dark:text-white font-bold text-xs uppercase tracking-widest px-8 shadow-sm transition-all focus:ring-0">
-                                  <Plus className="h-4 w-4 mr-2" /> Assign Pivot Role
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                  <button onClick={addForceRole} className="flex items-center gap-2 bg-[#f2ece4] text-[#c2652a] px-5 py-2.5 rounded-lg font-medium text-xs shadow-sm hover:bg-[#c2652a]/10 transition-all active:scale-95" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                    <Plus className="h-4 w-4" /> <span className="uppercase tracking-widest font-bold text-[10px]">Assign Pivot Role</span>
+                                  </button>
+                                </div>
                               </div>
 
                               {/* BENTO GRID: Core Roles */}
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                 {forceRoles.map((role) => (
-                                  <div key={role.id} className="relative bg-[#eee8eb]/80 dark:bg-[#221e20]/80 backdrop-blur-2xl border-2 border-[#e3d2d8]/60 dark:border-[#3d3336]/60 rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group/role hover:shadow-xl transition-all duration-500 hover:border-[#dbc6cd]/80 hover:-translate-y-1">
+                                  <div key={role.id} className="bg-white p-8 rounded-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/40 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_4px_20px_rgba(58,48,42,0.08)] group/role hover:-translate-y-1">
                                     <div className="flex flex-col gap-6">
                                       <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-5">
-                                          <div className={cn("h-14 w-14 rounded-3xl flex items-center justify-center shadow-inner transition-transform duration-300 group-hover/role:scale-110", role.bg)}>
+                                          <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner transition-transform duration-300 group-hover/role:scale-110", role.bg)}>
                                             <role.icon className={cn("h-6 w-6", role.color)} />
                                           </div>
                                           <div>
@@ -1508,21 +1536,22 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditingRoleId(null)}
                                                 autoFocus
                                                 placeholder="Role Designation"
-                                                className="h-12 -ml-3 px-4 w-60 bg-[#fcfafb] dark:bg-[#1a1618] border-2 border-[#e3d1d8] dark:border-[#382f33] rounded-[1rem] text-xl font-black text-[#362b2f] dark:text-white tracking-tight leading-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] transition-all duration-300 relative z-[100]"
+                                                className="h-10 -ml-2 px-2 w-60 bg-transparent border-none shadow-none text-2xl text-[#3a302a] focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:border-none relative z-[100]"
+                                                style={{ fontFamily: "'EB Garamond', serif" }}
                                               />
                                             ) : (
-                                              <h4 onClick={() => setEditingRoleId(role.id)} className="text-xl font-black text-[#362b2f] dark:text-white tracking-tight leading-none hover:text-[#9e768a] transition-colors cursor-pointer block">
+                                              <h4 onClick={() => setEditingRoleId(role.id)} className="text-2xl text-[#3a302a] hover:text-[#c2652a] transition-colors cursor-pointer block" style={{ fontFamily: "'EB Garamond', serif" }}>
                                                 {role.label || 'Unnamed Role'}
                                               </h4>
                                             )}
-                                            <div className="text-[10px] uppercase font-black tracking-widest text-[#8a7a81] dark:text-[#a08f97] mt-1">Force Responsibility</div>
+                                            <div className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#c2652a]/70 mt-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Force Responsibility</div>
                                           </div>
                                         </div>
                                         
                                         <div className="flex items-center gap-3">
-                                          <Button variant="ghost" size="icon" onClick={() => confirmDelete('Delete Role?', `Are you sure you want to remove "${role.label || 'this'}"?`, () => deleteForceRole(role.id))} className="h-10 w-10 text-[#baa1ad] hover:text-[#ba4f6c] hover:bg-[#fad0da]/50 dark:hover:bg-rose-950/50 rounded-full opacity-0 group-hover/role:opacity-100 transition-all scale-90 group-hover/role:scale-100 shadow-sm">
+                                          <button onClick={() => confirmDelete('Delete Role?', `Are you sure you want to remove "${role.label || 'this'}"?`, () => deleteForceRole(role.id))} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/role:opacity-100">
                                             <Trash2 className="h-4 w-4" />
-                                          </Button>
+                                          </button>
                                         </div>
                                       </div>
                                       
@@ -1530,34 +1559,34 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <Select onValueChange={(val: string) => {
                                           setForceRoles(prev => prev.map(r => r.id === role.id ? { ...r, assignedMember: val } : r));
                                         }} value={role.assignedMember || ""}>
-                                          <SelectTrigger className="h-16 w-full bg-[#fcfafb]/90 dark:bg-[#1a1618]/60 rounded-2xl border-2 border-[#e3d1d8]/50 dark:border-[#382f33]/50 focus:ring-0 group-hover/role:border-[#cfb6c3] dark:group-hover/role:border-[#524147] transition-all font-bold text-[#55474d] dark:text-[#d3c8cc] text-base shadow-sm">
+                                          <SelectTrigger className="h-14 w-full bg-[#f2ece4] rounded-lg border border-[#d8d0c8]/40 focus:ring-0 group-hover/role:border-[#c2652a]/40 transition-all font-medium text-[#3a302a] text-sm shadow-sm" style={{ fontFamily: "'Manrope', sans-serif" }}>
                                             <SelectValue placeholder="Assign Commander..." />
                                           </SelectTrigger>
-                                          <SelectContent className="rounded-[1.5rem] border shadow-2xl p-2 bg-white/95 dark:bg-[#121318]/95 backdrop-blur-2xl border-white/50 dark:border-white/5 z-50">
-                                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 py-3">Available Directory</div>
+                                          <SelectContent className="rounded-xl border shadow-xl p-2 bg-white border-[#d8d0c8]/40 z-50">
+                                            <div className="text-[10px] font-black text-[#9a9088] uppercase tracking-widest px-4 py-3">Available Directory</div>
                                             {orgMembers.length > 0 ? orgMembers.map((member: any) => (
-                                              <SelectItem key={member.id} value={member.id} textValue={member.display_name || member.email} className="rounded-[1.25rem] py-3 px-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                              <SelectItem key={member.id} value={member.id} textValue={member.display_name || member.email} className="rounded-[1.25rem] py-3 px-4 cursor-pointer hover:bg-[#f6f0e8] transition-colors">
                                                 <div className="flex items-center gap-3">
-                                                  <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-800 shrink-0">
-                                                    <AvatarFallback className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 text-xs font-bold">
+                                                  <Avatar className="h-10 w-10 border border-[#d8d0c8] dark:border-slate-800 shrink-0">
+                                                    <AvatarFallback className="bg-[#fbe8d8] text-[#8a4518] text-xs font-bold">
                                                       {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
                                                     </AvatarFallback>
                                                   </Avatar>
                                                   <div className="flex flex-col items-start overflow-hidden">
                                                     <div className="flex items-center gap-2">
-                                                      <span className="font-bold text-slate-900 dark:text-white truncate">{member.display_name || member.email}</span>
+                                                      <span className="font-bold text-[#3a302a] truncate">{member.display_name || member.email}</span>
                                                       {member.department?.name && (
-                                                        <Badge variant="outline" className="text-[9px] uppercase font-black tracking-wider px-2 py-0 border-indigo-100 dark:border-indigo-900/40 text-indigo-600 dark:text-indigo-400 h-[18px]">
+                                                        <Badge variant="outline" className="text-[9px] uppercase font-black tracking-wider px-2 py-0 border-[#f0a878]/40 text-[#c2652a] h-[18px]">
                                                           {member.department.name}
                                                         </Badge>
                                                       )}
                                                     </div>
-                                                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-500 truncate mt-0.5">{member.email}</span>
+                                                    <span className="text-[10px] font-medium text-[#605850] dark:text-[#605850] truncate mt-0.5">{member.email}</span>
                                                   </div>
                                                 </div>
                                               </SelectItem>
                                             )) : (
-                                              <div className="p-4 text-sm font-medium text-slate-500 text-center">Directory empty</div>
+                                              <div className="p-4 text-sm font-medium text-[#605850] text-center">Directory empty</div>
                                             )}
                                           </SelectContent>
                                         </Select>
@@ -1568,11 +1597,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               </div>
 
                               <div className="space-y-6 pt-10">
-                                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
-                                    <div className="space-y-1 w-full sm:w-auto">
-                                      <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Platform Resource Matrix</h3>
-                                      <p className="text-sm font-medium text-slate-500">Global engineering allocation across active services.</p>
-                                    </div>
+                                  <div className="flex justify-between items-center border-b border-[#d8d0c8]/40 pb-4">
+                                    <h4 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Platform Matrix</h4>
                                     <div className="flex items-center gap-3">
                                       <div className="flex gap-2 items-center">
                                         <Input
@@ -1580,19 +1606,20 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           value={newPlatformName}
                                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
                                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
-                                          className="h-9 w-48 bg-white/60 dark:bg-black/20 border border-slate-200/50 dark:border-white/10 rounded-xl text-sm font-bold shadow-none focus-visible:ring-2 focus-visible:ring-slate-300/50 placeholder:text-slate-400 transition-all"
+                                          className="h-10 w-48 bg-white border border-[#d8d0c8]/40 rounded-lg text-sm shadow-sm focus-visible:ring-0 focus-visible:border-[#c2652a]/40 placeholder:text-[#d8d0c8] transition-all"
+                                          style={{ fontFamily: "'Manrope', sans-serif" }}
                                         />
-                                        <Button
+                                        <button
                                           onClick={addPlatform}
                                           disabled={!newPlatformName.trim()}
-                                          className="h-9 bg-slate-900 hover:bg-black dark:bg-white dark:text-black dark:hover:bg-slate-200 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] px-4 shadow-sm transition-all active:scale-95"
+                                          className="flex items-center gap-2 bg-[#f2ece4] text-[#c2652a] px-4 py-2 rounded-lg font-medium text-xs shadow-sm hover:bg-[#c2652a]/10 transition-all active:scale-95 h-10 border-none disabled:opacity-50 disabled:cursor-not-allowed" 
+                                          style={{ fontFamily: "'Manrope', sans-serif" }}
                                         >
-                                          <Plus className="h-3.5 w-3.5 mr-1.5" />
-                                          Add
-                                        </Button>
+                                          <Plus className="h-4 w-4" /> <span className="uppercase tracking-widest font-bold text-[10px]">Add</span>
+                                        </button>
                                       </div>
                                       {platforms.length > 0 && (
-                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">{platforms.length} Active</div>
+                                        <div className="text-xs font-bold text-[#9a9088] uppercase tracking-widest ml-2" style={{ fontFamily: "'Manrope', sans-serif" }}>{platforms.length} Active</div>
                                       )}
                                     </div>
                                   </div>
@@ -1600,127 +1627,115 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   <div className="flex flex-col gap-3">
                                     {platforms.map((platform) => (
                                       <div key={platform.id} className={cn(
-                                        "backdrop-blur-2xl rounded-2xl shadow-sm overflow-hidden group/acc transition-all duration-500",
+                                        "bg-white rounded-xl overflow-hidden group/acc transition-all duration-300 border border-[#d8d0c8]/40",
                                         platform.isExpanded 
-                                          ? "bg-[#e8dbe0]/95 dark:bg-[#201c1e]/90 border-2 border-[#e3d1d8]/80 dark:border-[#382f33]/80 shadow-2xl"
-                                          : "bg-white/60 dark:bg-[#121318]/60 border border-white/60 dark:border-white/10 hover:border-slate-300/50 dark:hover:border-slate-700/50"
+                                          ? "shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] border-[#c2652a]/40"
+                                          : "shadow-[0_2px_8px_rgba(58,48,42,0.02)] hover:shadow-[0_4px_16px_rgba(58,48,42,0.04)]"
                                       )}>
                                         
                                         {/* ACCORDION ROW HEADER */}
                                         <div 
                                           onClick={() => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, isExpanded: !p.isExpanded } : p))}
                                           className={cn(
-                                            "flex items-center justify-between p-4 cursor-pointer transition-colors select-none relative overflow-hidden",
-                                            platform.isExpanded ? "bg-[#debnd4]/80 dark:bg-[#2b2528]/80" : "hover:bg-white/80 dark:hover:bg-white/5"
+                                            "flex items-center justify-between p-5 cursor-pointer transition-colors select-none relative overflow-hidden",
+                                            platform.isExpanded ? "bg-[#f2ece4]/50" : "hover:bg-[#f2ece4]/30"
                                           )}
                                         >
-                                          {platform.isExpanded && (
-                                            <div className="absolute top-0 left-0 w-full h-full bg-black/5 dark:bg-black/20 pointer-events-none" />
-                                          )}
-
                                           <div className="flex items-center gap-4 w-1/4 relative z-10">
                                             <div className={cn(
-                                              "h-10 w-10 rounded-[0.8rem] flex items-center justify-center shrink-0 border group-hover/acc:scale-105 transition-all duration-300",
+                                              "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border group-hover/acc:scale-105 transition-all duration-300",
                                               platform.isExpanded
-                                                ? "bg-[#d4c5cb] border-[#c4b3ba] dark:bg-[#3c3437] dark:border-[#4d4447] text-[#42363b] dark:text-[#ede4e7] shadow-inner shadow-black/5"
-                                                : "bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"
+                                                ? "bg-white border-[#d8d0c8]/40 text-[#c2652a] shadow-sm"
+                                                : "bg-[#f2ece4] border-transparent text-[#605850]"
                                             )}>
-                                               <LayoutDashboard className="h-5 w-5" />
+                                               <LayoutDashboard className="h-6 w-6" />
                                             </div>
                                             <div className="flex flex-col">
-                                              <h4 className={cn("text-sm font-black leading-none transition-colors", platform.isExpanded ? "text-[#362b2f] dark:text-white" : "text-slate-900 dark:text-white")}>{platform.name}</h4>
-                                              <span className={cn("text-[9px] font-bold uppercase tracking-widest mt-1 transition-colors", platform.isExpanded ? "text-[#7a6b72] dark:text-[#a08f97]" : "text-slate-400")}>Domain</span>
+                                              <h4 className="text-xl md:text-2xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{platform.name}</h4>
+                                              <span className="text-[10px] uppercase tracking-widest text-[#78706a] mt-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>Domain</span>
                                             </div>
                                           </div>
 
-                                          <div className="flex items-center gap-6 w-1/2 justify-center px-4 relative z-10" onClick={(e) => e.stopPropagation()}>
+                                          <div className="flex items-center gap-6 w-1/2 justify-center px-4 relative z-10">
                                             <div className="flex items-center gap-2">
-                                              <span className={cn("text-[9px] font-black uppercase tracking-widest transition-colors", platform.isExpanded ? "text-[#665a60] dark:text-[#b5a7af]" : "text-slate-400")}>Total SP</span>
+                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Total SP</span>
                                               <Input 
                                                 type="number" 
-                                                className={cn(
-                                                  "h-9 w-20 border rounded-lg text-sm font-black px-2 py-0 text-center focus-visible:ring-0 shadow-sm transition-colors",
-                                                  platform.isExpanded 
-                                                    ? "bg-[#faf7f8] dark:bg-[#1a1618]/60 border-[#d6c4cb] dark:border-[#453c40] text-[#42363b] dark:text-white"
-                                                    : "bg-white dark:bg-black/40 border-slate-200/50 dark:border-slate-800 text-slate-900 dark:text-white"
-                                                )}
+                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#3a302a] transition-all"
+                                                style={{ fontFamily: "'EB Garamond', serif" }}
                                                 value={platform.totalStoryPoints || ''} 
+                                                onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))} 
                                                 placeholder="0"
                                               />
                                             </div>
                                             <div className="flex items-center gap-2">
-                                              <span className={cn("text-[9px] font-black uppercase tracking-widest transition-colors", platform.isExpanded ? "text-[#665a60] dark:text-[#b5a7af]" : "text-slate-400")}>Alpha %</span>
+                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Alpha %</span>
                                               <Input 
                                                 type="number" 
-                                                className={cn(
-                                                  "h-9 w-20 border rounded-lg text-sm font-black px-2 py-0 text-center focus-visible:ring-0 shadow-sm transition-colors",
-                                                  platform.isExpanded 
-                                                    ? "bg-[#faf7f8] dark:bg-[#1a1618]/60 border-[#d6c4cb] dark:border-[#453c40] text-rose-500"
-                                                    : "bg-white dark:bg-black/40 border-slate-200/50 dark:border-slate-800 text-rose-500"
-                                                )}
+                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
+                                                style={{ fontFamily: "'EB Garamond', serif" }}
                                                 value={platform.targetImprovement || ''} 
+                                                onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))} 
                                                 placeholder="0"
                                               />
                                             </div>
                                             <div className="flex items-center gap-2">
-                                              <span className={cn("text-[9px] font-black uppercase tracking-widest transition-colors", platform.isExpanded ? "text-[#665a60] dark:text-[#b5a7af]" : "text-slate-400")}>SP/Day</span>
+                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>SP/Day</span>
                                               <Input 
                                                 type="number" 
-                                                className={cn(
-                                                  "h-9 w-20 border rounded-lg text-sm font-black px-2 py-0 text-center focus-visible:ring-0 shadow-sm transition-colors",
-                                                  platform.isExpanded 
-                                                    ? "bg-[#faf7f8] dark:bg-[#1a1618]/60 border-[#d6c4cb] dark:border-[#453c40] text-amber-600"
-                                                    : "bg-white dark:bg-black/40 border-slate-200/50 dark:border-slate-800 text-amber-500"
-                                                )}
+                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
+                                                style={{ fontFamily: "'EB Garamond', serif" }}
                                                 value={platform.targetVelocity || ''} 
+                                                onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))} 
                                                 placeholder="0"
                                               />
                                             </div>
                                           </div>
 
-                                          <div className="flex items-center gap-4 w-1/4 justify-end relative z-10">
-                                            <div className={cn(
-                                              "flex items-center justify-center h-8 px-3 rounded-[0.6rem] shadow-sm transition-colors",
-                                              platform.isExpanded ? "bg-[#54464b] dark:bg-[#efebed]" : "bg-slate-900 dark:bg-white"
-                                            )}>
-                                              <span className={cn("text-[10px] font-black uppercase tracking-widest leading-none mt-px", platform.isExpanded ? "text-white dark:text-[#362b2f]" : "text-white dark:text-black")}>{platform.members.length} Devs</span>
+                                          <div className="flex items-center gap-3 w-1/4 justify-end relative z-10">
+                                            <div className="flex items-center justify-center h-8 px-3 rounded-lg bg-[#f2ece4] border border-[#d8d0c8]/40 shadow-sm transition-colors">
+                                              <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-px text-[#c2652a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{platform.members.length} Devs</span>
                                             </div>
-                                            <div className={cn(
-                                              "h-8 w-8 flex items-center justify-center rounded-lg border transition-colors shadow-sm",
-                                              platform.isExpanded 
-                                                ? "bg-[#d8cdd2] dark:bg-[#342c2f] border-[#c4b5bc] dark:border-[#4a4043] text-[#4d4045] dark:text-[#cfc5c9]" 
-                                                : "bg-white dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-400 group-hover/acc:text-slate-600 dark:group-hover/acc:text-slate-300"
-                                            )}>
-                                               <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", platform.isExpanded ? "rotate-180" : "")} />
+                                            <button 
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                confirmDelete('Delete Platform?', `Are you sure you want to remove "${platform.name}"?`, () => deletePlatform(platform.id))
+                                              }} 
+                                              className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/acc:opacity-100"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </button>
+                                            <div className={cn("transition-transform duration-300", platform.isExpanded ? "rotate-180 text-[#3a302a]" : "text-[#d8d0c8] group-hover/acc:text-[#9a9088]")}>
+                                              <ChevronDown className="h-5 w-5" />
                                             </div>
                                           </div>
                                         </div>
 
                                         {/* ACCORDION BODY (EXPANDED) */}
                                         {platform.isExpanded && (
-                                          <div className="border-t border-white/50 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
+                                          <div className="border-t border-[#d8d0c8]/40 bg-[#f6f0e8]/50  p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
                                             
                                             {/* Inject Button */}
                                             <div className="w-full relative group/member">
                                               <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                  <button className="w-full text-left h-12 pl-12 pr-6 bg-white/80 dark:bg-black/40 border-[2px] border-dashed border-slate-300/60 dark:border-slate-800 rounded-xl text-xs font-black text-slate-400 hover:text-indigo-600 hover:border-indigo-300 dark:hover:border-indigo-600/30 dark:hover:text-white focus:outline-none focus:ring-0 transition-all uppercase tracking-widest shadow-sm block relative overflow-hidden">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover/member:text-indigo-500 transition-colors">
+                                                  <button className="w-full text-left h-12 pl-12 pr-6 bg-white/80  border-[2px] border-dashed border-[#d8d0c8]/60 dark:border-slate-800 rounded-xl text-xs font-black text-[#9a9088] hover:text-[#c2652a] hover:border-[#f0a878]  dark:hover:text-white focus:outline-none focus:ring-0 transition-all uppercase tracking-widest shadow-sm block relative overflow-hidden">
+                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9a9088] group-hover/member:text-[#c2652a] transition-colors">
                                                       <Plus className="h-4 w-4" />
                                                     </div>
                                                     Inject Resource Node
                                                   </button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 dark:bg-[#121318]/95 backdrop-blur-2xl border-white/20 dark:border-white/5 border">
-                                                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 py-3">Available Org Members</div>
+                                                <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 backdrop-blur-2xl border-white/20  border">
+                                                  <div className="text-[10px] font-black text-[#9a9088] uppercase tracking-widest px-4 py-3">Available Org Members</div>
                                                   <div className="max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                                                     {orgMembers.length > 0 ? orgMembers.map((member: any) => (
                                                       <DropdownMenuItem 
                                                         key={member.id} 
-                                                        className="rounded-[1.25rem] py-3 px-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-4"
+                                                        className="rounded-[1.25rem] py-3 px-3 cursor-pointer hover:bg-[#f6f0e8] transition-colors flex items-center gap-4"
                                                         onClick={() => {
                                                           const val = member.id;
                                                           if (val && !platform.members.includes(val)) {
@@ -1728,26 +1743,26 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                           }
                                                         }}
                                                       >
-                                                        <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-800 shrink-0 shadow-sm">
-                                                          <AvatarFallback className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-bold">
+                                                        <Avatar className="h-10 w-10 border border-[#d8d0c8] dark:border-slate-800 shrink-0 shadow-sm">
+                                                          <AvatarFallback className="bg-[#fbe8d8] text-[#8a4518] font-bold">
                                                             {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
                                                           </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col overflow-hidden">
-                                                          <span className="font-bold text-slate-900 dark:text-white truncate text-sm">{member.display_name || member.email}</span>
+                                                          <span className="font-bold text-[#3a302a] truncate text-sm">{member.display_name || member.email}</span>
                                                           <div className="flex items-center gap-1.5 mt-0.5">
-                                                            <span className="text-[10px] font-medium text-slate-500 truncate">{member.email}</span>
+                                                            <span className="text-[10px] font-medium text-[#605850] truncate">{member.email}</span>
                                                             {member.department?.name && (
                                                               <>
-                                                                <span className="text-[8px] text-slate-300 dark:text-slate-700">•</span>
-                                                                <span className="text-[9px] text-indigo-500/80 font-black uppercase tracking-widest">{member.department.name}</span>
+                                                                <span className="text-[8px] text-[#d8d0c8] dark:text-[#3a302a]">•</span>
+                                                                <span className="text-[9px] text-[#c2652a]/80 font-black uppercase tracking-widest">{member.department.name}</span>
                                                               </>
                                                             )}
                                                           </div>
                                                         </div>
                                                       </DropdownMenuItem>
                                                     )) : (
-                                                      <div className="p-4 text-sm font-medium text-slate-500 text-center">No unassigned members</div>
+                                                      <div className="p-4 text-sm font-medium text-[#605850] text-center">No unassigned members</div>
                                                     )}
                                                   </div>
                                                 </DropdownMenuContent>
@@ -1758,11 +1773,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             {platform.members.length > 0 && (
                                               <div className="space-y-2">
                                                 {/* Header */}
-                                                <div className="grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 px-3 pb-1 border-b border-slate-200/50 dark:border-white/10">
-                                                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Node Identity</label>
-                                                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Geo</label>
-                                                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Alloc %</label>
-                                                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center">Out (D)</label>
+                                                <div className="grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 px-3 pb-2 border-b border-[#d8d0c8]/40">
+                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Node Identity</label>
+                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Geo</label>
+                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Alloc %</label>
+                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Out (D)</label>
                                                   <div />
                                                 </div>
 
@@ -1795,36 +1810,36 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     };
 
                                                     return (
-                                                      <div key={idx} className="group/row p-2 rounded-xl bg-white dark:bg-black/40 border border-slate-200/50 dark:border-white/5 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900/40 transition-all grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 items-center">
+                                                      <div key={idx} className="group/row p-2 rounded-xl bg-white border border-[#d8d0c8]/40 shadow-sm focus-within:shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] focus-within:border-[#c2652a]/40 transition-all grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 items-center">
                                                         <div className="flex items-center gap-3 min-w-0 pr-1">
-                                                          <Avatar className="h-8 w-8 rounded-lg border border-slate-100 dark:border-slate-800 shrink-0">
+                                                          <Avatar className="h-8 w-8 rounded-lg border border-[#d8d0c8]/40 shrink-0">
                                                             {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
-                                                            <AvatarFallback className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 font-bold text-[9px]">{initials}</AvatarFallback>
+                                                            <AvatarFallback className="bg-[#f2ece4] text-[#c2652a] font-bold text-[10px]" style={{ fontFamily: "'Manrope', sans-serif" }}>{initials}</AvatarFallback>
                                                           </Avatar>
                                                           <div className="flex flex-col min-w-0">
-                                                            <span className="text-xs font-black text-slate-900 dark:text-white leading-none truncate mb-0.5">{displayName}</span>
-                                                            <span className="text-[9px] text-slate-400 font-bold truncate leading-none uppercase tracking-widest">{memberObj?.department?.name || 'Engineer'}</span>
+                                                            <span className="text-sm font-medium text-[#3a302a] leading-none truncate mb-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>{displayName}</span>
+                                                            <span className="text-[10px] text-[#9a9088] uppercase tracking-widest truncate leading-none" style={{ fontFamily: "'Manrope', sans-serif" }}>{memberObj?.department?.name || 'Engineer'}</span>
                                                           </div>
                                                         </div>
 
                                                         <div className="w-[90px]">
                                                           <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
-                                                            <SelectTrigger className="h-9 bg-slate-50 dark:bg-black/40 rounded-lg font-black text-[9px] border border-slate-200/50 dark:border-slate-800 shadow-none focus:ring-0 uppercase text-slate-600 dark:text-slate-300 px-2">
+                                                            <SelectTrigger className="h-9 bg-[#f2ece4] rounded-lg border-none focus:ring-0 text-xs font-medium text-[#3a302a] px-3 shadow-none group-focus-within/row:bg-white transition-all" style={{ fontFamily: "'Manrope', sans-serif" }}>
                                                               {details.country ? (regionalClusters.find(rc => rc.id === details.country)?.countryCode || details.country) : "REG"}
                                                             </SelectTrigger>
-                                                            <SelectContent className="rounded-xl border-slate-100 dark:border-white/5 shadow-xl bg-white/95 dark:bg-[#121318]/95 backdrop-blur-xl">
+                                                            <SelectContent className="rounded-xl border border-[#d8d0c8]/40 shadow-xl bg-white p-1">
                                                               {regionalClusters.map(rc => {
                                                                 const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H` : 'None';
                                                                 return (
-                                                                  <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3">
+                                                                  <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors">
                                                                     <div className="flex items-center justify-between gap-4 w-[120px]">
-                                                                      <span className="font-bold">{rc.countryCode || 'Node'}</span>
-                                                                      <span className="text-[9px] text-slate-400 font-black">{holidaySummary}</span>
+                                                                      <span className="font-medium text-[#3a302a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{rc.countryCode || 'Node'}</span>
+                                                                      <span className="text-[10px] text-[#9a9088] font-bold">{holidaySummary}</span>
                                                                     </div>
                                                                   </SelectItem>
                                                                 );
                                                               })}
-                                                              <SelectItem value="Other" className="rounded-lg text-xs font-black text-slate-400 py-1.5 pl-8 pr-3">OTHER</SelectItem>
+                                                              <SelectItem value="Other" className="rounded-lg text-xs font-medium text-[#9a9088] py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors" style={{ fontFamily: "'Manrope', sans-serif" }}>OTHER</SelectItem>
                                                             </SelectContent>
                                                           </Select>
                                                         </div>
@@ -1832,33 +1847,33 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="relative w-full">
                                                           <Input
                                                             type="number"
-                                                            className="h-9 bg-slate-50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800 rounded-lg font-black text-sm shadow-none focus-visible:ring-0 px-2 pr-5 text-center tracking-tight"
+                                                            className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#3a302a] group-focus-within/row:bg-white transition-all"
+                                                            style={{ fontFamily: "'EB Garamond', serif" }}
                                                             value={Math.round(details.capacity * 100) || ''}
                                                             placeholder="100"
                                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value) / 100)}
                                                           />
-                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 pointer-events-none">%</span>
+                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">%</span>
                                                         </div>
 
                                                         <div className="relative w-full">
                                                           <Input
                                                             type="number"
-                                                            className="h-9 bg-slate-50 dark:bg-black/40 border border-slate-200/50 dark:border-slate-800 rounded-lg font-black text-sm shadow-none focus-visible:ring-0 px-2 pr-5 text-center tracking-tight text-rose-500"
+                                                            className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#8c3c3c] group-focus-within/row:bg-white transition-all"
+                                                            style={{ fontFamily: "'EB Garamond', serif" }}
                                                             value={details.plannedLeave || ''}
                                                             placeholder="0"
                                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
                                                           />
-                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 pointer-events-none">D</span>
+                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">D</span>
                                                         </div>
 
-                                                        <Button
-                                                          variant="ghost"
-                                                          size="icon"
+                                                        <button
                                                           onClick={() => confirmDelete('Disengage Node', `Are you sure you want to disengage ${displayName} from ${platform.name}?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
-                                                          className="h-8 w-8 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50/80 transition-all shrink-0 ml-auto scale-90 opacity-0 group-hover/row:opacity-100 group-hover/row:scale-100 shadow-sm"
+                                                          className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/row:opacity-100 ml-auto"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        </button>
                                                       </div>
                                                     );
                                                   })}
@@ -1878,21 +1893,21 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
                               <div className="flex items-center justify-between px-2">
                                 <div className="space-y-1">
-                                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Strategic Project Priorities</h3>
-                                  <p className="text-sm font-medium text-slate-500">Prioritize mission-critical deliverables and service enhancements.</p>
+                                  <h3 className="text-xl font-black text-[#3a302a] tracking-tight">Strategic Project Priorities</h3>
+                                  <p className="text-sm font-medium text-[#605850]">Prioritize mission-critical deliverables and service enhancements.</p>
                                 </div>
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {[
                                   { label: 'P0 - Critical', value: projects.filter(p => p.priority === 'critical').length, color: 'text-rose-500', bg: 'bg-[#fad0da]/50 dark:bg-rose-950/30 border border-white/40 dark:border-rose-900/40', icon: ShieldAlert },
-                                  { label: 'P1 - High', value: projects.filter(p => p.priority === 'high').length, color: 'text-indigo-500', bg: 'bg-[#d0dbfa]/50 dark:bg-indigo-950/30 border border-white/40 dark:border-indigo-900/40', icon: Zap },
+                                  { label: 'P1 - High', value: projects.filter(p => p.priority === 'high').length, color: 'text-[#c2652a]', bg: 'bg-[#fbe8d8]/50 border border-white/40 border-[#f0a878]/40', icon: Zap },
                                   { label: 'P2 - Maintenance', value: projects.filter(p => p.priority === 'medium').length, color: 'text-[#8a7a81] dark:text-[#a08f97]', bg: 'bg-[#ede9eb]/70 dark:bg-[#201c1e] border border-white/40 dark:border-[#382f33]/60', icon: Target }
                                 ].map((stat, i) => (
                                   <div key={i} className="p-6 rounded-[2.5rem] bg-[#eee8eb]/80 dark:bg-[#221e20]/80 backdrop-blur-2xl border-2 border-[#e3d2d8]/60 dark:border-[#3d3336]/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between group hover:shadow-xl transition-all duration-500 hover:border-[#dbc6cd]/80 hover:-translate-y-1">
                                     <div className="space-y-1">
                                       <p className="text-[10px] font-black text-[#8a7a81] dark:text-[#a08f97] uppercase tracking-widest">{stat.label}</p>
-                                      <p className="text-3xl font-black text-[#362b2f] dark:text-white tracking-tighter">{stat.value}</p>
+                                      <p className="text-3xl font-black text-[#362b2f]  tracking-tighter">{stat.value}</p>
                                     </div>
                                     <div className={cn("h-14 w-14 rounded-[1.2rem] shadow-inner flex items-center justify-center transition-transform group-hover:rotate-12", stat.bg)}>
                                       <stat.icon className={cn("h-6 w-6 border-0", stat.color)} />
@@ -1903,7 +1918,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                               <div className="mt-12 flex items-center justify-between px-2">
                                 <div className="space-y-1 mb-6">
-                                  <h3 className="text-xl font-black text-[#524147] dark:text-white tracking-tight">Initiative Registry</h3>
+                                  <h3 className="text-xl font-black text-[#524147]  tracking-tight">Initiative Registry</h3>
                                   <p className="text-sm font-medium text-[#baa1ad] dark:text-[#a08f97]">Formally track actionable items mapped against business value.</p>
                                 </div>
                               </div>
@@ -1921,7 +1936,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       "backdrop-blur-2xl rounded-[1.5rem] overflow-hidden group/row transition-all duration-500 border relative flex flex-col group/p z-10 hover:z-20",
                                       isExpanded
                                         ? "bg-[#eee8eb]/80 dark:bg-[#1a1618]/80 border-[#dbc6cd] dark:border-[#382f33] shadow-2xl ring-1 ring-[#e3d1d8]/30 dark:ring-[#382f33]/30"
-                                        : "bg-white/60 dark:bg-[#1a1618]/60 border-white/60 dark:border-white/5 hover:-translate-y-1 hover:border-[#dbc6cd]/80 dark:hover:border-[#382f33]/80 hover:shadow-xl"
+                                        : "bg-white/60 dark:bg-[#1a1618]/60 border-white/60  hover:-translate-y-1 hover:border-[#dbc6cd]/80 dark:hover:border-[#382f33]/80 hover:shadow-xl"
                                     )}>
                                       
                                       {/* Top Row: Index | Name | Priority | Remarks | Allocation Badge | Net Pts | Expand | Delete */}
@@ -1934,7 +1949,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           <Input
                                             value={project.name}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'name', e.target.value)}
-                                            className="h-12 w-full bg-transparent border-transparent px-3 text-lg font-black text-[#362b2f] dark:text-white tracking-tight leading-none hover:bg-white/60 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] transition-all duration-300 relative z-[100]"
+                                            className="h-12 w-full bg-transparent border-transparent px-3 text-lg font-black text-[#362b2f]  tracking-tight leading-none hover:bg-white/60 focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] transition-all duration-300 relative z-[100]"
                                             placeholder="Enter Project Name, ex: MyApp 1.2.0"
                                           />
                                         </div>
@@ -1943,18 +1958,18 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           <Select value={project.priority || 'medium'} onValueChange={(val: string) => updateProject(project.id, 'priority', val)}>
                                             <SelectTrigger className={cn(
                                               "h-10 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] border-0 transition-all shadow-sm focus:ring-0",
-                                              (project.priority || 'medium') === 'critical' ? "bg-gradient-to-r from-rose-100 via-white to-rose-100 dark:from-[#3a1a21] dark:via-[#1a1618] dark:to-[#3a1a21] text-rose-600 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 shadow-inner" :
-                                              (project.priority || 'medium') === 'high' ? "bg-gradient-to-r from-indigo-100 via-white to-indigo-100 dark:from-[#1a1c32] dark:via-[#1a1618] dark:to-[#1a1c32] text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-900/50 shadow-inner" :
+                                              (project.priority || 'medium') === 'critical' ? "bg-gradient-to-r from-rose-100 via-white to-rose-100 dark:from-[#3a1a21] dark:via-[#1a1618] dark:to-[#3a1a21] text-[#8c3c3c] dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 shadow-inner" :
+                                              (project.priority || 'medium') === 'high' ? "bg-gradient-to-r from-[#fbe8d8] via-white to-[#fbe8d8] text-[#c2652a] border border-[#f0a878]/60 shadow-inner" :
                                               (project.priority || 'medium') === 'medium' ? "bg-gradient-to-r from-[#e3d1d8] via-white to-[#e3d1d8] dark:from-[#2a2225] dark:via-[#1a1618] dark:to-[#2a2225] text-[#8a7a81] dark:text-[#baa1ad] border border-[#cdaec1] dark:border-[#382f33] shadow-inner" :
-                                              "bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-[#222222] dark:via-[#1a1618] dark:to-[#222222] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/5 shadow-inner"
+                                              "bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-[#222222] dark:via-[#1a1618] dark:to-[#222222] text-gray-500 dark:text-gray-400 border border-gray-200  shadow-inner"
                                             )}>
                                               <SelectValue placeholder="PRIORITY">
                                                 {project.priority ? project.priority.toUpperCase() : 'MEDIUM'}
                                               </SelectValue>
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-[1.2rem] border shadow-2xl p-2 bg-white/95 dark:bg-[#121318]/95 backdrop-blur-2xl border-white/50 dark:border-white/5 z-[200]">
-                                              <SelectItem value="critical" className="rounded-xl font-bold text-rose-600 focus:bg-rose-50 dark:focus:bg-rose-950/40">Critical</SelectItem>
-                                              <SelectItem value="high" className="rounded-xl font-bold text-indigo-600 focus:bg-indigo-50 dark:focus:bg-indigo-950/40">High</SelectItem>
+                                            <SelectContent className="rounded-[1.2rem] border shadow-2xl p-2 bg-white/95 backdrop-blur-2xl border-[#d8d0c8]/40 z-[200]">
+                                              <SelectItem value="critical" className="rounded-xl font-bold text-[#8c3c3c] focus:bg-rose-50 dark:focus:bg-rose-950/40">Critical</SelectItem>
+                                              <SelectItem value="high" className="rounded-xl font-bold text-[#c2652a] focus:bg-[#fbe8d8] dark:focus:bg-[#fbe8d8]">High</SelectItem>
                                               <SelectItem value="medium" className="rounded-xl font-bold text-[#baa1ad] focus:bg-[#fcfafb] dark:focus:bg-[#201c1e]">Medium</SelectItem>
                                               <SelectItem value="low" className="rounded-xl font-bold text-[#8a7a81] focus:bg-[#fcfafb] dark:focus:bg-[#201c1e]">Low</SelectItem>
                                             </SelectContent>
@@ -1965,7 +1980,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           <Input
                                             value={project.remarks}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'remarks', e.target.value)}
-                                            className="h-10 bg-transparent border-transparent px-3 text-sm font-bold text-[#8a7a81] dark:text-[#a08f97] transition-all rounded-xl shadow-none hover:bg-white/60 dark:hover:bg-white/5 placeholder:text-slate-300 dark:placeholder:text-[#6a5a61] focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] z-[100]"
+                                            className="h-10 bg-transparent border-transparent px-3 text-sm font-bold text-[#8a7a81] dark:text-[#a08f97] transition-all rounded-xl shadow-none hover:bg-white/60 placeholder:text-[#d8d0c8] dark:placeholder:text-[#6a5a61] focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] z-[100]"
                                             placeholder="Strategic context..."
                                           />
                                         </div>
@@ -1984,7 +1999,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <div className="w-24 shrink-0 relative z-10 text-right pr-2">
                                           <div className="flex flex-col">
                                             <div className="flex items-baseline justify-end gap-0.5">
-                                              <span className="text-xl leading-none font-black tracking-tighter text-[#524147] dark:text-white">{netPts}</span>
+                                              <span className="text-xl leading-none font-black tracking-tighter text-[#524147] ">{netPts}</span>
                                               <span className="text-[10px] font-bold text-[#cdaec1] dark:text-[#524147]">/</span>
                                               <span className="text-xs leading-none font-bold text-[#baa1ad] dark:text-[#6a5a61]">{platforms.reduce((s, p) => s + p.totalStoryPoints, 0)}</span>
                                             </div>
@@ -2011,7 +2026,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => confirmDelete('Delete Initiative', `Remove ${project.name || 'this initiative'}?`, () => deleteProject(project.id))}
-                                            className="h-8 w-8 rounded-lg text-slate-300 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 opacity-0 group-hover/p:opacity-100 transition-opacity"
+                                            className="h-8 w-8 rounded-lg text-[#d8d0c8] hover:bg-rose-50 hover:text-[#8c3c3c] dark:hover:bg-[#8c3c3c]/10 dark:hover:text-rose-400 opacity-0 group-hover/p:opacity-100 transition-opacity"
                                           >
                                             <Trash2 className="h-4 w-4" />
                                           </Button>
@@ -2046,7 +2061,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   {/* Platform Name */}
                                                   <div className="flex-1 flex items-center gap-3">
                                                     <div className="h-2 w-2 rounded-full bg-[#baa1ad] dark:bg-[#524147] shrink-0" />
-                                                    <span className="text-sm font-bold text-[#524147] dark:text-white truncate">{platform.name}</span>
+                                                    <span className="text-sm font-bold text-[#524147]  truncate">{platform.name}</span>
                                                   </div>
 
                                                   {/* Percentage Input */}
@@ -2056,7 +2071,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         type="number"
                                                         value={percent || ''}
                                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePlatformAllocationForProject(platform.id, project.id, Number(e.target.value))}
-                                                        className="h-9 text-sm text-center font-black rounded-lg border border-transparent bg-transparent hover:bg-white dark:hover:bg-[#1a1b1e] hover:border-[#e3d1d8] dark:hover:border-[#382f33] text-[#362b2f] dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)] transition-all px-2 pr-7 shadow-none"
+                                                        className="h-9 text-sm text-center font-black rounded-lg border border-transparent bg-transparent hover:bg-white dark:hover:bg-[#1a1b1e] hover:border-[#e3d1d8] dark:hover:border-[#382f33] text-[#362b2f]  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)] transition-all px-2 pr-7 shadow-none"
                                                         placeholder="0"
                                                       />
                                                       <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-black text-[#baa1ad] pointer-events-none">%</span>
@@ -2065,7 +2080,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                                   {/* Net / Total Points */}
                                                   <div className="w-40 flex items-baseline justify-end gap-1 pr-1">
-                                                    <span className="text-sm font-black text-[#524147] dark:text-white">{platformPts}</span>
+                                                    <span className="text-sm font-black text-[#524147] ">{platformPts}</span>
                                                     <span className="text-[10px] font-bold text-[#cdaec1] dark:text-[#524147]">/</span>
                                                     <span className="text-xs font-bold text-[#baa1ad] dark:text-[#6a5a61]">{platform.totalStoryPoints}</span>
                                                     <span className="text-[8px] font-bold text-[#cdaec1] dark:text-[#524147] uppercase ml-1">points</span>
@@ -2093,11 +2108,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       <Target className="h-10 w-10 text-[#baa1ad] dark:text-[#8a7a81] group-hover:text-[#ba4f6c] dark:group-hover:text-[#db839b] transition-colors" />
                                     </div>
                                     <div>
-                                      <p className="font-black text-[#524147] dark:text-white tracking-tight text-xl mb-2">No active objectives</p>
+                                      <p className="font-black text-[#524147]  tracking-tight text-xl mb-2">No active objectives</p>
                                       <p className="text-sm font-medium text-[#baa1ad] dark:text-[#a08f97] mb-6">Start by defining your primary mission targets.</p>
                                       <Button
                                         onClick={addProject}
-                                        className="rounded-2xl h-11 bg-[#524147] text-white dark:bg-white dark:text-[#1a1618] hover:bg-[#362b2f] dark:hover:bg-[#e3d1d8] font-bold text-xs uppercase tracking-widest px-8 shadow-xl hover:-translate-y-0.5 transition-all"
+                                        className="rounded-2xl h-11 bg-[#524147] text-white dark:text-[#1a1618] hover:bg-[#362b2f] dark:hover:bg-[#e3d1d8] font-bold text-xs uppercase tracking-widest px-8 shadow-xl hover:-translate-y-0.5 transition-all"
                                       >
                                         <Plus className="h-4 w-4 mr-2" />
                                         Define Objective
@@ -2125,32 +2140,32 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                           {activeSection === 'goals' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <Card className="border-none shadow-xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm ring-1 ring-zinc-200 dark:ring-zinc-800">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 bg-white/50 dark:bg-zinc-900/50">
+                              <Card className="border-none shadow-xl bg-white/50 bg-[#f2ece4]/50 backdrop-blur-sm ring-1 ring-zinc-200 dark:ring-zinc-800">
+                                <CardHeader className="border-b border-[#d8d0c8]/30/50 pb-6 bg-white/50 bg-[#f2ece4]/50">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                        <Target className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                                      <div className="h-12 w-12 rounded-2xl bg-[#fbe8d8] flex items-center justify-center border border-[#f0a878]/40 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                        <Target className="h-6 w-6 text-[#c2652a]" />
                                       </div>
                                       <div>
-                                        <CardTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Strategic Performance Goals</CardTitle>
+                                        <CardTitle className="text-xl font-black text-[#3a302a] tracking-tight">Strategic Performance Goals</CardTitle>
                                         <Dialog>
                                           <DialogTrigger asChild>
                                             <div className="flex items-center gap-1.5 mt-1 cursor-pointer group/info">
-                                              <p className="text-sm text-slate-500 font-medium group-hover/info:text-indigo-600 transition-colors">
+                                              <p className="text-sm text-[#605850] font-medium group-hover/info:text-[#c2652a] transition-colors">
                                                 Define outcome-driven objectives to provide tactical direction.
                                               </p>
-                                              <Info className="h-4 w-4 text-slate-400 group-hover/info:text-indigo-500 transition-colors" />
+                                              <Info className="h-4 w-4 text-[#9a9088] group-hover/info:text-[#c2652a] transition-colors" />
                                             </div>
                                           </DialogTrigger>
                                           <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
                                             <DialogHeader className="space-y-4">
-                                              <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 mb-2">
-                                                <Target className="h-7 w-7 text-indigo-600" />
+                                              <div className="h-14 w-14 rounded-2xl bg-[#fbe8d8] flex items-center justify-center border border-[#f0a878]/40 mb-2">
+                                                <Target className="h-7 w-7 text-[#c2652a]" />
                                               </div>
                                               <div>
-                                                <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Strategic Goal Framework</DialogTitle>
-                                                <DialogDescription className="text-slate-500 font-medium text-base">
+                                                <DialogTitle className="text-2xl font-black text-[#3a302a] tracking-tight">Strategic Goal Framework</DialogTitle>
+                                                <DialogDescription className="text-[#605850] font-medium text-base">
                                                   Master the art of defining outcome-driven objectives.
                                                 </DialogDescription>
                                               </div>
@@ -2168,10 +2183,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <h4 className="font-bold text-amber-900 dark:text-amber-100 flex items-center gap-2 mb-2">
                                                     <Crown className="h-5 w-5" /> 1. The Golden Rule: Goal vs. Scope
                                                   </h4>
-                                                  <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-2">
+                                                  <p className="text-sm text-zinc-700 mb-2">
                                                     A common mistake is treating the Sprint Goal as a summary of all tickets.
                                                   </p>
-                                                  <ul className="text-sm space-y-1 list-disc list-inside text-zinc-600 dark:text-zinc-400">
+                                                  <ul className="text-sm space-y-1 list-disc list-inside text-zinc-600">
                                                     <li><strong>The Reality:</strong> The Goal is the objective, the backlog is the plan.</li>
                                                     <li><strong>Why it matters:</strong> If time runs out, drop non-essential tickets (scope) while still delivering the Goal (value).</li>
                                                     <li><strong>Best Practice:</strong> The Goal should only require 70-80% of capacity, leaving room for the unknown.</li>
@@ -2205,11 +2220,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 {/* 3. Writing Formula Table */}
                                                 <div className="space-y-3">
                                                   <h4 className="font-semibold text-lg">3. Writing Formula & Examples</h4>
-                                                  <div className="bg-zinc-100 dark:bg-zinc-900 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm font-medium text-center text-indigo-600 dark:text-indigo-400 mb-2">
+                                                  <div className="bg-[#f2ece4] p-3 rounded-lg border border-[#d8d0c8]/40 text-sm font-medium text-center text-[#c2652a] mb-2">
                                                     "Our goal is to [Action/Change] so that [User/Business Value] is achieved."
                                                   </div>
 
-                                                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
+                                                  <div className="border border-[#d8d0c8]/40 rounded-lg overflow-hidden">
                                                     <table className="w-full text-sm text-left">
                                                       <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-500 uppercase text-xs">
                                                         <tr>
@@ -2219,20 +2234,20 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         </tr>
                                                       </thead>
                                                       <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                                                        <tr className="bg-white dark:bg-zinc-950">
+                                                        <tr className="bg-white bg-white">
                                                           <td className="px-4 py-3 font-medium">Feature</td>
                                                           <td className="px-4 py-3 text-zinc-500">"Finish the new Search tickets."</td>
-                                                          <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">"Improve search relevance so customers find products faster."</td>
+                                                          <td className="px-4 py-3 text-zinc-900">"Improve search relevance so customers find products faster."</td>
                                                         </tr>
-                                                        <tr className="bg-white dark:bg-zinc-950">
+                                                        <tr className="bg-white bg-white">
                                                           <td className="px-4 py-3 font-medium">Risk</td>
                                                           <td className="px-4 py-3 text-zinc-500">"Do the research spike."</td>
-                                                          <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">"Validate the new architecture to ensure it handles 10k users."</td>
+                                                          <td className="px-4 py-3 text-zinc-900">"Validate the new architecture to ensure it handles 10k users."</td>
                                                         </tr>
-                                                        <tr className="bg-white dark:bg-zinc-950">
+                                                        <tr className="bg-white bg-white">
                                                           <td className="px-4 py-3 font-medium">Fix</td>
                                                           <td className="px-4 py-3 text-zinc-500">"Close 10 bugs."</td>
-                                                          <td className="px-4 py-3 text-zinc-900 dark:text-zinc-100">"Stabilize the checkout flow to reduce cart abandonment."</td>
+                                                          <td className="px-4 py-3 text-zinc-900">"Stabilize the checkout flow to reduce cart abandonment."</td>
                                                         </tr>
                                                       </tbody>
                                                     </table>
@@ -2244,7 +2259,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <h4 className="font-semibold text-lg">4. The "SMART" Checklist</h4>
                                                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
                                                     {['Specific?', 'Measurable?', 'Achievable?', 'Value-Driven?'].map((item) => (
-                                                      <div key={item} className="p-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                                                      <div key={item} className="p-2 bg-zinc-50 dark:bg-zinc-900 border border-[#d8d0c8]/40 rounded-md text-sm font-bold text-zinc-700">
                                                         {item}
                                                       </div>
                                                     ))}
@@ -2255,9 +2270,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 </div>
 
                                                 {/* 5. During Sprint */}
-                                                <div className="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800 rounded-xl p-4">
-                                                  <h4 className="font-bold text-indigo-900 dark:text-indigo-100 mb-2">5. During the Sprint</h4>
-                                                  <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+                                                <div className="bg-[#fbe8d8] border border-[#f0a878]/40 rounded-xl p-4">
+                                                  <h4 className="font-bold text-[#3a302a] mb-2">5. During the Sprint</h4>
+                                                  <div className="space-y-2 text-sm text-zinc-700">
                                                     <div className="flex gap-2">
                                                       <span className="font-bold whitespace-nowrap">Daily Focus:</span>
                                                       <span>Ask "How is our progress toward the Goal?" (Not just "What did you do?").</span>
@@ -2274,20 +2289,20 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 {/* Phase 1 */}
                                                 <div className="space-y-4">
                                                   <h4 className="font-semibold text-lg flex items-center gap-2 border-b pb-2">
-                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs">1</div>
+                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#fbe8d8] text-[#c2652a] font-bold text-xs">1</div>
                                                     Phase 1: Planning & Definition
                                                   </h4>
                                                   <p className="text-sm text-muted-foreground italic">Use these statuses before the Sprint officially starts.</p>
 
                                                   <div className="grid gap-3">
-                                                    <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800">
+                                                    <div className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/40 border border-[#d8d0c8]/40">
                                                       <div className="flex items-center gap-2 mb-1">
                                                         <Circle className="h-3 w-3 text-zinc-400" />
-                                                        <span className="font-bold text-zinc-700 dark:text-zinc-300">Draft</span>
+                                                        <span className="font-bold text-zinc-700">Draft</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> The goal is currently being written or brainstormed by the Product Owner.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Refine the wording to ensure it is SMART.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> The goal is currently being written or brainstormed by the Product Owner.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Refine the wording to ensure it is SMART.
                                                       </p>
                                                     </div>
 
@@ -2296,9 +2311,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="h-3 w-3 rounded-full bg-blue-500" />
                                                         <span className="font-bold text-blue-900 dark:text-blue-100">Proposed</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> Presented to the team for feasibility checking during Sprint Planning.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Developers and QA must review the goal for capacity fit.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> Presented to the team for feasibility checking during Sprint Planning.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Developers and QA must review the goal for capacity fit.
                                                       </p>
                                                     </div>
                                                   </div>
@@ -2307,7 +2322,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 {/* Phase 2 */}
                                                 <div className="space-y-4">
                                                   <h4 className="font-semibold text-lg flex items-center gap-2 border-b pb-2">
-                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs">2</div>
+                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#fbe8d8] text-[#c2652a] font-bold text-xs">2</div>
                                                     Phase 2: Execution (Health Check)
                                                   </h4>
                                                   <p className="text-sm text-muted-foreground italic">Use these statuses to update stakeholders during Daily Standups.</p>
@@ -2318,9 +2333,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="h-3 w-3 rounded-full bg-emerald-500" />
                                                         <span className="font-bold text-emerald-900 dark:text-emerald-100">On Track</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> "Business as usual." The team is confident the goal will be met.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Continue current execution strategy. No major blockers exist.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> "Business as usual." The team is confident the goal will be met.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Continue current execution strategy. No major blockers exist.
                                                       </p>
                                                     </div>
 
@@ -2329,9 +2344,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="h-3 w-3 rounded-full bg-yellow-500" />
                                                         <span className="font-bold text-yellow-900 dark:text-yellow-100">At Risk</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> "Warning." Impediments or scope creep have been identified.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Discuss immediately. May need to swarm or deprioritize work.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> "Warning." Impediments or scope creep have been identified.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Discuss immediately. May need to swarm or deprioritize work.
                                                       </p>
                                                     </div>
 
@@ -2340,9 +2355,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="h-3 w-3 rounded-full bg-red-500" />
                                                         <span className="font-bold text-red-900 dark:text-red-100">Off Track</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> "Critical Alert." Highly unlikely the goal will be met.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Immediate escalation to Product Owner. Decide to pivot or descope.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> "Critical Alert." Highly unlikely the goal will be met.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Immediate escalation to Product Owner. Decide to pivot or descope.
                                                       </p>
                                                     </div>
 
@@ -2351,9 +2366,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         <div className="h-3 w-3 rounded-full bg-purple-500" />
                                                         <span className="font-bold text-purple-900 dark:text-purple-100">Blocked</span>
                                                       </div>
-                                                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Meaning:</span> Progress is completely halted due to an external dependency.<br />
-                                                        <span className="font-semibold text-zinc-900 dark:text-zinc-200">Action:</span> Scrum Master must intervene. Team cannot proceed until resolved.
+                                                      <p className="text-sm text-zinc-600">
+                                                        <span className="font-semibold text-zinc-900">Meaning:</span> Progress is completely halted due to an external dependency.<br />
+                                                        <span className="font-semibold text-zinc-900">Action:</span> Scrum Master must intervene. Team cannot proceed until resolved.
                                                       </p>
                                                     </div>
                                                   </div>
@@ -2362,34 +2377,34 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 {/* Phase 3 */}
                                                 <div className="space-y-4">
                                                   <h4 className="font-semibold text-lg flex items-center gap-2 border-b pb-2">
-                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs">3</div>
+                                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#fbe8d8] text-[#c2652a] font-bold text-xs">3</div>
                                                     Phase 3: Completion (Retrospective)
                                                   </h4>
                                                   <p className="text-sm text-muted-foreground italic">Select these when closing the Sprint.</p>
 
                                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                                    <div className="p-3 rounded-lg border border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
                                                       <div className="flex items-center gap-2 mb-2">
                                                         <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                                                         <span className="font-semibold">Achieved</span>
                                                       </div>
                                                       <p className="text-xs text-muted-foreground">Delivered and met "Definition of Done."</p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                                    <div className="p-3 rounded-lg border border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
                                                       <div className="flex items-center gap-2 mb-2">
                                                         <div className="h-4 w-4 rounded-full border-2 border-orange-500 border-t-transparent -rotate-45" />
                                                         <span className="font-semibold">Partially Achieved</span>
                                                       </div>
                                                       <p className="text-xs text-muted-foreground">Value delivered, but missed some criteria.</p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                                    <div className="p-3 rounded-lg border border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
                                                       <div className="flex items-center gap-2 mb-2">
                                                         <LogOut className="h-4 w-4 text-red-500 rotate-180" />
                                                         <span className="font-semibold">Missed</span>
                                                       </div>
                                                       <p className="text-xs text-muted-foreground">Primary objective not completed.</p>
                                                     </div>
-                                                    <div className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                                                    <div className="p-3 rounded-lg border border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
                                                       <div className="flex items-center gap-2 mb-2">
                                                         <Circle className="h-4 w-4 text-zinc-400" />
                                                         <span className="font-semibold">Abandoned</span>
@@ -2403,27 +2418,27 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               <TabsContent value="best-practices" className="space-y-6 pt-4">
                                                 <div className="space-y-4">
                                                   <h4 className="font-semibold text-lg">What is a Sprint Goal?</h4>
-                                                  <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                                  <p className="text-sm text-zinc-600 leading-relaxed">
                                                     The Sprint Goal is the single, overarching objective for the Sprint. It acts as the "North Star," providing the <strong>Why</strong> behind the work. It allows the team to focus on value and collaboration, rather than just clearing a list of tickets.
                                                   </p>
                                                 </div>
 
-                                                <div className="bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5">
+                                                <div className="bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40 rounded-xl p-5">
                                                   <div className="flex items-center gap-2 mb-3">
                                                     <Zap className="h-5 w-5 text-amber-500 fill-amber-500" />
-                                                    <h4 className="font-bold text-zinc-900 dark:text-zinc-100">Pro Tip: How to write a good Goal</h4>
+                                                    <h4 className="font-bold text-zinc-900">Pro Tip: How to write a good Goal</h4>
                                                   </div>
-                                                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                                                  <p className="text-sm text-zinc-600 mb-4">
                                                     Don't just list tasks. Use this simple formula:
                                                   </p>
 
-                                                  <div className="bg-white dark:bg-zinc-950 p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 font-mono text-sm text-indigo-600 dark:text-indigo-400 mb-4 shadow-sm">
+                                                  <div className="bg-white bg-white p-4 rounded-lg border border-[#d8d0c8]/40 font-mono text-sm text-[#c2652a] mb-4 shadow-sm">
                                                     "We will [Action] the [Feature] to achieve [Outcome/Value]."
                                                   </div>
 
                                                   <div className="text-sm">
-                                                    <span className="font-semibold text-zinc-900 dark:text-zinc-200">Example:</span>
-                                                    <span className="text-zinc-600 dark:text-zinc-400 italic"> "Implement Face ID Login to reduce user sign-in time by 50%."</span>
+                                                    <span className="font-semibold text-zinc-900">Example:</span>
+                                                    <span className="text-zinc-600 italic"> "Implement Face ID Login to reduce user sign-in time by 50%."</span>
                                                   </div>
                                                 </div>
                                               </TabsContent>
@@ -2434,7 +2449,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     </div>
                                     <Button
                                       onClick={addSprintGoal}
-                                      className="bg-slate-900 hover:bg-indigo-600 text-white shadow-xl shadow-slate-200 dark:shadow-none transition-all duration-300 rounded-2xl px-6 h-12 font-bold group"
+                                      className="bg-[#3a302a] hover:bg-[#c2652a] text-white shadow-xl shadow-[#d8d0c8]/50  transition-all duration-300 rounded-2xl px-6 h-12 font-bold group"
                                     >
                                       <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
                                       Create Goal
@@ -2443,17 +2458,17 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 </CardHeader>
                                 <CardContent className="pt-10 pb-10 px-8">
                                   {sprintGoals.length === 0 ? (
-                                    <div className="text-center py-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/20 flex flex-col items-center gap-6 group">
-                                      <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800">
-                                        <Target className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                                    <div className="text-center py-24 border-2 border-dashed border-[#d8d0c8] dark:border-slate-800 rounded-[2.5rem] bg-[#f6f0e8]/50 dark:bg-[#3a302a]/20 flex flex-col items-center gap-6 group">
+                                      <div className="h-20 w-20 rounded-3xl bg-white dark:bg-[#3a302a] flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800">
+                                        <Target className="h-10 w-10 text-[#d8d0c8] group-hover:text-[#c2652a] transition-colors" />
                                       </div>
                                       <div className="space-y-2">
-                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">No Objectives Defined</h3>
-                                        <p className="text-slate-500 font-medium max-w-sm mx-auto">Establish high-impact outcome statements to align the engineering force.</p>
+                                        <h3 className="text-2xl font-black text-[#3a302a] tracking-tight">No Objectives Defined</h3>
+                                        <p className="text-[#605850] font-medium max-w-sm mx-auto">Establish high-impact outcome statements to align the engineering force.</p>
                                       </div>
                                       <Button
                                         onClick={addSprintGoal}
-                                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-8 shadow-lg shadow-indigo-100 dark:shadow-none"
+                                        className="bg-[#c2652a] hover:bg-[#c2652a] text-white rounded-2xl font-bold px-8 shadow-lg shadow-[#f0a878]/30 "
                                       >
                                         Establish First Goal
                                       </Button>
@@ -2471,13 +2486,13 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     {...provided.draggableProps}
                                                     className={cn(
                                                       "group relative border-0 rounded-[2rem] p-6 transition-all duration-300",
-                                                      snapshot.isDragging ? "shadow-2xl ring-4 ring-indigo-500/10 rotate-1 z-50 scale-[1.02] bg-white" : "bg-white/40 dark:bg-slate-950/40 backdrop-blur-sm shadow-sm hover:shadow-xl hover:bg-white dark:hover:bg-slate-900 ring-1 ring-slate-200/50 dark:ring-slate-800/50",
+                                                      snapshot.isDragging ? "shadow-2xl ring-4 ring-[#c2652a]/10 rotate-1 z-50 scale-[1.02] bg-white" : "bg-white/40 dark:bg-slate-950/40 backdrop-blur-sm shadow-sm hover:shadow-xl hover:bg-white dark:hover:bg-[#3a302a] ring-1 ring-slate-200/50 dark:ring-slate-800/50",
                                                       goal.status === 'achieved' && "ring-emerald-500/20 bg-emerald-50/30",
                                                     )}
                                                   >
                                                     <div
                                                       {...provided.dragHandleProps}
-                                                      className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-12 flex items-center justify-center cursor-grab active:cursor-grabbing text-slate-300 hover:text-indigo-500 transition-all rounded-xl opacity-0 group-hover:opacity-100"
+                                                      className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-12 flex items-center justify-center cursor-grab active:cursor-grabbing text-[#d8d0c8] hover:text-[#c2652a] transition-all rounded-xl opacity-0 group-hover:opacity-100"
                                                     >
                                                       <GripVertical className="h-5 w-5" />
                                                     </div>
@@ -2486,10 +2501,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       {/* Description */}
                                                       <div className="flex-1 w-full space-y-3">
                                                           <div className="flex items-center gap-2">
-                                                            <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                              <Target className="h-3.5 w-3.5 text-indigo-600" />
+                                                            <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                              <Target className="h-3.5 w-3.5 text-[#c2652a]" />
                                                             </div>
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Goal Definition</label>
+                                                            <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Goal Definition</label>
                                                           </div>
                                                           <div className="relative group/field mt-2">
                                                             <Textarea
@@ -2500,7 +2515,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 e.target.style.height = `${e.target.scrollHeight}px`;
                                                               }}
                                                               placeholder="Define a primary goal for this sprint cycle..."
-                                                              className="min-h-[80px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 p-4 rounded-[1.5rem] text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
+                                                              className="min-h-[80px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] p-4 rounded-[1.5rem] text-[#3a302a] placeholder:text-[#d8d0c8] transition-all shadow-sm"
                                                             />
                                                           </div>
                                                       </div>
@@ -2510,10 +2525,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         {/* Status */}
                                                         <div className="w-full md:w-56 space-y-3">
                                                           <div className="flex items-center gap-2">
-                                                            <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                              <Activity className="h-3.5 w-3.5 text-indigo-600" />
+                                                            <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                              <Activity className="h-3.5 w-3.5 text-[#c2652a]" />
                                                             </div>
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Execution Pulse</label>
+                                                            <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Execution Pulse</label>
                                                           </div>
                                                           <Select
                                                             value={goal.status}
@@ -2521,7 +2536,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                           >
                                                             <SelectTrigger className={cn(
                                                               "h-14 border-0 shadow-lg transition-all duration-300 rounded-2xl font-bold px-4",
-                                                              goal.status === 'draft' ? "bg-slate-100 text-slate-600 shadow-slate-200/50" :
+                                                              goal.status === 'draft' ? "bg-[#f2ece4] text-[#605850] shadow-[#d8d0c8]/50/50" :
                                                                 goal.status === 'proposed' ? "bg-blue-50 text-blue-700 shadow-blue-100" :
                                                                   goal.status === 'on-track' ? "bg-emerald-50 text-emerald-700 shadow-emerald-100" :
                                                                     goal.status === 'at-risk' ? "bg-amber-50 text-amber-700 shadow-amber-100" :
@@ -2530,19 +2545,19 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                           goal.status === 'achieved' ? "bg-emerald-600 text-white shadow-emerald-200 ring-2 ring-emerald-400/20" :
                                                                             goal.status === 'partially-achieved' ? "bg-orange-50 text-orange-700 shadow-orange-100" :
                                                                               goal.status === 'missed' ? "bg-rose-600 text-white shadow-rose-200" :
-                                                                                "bg-slate-200 text-slate-400 line-through"
+                                                                                "bg-slate-200 text-[#9a9088] line-through"
                                                             )}>
                                                               <SelectValue />
                                                             </SelectTrigger>
                                                             <SelectContent className="rounded-2xl border-0 shadow-2xl">
                                                               <SelectGroup>
-                                                                <SelectLabel className="text-[10px] font-black uppercase text-slate-400 p-4 tracking-widest">Initiation</SelectLabel>
+                                                                <SelectLabel className="text-[10px] font-black uppercase text-[#9a9088] p-4 tracking-widest">Initiation</SelectLabel>
                                                                 <SelectItem value="draft" className="rounded-xl">⚪ Draft Stage</SelectItem>
                                                                 <SelectItem value="proposed" className="rounded-xl">🔵 Proposed Objective</SelectItem>
                                                               </SelectGroup>
                                                               <SelectSeparator />
                                                               <SelectGroup>
-                                                                <SelectLabel className="text-[10px] font-black uppercase text-slate-400 p-4 tracking-widest">In-Flight Pulse</SelectLabel>
+                                                                <SelectLabel className="text-[10px] font-black uppercase text-[#9a9088] p-4 tracking-widest">In-Flight Pulse</SelectLabel>
                                                                 <SelectItem value="on-track" className="rounded-xl">🟢 Nominal Performance</SelectItem>
                                                                 <SelectItem value="at-risk" className="rounded-xl">🟡 Performance Degradation</SelectItem>
                                                                 <SelectItem value="off-track" className="rounded-xl">🔴 Critical Deviation</SelectItem>
@@ -2550,7 +2565,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               </SelectGroup>
                                                               <SelectSeparator />
                                                               <SelectGroup>
-                                                                <SelectLabel className="text-[10px] font-black uppercase text-slate-400 p-4 tracking-widest">Final Resolution</SelectLabel>
+                                                                <SelectLabel className="text-[10px] font-black uppercase text-[#9a9088] p-4 tracking-widest">Final Resolution</SelectLabel>
                                                                 <SelectItem value="achieved" className="rounded-xl">✅ Mission Accomplished</SelectItem>
                                                                 <SelectItem value="partially-achieved" className="rounded-xl">🌗 Partial Success</SelectItem>
                                                                 <SelectItem value="missed" className="rounded-xl">❌ Mission Failed</SelectItem>
@@ -2563,10 +2578,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         {/* Remark */}
                                                         <div className="flex-1 min-w-[300px] space-y-3">
                                                           <div className="flex items-center gap-2">
-                                                            <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                              <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                                                            <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                              <FileText className="h-3.5 w-3.5 text-[#c2652a]" />
                                                             </div>
-                                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Strategic Context</label>
+                                                            <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Strategic Context</label>
                                                           </div>
                                                           <div className="relative group/remark mt-2">
                                                             <Textarea
@@ -2577,7 +2592,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 e.target.style.height = `${e.target.scrollHeight}px`;
                                                               }}
                                                               placeholder="Add supporting notes or detailed success criteria..."
-                                                              className="min-h-[64px] overflow-hidden text-sm font-medium resize-none bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl p-4 transition-all shadow-sm placeholder:text-slate-300"
+                                                              className="min-h-[64px] overflow-hidden text-sm font-medium resize-none bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] rounded-2xl p-4 transition-all shadow-sm placeholder:text-[#d8d0c8]"
                                                             />
                                                           </div>
                                                         </div>
@@ -2593,7 +2608,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                             "Are you sure you want to remove this strategic goal from the current mission?",
                                                             () => deleteSprintGoal(goal.id)
                                                           )}
-                                                          className="h-12 w-12 bg-white hover:bg-rose-50 text-slate-300 hover:text-rose-600 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-slate-100"
+                                                          className="h-12 w-12 bg-white hover:bg-rose-50 text-[#d8d0c8] hover:text-[#8c3c3c] rounded-2xl shadow-sm hover:shadow-lg transition-all border border-slate-100"
                                                         >
                                                           <Trash2 className="h-5 w-5" />
                                                         </Button>
@@ -2617,29 +2632,29 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                           {activeSection === 'milestones' && (
                             <div className="w-full max-w-none px-4 space-y-6">
                               <div className="flex items-center gap-4">
-                                <div className="h-14 w-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/50 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                  <Milestone className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
+                                <div className="h-14 w-14 rounded-2xl bg-[#fbe8d8] flex items-center justify-center border border-[#f0a878]/40 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                  <Milestone className="h-7 w-7 text-[#c2652a]" />
                                 </div>
                                 <div>
-                                  <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight italic">Key Execution Milestones</h2>
+                                  <h2 className="text-3xl font-black text-[#3a302a] tracking-tight italic">Key Execution Milestones</h2>
                                   <div className="flex items-center gap-2 mt-1">
-                                    <p className="text-slate-500 font-medium">Identify and sequence critical checkpoints to track delivery progress.</p>
-                                    <div className="h-1 w-1 rounded-full bg-indigo-300 mx-1" />
+                                    <p className="text-[#605850] font-medium">Identify and sequence critical checkpoints to track delivery progress.</p>
+                                    <div className="h-1 w-1 rounded-full bg-[#c2652a] mx-1" />
                                     <Dialog>
                                       <DialogTrigger asChild>
-                                        <button className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-700 transition-colors text-sm font-bold group/help cursor-pointer">
+                                        <button className="flex items-center gap-1.5 text-[#c2652a] hover:text-[#8a4518] transition-colors text-sm font-bold group/help cursor-pointer">
                                           <Info className="h-4 w-4" />
                                           Orchestration Protocol
                                         </button>
                                       </DialogTrigger>
                                       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto rounded-3xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl">
                                         <DialogHeader className="space-y-4">
-                                          <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 mb-2">
-                                            <Milestone className="h-7 w-7 text-indigo-600" />
+                                          <div className="h-14 w-14 rounded-2xl bg-[#fbe8d8] flex items-center justify-center border border-[#f0a878]/40 mb-2">
+                                            <Milestone className="h-7 w-7 text-[#c2652a]" />
                                           </div>
                                           <div>
-                                            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Milestone Execution Framework</DialogTitle>
-                                            <DialogDescription className="text-slate-500 font-medium text-base">
+                                            <DialogTitle className="text-2xl font-black text-[#3a302a] tracking-tight">Milestone Execution Framework</DialogTitle>
+                                            <DialogDescription className="text-[#605850] font-medium text-base">
                                               Advanced protocol for multi-phase strategic delivery.
                                             </DialogDescription>
                                           </div>
@@ -2654,12 +2669,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           {/* Status Legend Tab */}
                                           <TabsContent value="status" className="space-y-6 mt-4">
                                             <div className="space-y-4">
-                                              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-4 border border-zinc-100 dark:border-zinc-800">
-                                                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 mb-2">
-                                                  <Info className="h-4 w-4 text-indigo-500" />
+                                              <div className="bg-zinc-50 dark:bg-zinc-900 rounded-lg p-4 border border-[#d8d0c8]/30">
+                                                <h3 className="font-semibold text-zinc-900 flex items-center gap-2 mb-2">
+                                                  <Info className="h-4 w-4 text-[#c2652a]" />
                                                   What is a Milestone?
                                                 </h3>
-                                                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                                                <p className="text-sm text-zinc-600 leading-relaxed">
                                                   A Milestone marks a <strong>significant achievement or event</strong> in your project. Unlike Sprints, which are time-based (e.g., "Two Weeks"), Milestones are <strong>outcome-based</strong>. They typically span multiple Sprints and group together specific Phases (like Research, Execution, Review) to track progress toward a major goal, such as a Product Launch, a Marketing Campaign, or a Compliance Audit.
                                                 </p>
                                               </div>
@@ -2667,12 +2682,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               {/* Phase 1 */}
                                               <div className="space-y-3">
                                                 <h4 className="font-semibold text-lg flex items-center gap-2 border-b pb-2">
-                                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 font-bold text-xs dark:bg-zinc-800 dark:text-zinc-400">1</span>
+                                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f2ece4] text-zinc-600 font-bold text-xs bg-[#ece6dc]">1</span>
                                                   Phase 1: Planning
                                                 </h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                  <div className="p-3 bg-zinc-50 rounded-lg border border-zinc-200 dark:bg-zinc-900 dark:border-zinc-800">
-                                                    <div className="flex items-center gap-2 font-bold text-zinc-600 dark:text-zinc-400 mb-1">
+                                                  <div className="p-3 bg-zinc-50 rounded-lg border border-[#d8d0c8] dark:bg-zinc-900 border-[#d8d0c8]">
+                                                    <div className="flex items-center gap-2 font-bold text-zinc-600 mb-1">
                                                       <Circle className="h-3 w-3 fill-zinc-200 text-zinc-400" /> Draft
                                                     </div>
                                                     <p className="text-xs text-muted-foreground"><span className="font-semibold">Meaning:</span> Ideas are being formed. Visible to Planners.</p>
@@ -2691,7 +2706,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               {/* Phase 2 */}
                                               <div className="space-y-3">
                                                 <h4 className="font-semibold text-lg flex items-center gap-2 border-b pb-2">
-                                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs dark:bg-indigo-900 dark:text-indigo-300">2</span>
+                                                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#fbe8d8] text-[#c2652a] font-bold text-xs bg-[#fbe8d8]">2</span>
                                                   Phase 2: Execution (Health Check)
                                                 </h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2716,8 +2731,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     <p className="text-xs text-muted-foreground"><span className="font-semibold">Meaning:</span> Major blockers. Deadline will be missed.</p>
                                                     <p className="text-xs text-muted-foreground mt-1"><span className="font-semibold">Action:</span> Notify stakeholders immediately.</p>
                                                   </div>
-                                                  <div className="p-3 bg-zinc-100 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700">
-                                                    <div className="flex items-center gap-2 font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                                  <div className="p-3 bg-[#f2ece4] rounded-lg border border-[#d8d0c8] bg-[#ece6dc] border-[#d8d0c8]">
+                                                    <div className="flex items-center gap-2 font-bold text-zinc-700 mb-1">
                                                       <div className="h-3 w-3 rounded-full bg-zinc-400" /> Paused
                                                     </div>
                                                     <p className="text-xs text-muted-foreground"><span className="font-semibold">Meaning:</span> Work stopped due to other priorities.</p>
@@ -2763,7 +2778,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               <h4 className="font-bold flex items-center gap-2 text-amber-600 dark:text-amber-500">
                                                 <Crown className="h-4 w-4" /> 1. The "Goldilocks" Rule for Granularity
                                               </h4>
-                                              <p className="text-sm text-zinc-600 dark:text-zinc-400">Avoid Milestones that are too small (micro-management) or too big (vague dreams).</p>
+                                              <p className="text-sm text-zinc-600">Avoid Milestones that are too small (micro-management) or too big (vague dreams).</p>
                                               <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
                                                 <div className="p-2 rounded bg-red-50 text-red-700 border border-red-100">
                                                   <strong>Too Small:</strong> "Draft one email"<br />(This is a task!)
@@ -2781,10 +2796,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                             {/* Rule 2 */}
                                             <div className="space-y-2">
-                                              <h4 className="font-bold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                                              <h4 className="font-bold flex items-center gap-2 text-[#c2652a]">
                                                 <Milestone className="h-4 w-4" /> 2. The Hierarchy of Value
                                               </h4>
-                                              <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 text-sm space-y-2">
+                                              <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg border border-dashed border-[#d8d0c8]/40 text-sm space-y-2">
                                                 <div className="flex gap-2">
                                                   <span className="font-bold w-20">Milestone:</span>
                                                   <span>The "What" & "When" (e.g., Annual Conference Launch)</span>
@@ -2803,7 +2818,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             {/* Rule 3 & 4 */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                               <div className="space-y-2">
-                                                <h4 className="font-bold flex items-center gap-2 text-zinc-900 dark:text-zinc-100">
+                                                <h4 className="font-bold flex items-center gap-2 text-zinc-900">
                                                   <CalendarIcon className="h-4 w-4" /> 3. Managing Dates
                                                 </h4>
                                                 <ul className="text-xs space-y-1.5 text-muted-foreground list-disc pl-4">
@@ -2829,7 +2844,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               <h4 className="font-bold flex items-center gap-2 text-emerald-600 dark:text-emerald-500">
                                                 <Target className="h-4 w-4" /> 5. Writing Value-Based Descriptions
                                               </h4>
-                                              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Answer: "If we cancel this, what business value do we lose?"</p>
+                                              <p className="text-sm text-zinc-600 mb-2">Answer: "If we cancel this, what business value do we lose?"</p>
                                               <div className="grid grid-cols-1 gap-2 text-sm">
                                                 <div className="group flex items-start gap-2 p-2 rounded hover:bg-zinc-50 dark:hover:bg-zinc-900">
                                                   <span className="text-red-500 font-bold">Weak:</span>
@@ -2837,7 +2852,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 </div>
                                                 <div className="group flex items-start gap-2 p-2 rounded bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800">
                                                   <span className="text-emerald-600 font-bold">Strong:</span>
-                                                  <span className="text-zinc-700 dark:text-zinc-300">"System Upgrade: Update internal software to fix security gaps and reduce crash rates by 20%."</span>
+                                                  <span className="text-zinc-700">"System Upgrade: Update internal software to fix security gaps and reduce crash rates by 20%."</span>
                                                 </div>
                                               </div>
                                             </div>
@@ -2850,7 +2865,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 </div>
                                 <Button
                                   onClick={addMilestone}
-                                  className="bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-bold px-6 h-12 shadow-xl shadow-slate-200 dark:shadow-none group transition-all duration-300"
+                                  className="bg-[#3a302a] hover:bg-[#c2652a] text-white rounded-2xl font-bold px-6 h-12 shadow-xl shadow-[#d8d0c8]/50  group transition-all duration-300"
                                 >
                                   <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
                                   Add Milestone
@@ -2858,17 +2873,17 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               </div>
 
                               {milestones.length === 0 ? (
-                                <div className="text-center py-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[2.5rem] bg-slate-50/50 dark:bg-slate-900/20 flex flex-col items-center gap-6 group">
-                                  <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-900 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800">
-                                    <Milestone className="h-10 w-10 text-slate-300 group-hover:text-indigo-500 transition-colors" />
+                                <div className="text-center py-24 border-2 border-dashed border-[#d8d0c8] dark:border-slate-800 rounded-[2.5rem] bg-[#f6f0e8]/50 dark:bg-[#3a302a]/20 flex flex-col items-center gap-6 group">
+                                  <div className="h-20 w-20 rounded-3xl bg-white dark:bg-[#3a302a] flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-slate-100 dark:border-slate-800">
+                                    <Milestone className="h-10 w-10 text-[#d8d0c8] group-hover:text-[#c2652a] transition-colors" />
                                   </div>
                                   <div className="space-y-2">
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">No Strategic Gates</h3>
-                                    <p className="text-slate-500 font-medium max-w-sm mx-auto">Establish multi-phase checkpoints to orchestrate complex mission delivery.</p>
+                                    <h3 className="text-2xl font-black text-[#3a302a] tracking-tight">No Strategic Gates</h3>
+                                    <p className="text-[#605850] font-medium max-w-sm mx-auto">Establish multi-phase checkpoints to orchestrate complex mission delivery.</p>
                                   </div>
                                   <Button
                                     onClick={addMilestone}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-8 shadow-lg shadow-indigo-100 dark:shadow-none"
+                                    className="bg-[#c2652a] hover:bg-[#c2652a] text-white rounded-2xl font-bold px-8 shadow-lg shadow-[#f0a878]/30 "
                                   >
                                     Create First Milestone
                                   </Button>
@@ -2877,37 +2892,37 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 <DragDropContext onDragEnd={onPhaseDragEnd}>
                                   <div className="space-y-8">
                                     {milestones.map((milestone) => (
-                                      <Card key={milestone.id} className="border-0 rounded-[2.5rem] bg-white/40 dark:bg-slate-950/40 backdrop-blur-md shadow-sm border border-slate-200/50 dark:border-slate-800/50 overflow-hidden transition-all duration-300 hover:shadow-xl">
-                                        <CardHeader className="pb-8 pt-8 px-8 border-b border-slate-100 dark:border-slate-800/50 bg-white/60 dark:bg-slate-900/60">
+                                      <Card key={milestone.id} className="border-0 rounded-[2.5rem] bg-white/40 dark:bg-slate-950/40 backdrop-blur-md shadow-sm border border-[#d8d0c8]/40 dark:border-slate-800/50 overflow-hidden transition-all duration-300 hover:shadow-xl">
+                                        <CardHeader className="pb-8 pt-8 px-8 border-b border-slate-100 dark:border-slate-800/50 bg-white/60 dark:bg-[#3a302a]/60">
                                           <div className="flex items-start justify-between gap-6">
                                             <div className="space-y-6 flex-1">
                                               {/* Milestone Header Row */}
                                               <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
                                                 <div className="xl:col-span-2 space-y-3">
                                                   <div className="flex items-center gap-2">
-                                                    <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                      <Target className="h-3.5 w-3.5 text-indigo-600" />
+                                                    <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                      <Target className="h-3.5 w-3.5 text-[#c2652a]" />
                                                     </div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Strategic Objective</label>
+                                                    <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Strategic Objective</label>
                                                   </div>
                                                   <Input
                                                     value={milestone.name}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMilestone(milestone.id, 'name', e.target.value)}
-                                                    className="text-xl font-black tracking-tight h-14 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl px-6 text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
+                                                    className="text-xl font-black tracking-tight h-14 bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] rounded-2xl px-6 text-[#3a302a] placeholder:text-[#d8d0c8] transition-all shadow-sm"
                                                     placeholder="OSDK 5.3.0 Release Authorization"
                                                   />
                                                 </div>
                                                 <div className="space-y-3">
                                                   <div className="flex items-center gap-2">
-                                                    <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                      <CalendarIcon className="h-3.5 w-3.5 text-indigo-600" />
+                                                    <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                      <CalendarIcon className="h-3.5 w-3.5 text-[#c2652a]" />
                                                     </div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Temporal Window</label>
+                                                    <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Temporal Window</label>
                                                   </div>
                                                   <div className="flex gap-2">
                                                     <Popover>
                                                       <PopoverTrigger asChild>
-                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-bold h-14 border-0 shadow-lg rounded-2xl bg-white dark:bg-slate-900 px-4 transition-all hover:bg-slate-50", !milestone.startDate && "text-slate-400")}>
+                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-bold h-14 border-0 shadow-lg rounded-2xl bg-white dark:bg-[#3a302a] px-4 transition-all hover:bg-[#f6f0e8]", !milestone.startDate && "text-[#9a9088]")}>
                                                           {milestone.startDate ? format(milestone.startDate, "MM/dd") : <span>Launch</span>}
                                                         </Button>
                                                       </PopoverTrigger>
@@ -2917,7 +2932,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     </Popover>
                                                     <Popover>
                                                       <PopoverTrigger asChild>
-                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-bold h-14 border-0 shadow-lg rounded-2xl bg-white dark:bg-slate-900 px-4 transition-all hover:bg-slate-50", !milestone.endDate && "text-slate-400")}>
+                                                        <Button variant="outline" className={cn("w-full justify-start text-left font-bold h-14 border-0 shadow-lg rounded-2xl bg-white dark:bg-[#3a302a] px-4 transition-all hover:bg-[#f6f0e8]", !milestone.endDate && "text-[#9a9088]")}>
                                                           {milestone.endDate ? format(milestone.endDate, "MM/dd") : <span>Target</span>}
                                                         </Button>
                                                       </PopoverTrigger>
@@ -2929,10 +2944,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 </div>
                                                 <div className="space-y-3">
                                                   <div className="flex items-center gap-2">
-                                                    <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                      <Activity className="h-3.5 w-3.5 text-indigo-600" />
+                                                    <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                      <Activity className="h-3.5 w-3.5 text-[#c2652a]" />
                                                     </div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Gate Status</label>
+                                                    <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Gate Status</label>
                                                   </div>
                                                   <Select
                                                     value={milestone.status}
@@ -2940,8 +2955,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   >
                                                     <SelectTrigger className={cn(
                                                       "h-14 border-0 shadow-lg transition-all duration-300 rounded-2xl font-bold px-4",
-                                                      milestone.status === 'planning' ? "bg-slate-100 text-slate-600" :
-                                                        milestone.status === 'active' ? "bg-indigo-600 text-white shadow-indigo-200" :
+                                                      milestone.status === 'planning' ? "bg-[#f2ece4] text-[#605850]" :
+                                                        milestone.status === 'active' ? "bg-[#c2652a] text-white shadow-[#f0a878]/20" :
                                                           milestone.status === 'completed' ? "bg-emerald-600 text-white shadow-emerald-200" :
                                                             "bg-rose-600 text-white shadow-rose-200"
                                                     )}>
@@ -2961,10 +2976,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               {milestone.isExpanded && (
                                                 <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
                                                   <div className="flex items-center gap-2">
-                                                    <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center">
-                                                      <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                                                    <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                      <FileText className="h-3.5 w-3.5 text-[#c2652a]" />
                                                     </div>
-                                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Deployment Intelligence</label>
+                                                    <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Deployment Intelligence</label>
                                                   </div>
                                                   <Textarea
                                                     value={milestone.description}
@@ -2974,7 +2989,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       e.target.style.height = `${e.target.scrollHeight}px`;
                                                     }}
                                                     placeholder="Define the critical success factors for this milestone..."
-                                                    className="min-h-[100px] text-sm font-medium resize-none overflow-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-[1.5rem] p-4 transition-all shadow-sm placeholder:text-slate-300"
+                                                    className="min-h-[100px] text-sm font-medium resize-none overflow-hidden bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] rounded-[1.5rem] p-4 transition-all shadow-sm placeholder:text-[#d8d0c8]"
                                                   />
                                                 </div>
                                               )}
@@ -2984,14 +2999,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => updateMilestone(milestone.id, 'isExpanded', !milestone.isExpanded)}
-                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition-all text-slate-400 hover:text-indigo-600"
+                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-[#3a302a] shadow-sm hover:shadow-lg transition-all text-[#9a9088] hover:text-[#c2652a]"
                                               >
                                                 <ChevronDown className={cn("h-6 w-6 transition-transform duration-500", milestone.isExpanded ? "rotate-180" : "")} />
                                               </Button>
                                               <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition-all text-slate-400 hover:text-rose-600"
+                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-[#3a302a] shadow-sm hover:shadow-lg transition-all text-[#9a9088] hover:text-[#8c3c3c]"
                                                 onClick={() => confirmDelete(
                                                   "Terminate Milestone?",
                                                   `Are you sure you want to delete "${milestone.name || 'this milestone'}"? All internal phases will be permanently purged.`,
@@ -3008,19 +3023,19 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           <>
                                             <Separator />
 
-                                            <CardContent className="bg-slate-50/30 dark:bg-slate-900/10 pt-10 pb-10 px-8">
+                                            <CardContent className="bg-[#f6f0e8]/30 dark:bg-[#3a302a]/10 pt-10 pb-10 px-8">
                                               <div className="space-y-6">
                                                 <div className="flex items-center justify-between px-4">
                                                   <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-800">
-                                                      <Activity className="h-5 w-5 text-indigo-600" />
+                                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-[#3a302a] shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-800">
+                                                      <Activity className="h-5 w-5 text-[#c2652a]" />
                                                     </div>
-                                                    <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Mission Phases</h4>
+                                                    <h4 className="text-lg font-black text-[#3a302a] tracking-tight">Mission Phases</h4>
                                                   </div>
                                                   <Button
                                                     onClick={() => addPhase(milestone.id)}
                                                     size="sm"
-                                                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl px-4 border border-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-900/50 dark:text-indigo-400"
+                                                    className="bg-[#fbe8d8] hover:bg-[#fbe8d8] text-[#8a4518] font-bold rounded-xl px-4 border border-[#f0a878]/40 bg-[#fbe8d8] border-[#f0a878]/40"
                                                   >
                                                     <Plus className="h-4 w-4 mr-2" />
                                                     Add Phase
@@ -3038,11 +3053,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               {...provided.draggableProps}
                                                               className={cn(
                                                                 "group relative flex flex-col xl:flex-row gap-6 p-6 transition-all duration-300 rounded-[2rem]",
-                                                                snapshot.isDragging ? "shadow-2xl ring-4 ring-indigo-500/10 rotate-1 z-50 scale-[1.02] bg-white" : "bg-white/40 dark:bg-slate-950/40 backdrop-blur-sm border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:bg-white dark:hover:bg-slate-900",
+                                                                snapshot.isDragging ? "shadow-2xl ring-4 ring-[#c2652a]/10 rotate-1 z-50 scale-[1.02] bg-white" : "bg-white/40 dark:bg-slate-950/40 backdrop-blur-sm border border-slate-100 dark:border-slate-800/50 hover:shadow-xl hover:bg-white dark:hover:bg-[#3a302a]",
                                                                 phase.status === 'completed' && "border-emerald-200/50 bg-emerald-50/20"
                                                               )}
                                                             >
-                                                              <div {...provided.dragHandleProps} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-indigo-500 cursor-grab active:cursor-grabbing">
+                                                              <div {...provided.dragHandleProps} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[#d8d0c8] hover:text-[#c2652a] cursor-grab active:cursor-grabbing">
                                                                 <GripVertical className="h-5 w-5" />
                                                               </div>
 
@@ -3051,7 +3066,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 <Input
                                                                   value={phase.name}
                                                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePhase(milestone.id, phase.id, 'name', e.target.value)}
-                                                                  className="h-12 text-base font-bold tracking-tight bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-400 rounded-2xl px-4 text-slate-900 dark:text-white placeholder:text-slate-300 transition-all shadow-sm"
+                                                                  className="h-12 text-base font-bold tracking-tight bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] rounded-2xl px-4 text-[#3a302a] placeholder:text-[#d8d0c8] transition-all shadow-sm"
                                                                   placeholder="Phase Authorization (e.g. UX Design)"
                                                                 />
                                                               </div>
@@ -3059,12 +3074,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               {/* PIC */}
                                                               <div className="w-full xl:w-56">
                                                                 <Select value={phase.pic} onValueChange={(val: any) => updatePhase(milestone.id, phase.id, 'pic', val)}>
-                                                                  <SelectTrigger className="h-12 border-0 bg-white/50 dark:bg-slate-900/50 shadow-sm hover:shadow-md rounded-2xl px-4 transition-all">
+                                                                  <SelectTrigger className="h-12 border-0 bg-white/50 dark:bg-[#3a302a]/50 shadow-sm hover:shadow-md rounded-2xl px-4 transition-all">
                                                                     <div className="flex items-center gap-3">
-                                                                      <Avatar className="h-6 w-6 ring-2 ring-indigo-100">
-                                                                        <AvatarFallback className="bg-indigo-50 text-indigo-600 text-[10px] font-black">{phase.pic ? phase.pic.substring(0, 2).toUpperCase() : '??'}</AvatarFallback>
+                                                                      <Avatar className="h-6 w-6 ring-2 ring-[#fbe8d8]">
+                                                                        <AvatarFallback className="bg-[#fbe8d8] text-[#c2652a] text-[10px] font-black">{phase.pic ? phase.pic.substring(0, 2).toUpperCase() : '??'}</AvatarFallback>
                                                                       </Avatar>
-                                                                      <span className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{phase.pic || 'Assign Intelligence'}</span>
+                                                                      <span className="text-sm font-bold text-[#3a302a] truncate">{phase.pic || 'Assign Intelligence'}</span>
                                                                     </div>
                                                                   </SelectTrigger>
                                                                   <SelectContent className="rounded-2xl border-0 shadow-2xl">
@@ -3081,7 +3096,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                               <div className="flex items-center gap-3 w-full xl:w-auto">
                                                                 <Popover>
                                                                   <PopoverTrigger asChild>
-                                                                    <Button variant="outline" className="h-12 border-0 bg-white/50 dark:bg-slate-900/50 shadow-sm hover:shadow-md rounded-2xl px-4 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-all">
+                                                                    <Button variant="outline" className="h-12 border-0 bg-white/50 dark:bg-[#3a302a]/50 shadow-sm hover:shadow-md rounded-2xl px-4 text-sm font-bold text-[#605850] hover:text-[#c2652a] transition-all">
                                                                       {phase.startDate ? format(phase.startDate, "MM/dd") : "Launch"}
                                                                     </Button>
                                                                   </PopoverTrigger>
@@ -3090,7 +3105,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                 <span className="text-slate-200 font-black">/</span>
                                                                 <Popover>
                                                                   <PopoverTrigger asChild>
-                                                                    <Button variant="outline" className="h-12 border-0 bg-white/50 dark:bg-slate-900/50 shadow-sm hover:shadow-md rounded-2xl px-4 text-sm font-bold text-slate-600 hover:text-indigo-600 transition-all">
+                                                                    <Button variant="outline" className="h-12 border-0 bg-white/50 dark:bg-[#3a302a]/50 shadow-sm hover:shadow-md rounded-2xl px-4 text-sm font-bold text-[#605850] hover:text-[#c2652a] transition-all">
                                                                       {phase.dueDate ? format(phase.dueDate, "MM/dd") : "Due"}
                                                                     </Button>
                                                                   </PopoverTrigger>
@@ -3105,7 +3120,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                     phase.status === 'in-progress' ? "bg-blue-50 text-blue-700 shadow-blue-100 hover:shadow-lg" :
                                                                       phase.status === 'completed' ? "bg-emerald-600 text-white shadow-emerald-200" :
                                                                         phase.status === 'delayed' ? "bg-rose-50 text-rose-700 shadow-rose-100" :
-                                                                          "bg-slate-100 text-slate-400"
+                                                                          "bg-[#f2ece4] text-[#9a9088]"
                                                                   )}>
                                                                     <SelectValue />
                                                                   </SelectTrigger>
@@ -3124,14 +3139,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                                   value={phase.remarks}
                                                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePhase(milestone.id, phase.id, 'remarks', e.target.value)}
                                                                   placeholder="Add deployment context or notes..."
-                                                                  className="h-12 text-sm font-medium bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-indigo-500/10 focus-visible:border-indigo-500/30 rounded-2xl px-6 transition-all shadow-sm placeholder:text-slate-300"
+                                                                  className="h-12 text-sm font-medium bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a]/30 rounded-2xl px-6 transition-all shadow-sm placeholder:text-[#d8d0c8]"
                                                                 />
                                                               </div>
 
                                                               <Button
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-slate-900 text-slate-300 hover:text-rose-600 shadow-sm hover:shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                                                                className="h-12 w-12 rounded-2xl bg-white dark:bg-[#3a302a] text-[#d8d0c8] hover:text-[#8c3c3c] shadow-sm hover:shadow-lg transition-all opacity-0 group-hover:opacity-100"
                                                                 onClick={() => confirmDelete(
                                                                   "Purge Phase?",
                                                                   `Are you sure you want to remove "${phase.name || 'this phase'}"?`,
@@ -3165,15 +3180,15 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                           )}
                           {activeSection === 'demo' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                              <Card className="border-none shadow-xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm ring-1 ring-zinc-200 dark:ring-zinc-800">
-                                <CardHeader className="border-b border-zinc-100 dark:border-zinc-800/50 pb-6 bg-white/50 dark:bg-zinc-900/50">
+                              <Card className="border-none shadow-xl bg-white/50 bg-[#f2ece4]/50 backdrop-blur-sm ring-1 ring-zinc-200 dark:ring-zinc-800">
+                                <CardHeader className="border-b border-[#d8d0c8]/30/50 pb-6 bg-white/50 bg-[#f2ece4]/50">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 flex items-center justify-center border border-violet-500/20 shadow-sm">
                                         <Presentation className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                                       </div>
                                       <div>
-                                        <CardTitle className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Sprint Demo</CardTitle>
+                                        <CardTitle className="text-lg font-bold text-zinc-900">Sprint Demo</CardTitle>
                                         <p className="text-sm text-muted-foreground mt-1">
                                           Plan and track demo topics, presenters, and schedules for the sprint review.
                                         </p>
@@ -3187,7 +3202,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
                                   {demoItems.map((item, index) => (
-                                    <Card key={item.id} className="border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                                    <Card key={item.id} className="border border-[#d8d0c8]/40 shadow-sm overflow-hidden">
                                       <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500" />
                                       <CardHeader className="pb-4 bg-zinc-50/50 dark:bg-zinc-900/30">
                                         <div className="flex items-center justify-between">
@@ -3195,7 +3210,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 font-bold text-sm">
                                               {index + 1}
                                             </div>
-                                            <CardTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                                            <CardTitle className="text-base font-semibold text-zinc-900">
                                               {item.topic || 'New Demo Topic'}
                                             </CardTitle>
                                           </div>
@@ -3218,7 +3233,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       </CardHeader>
                                                                             <CardContent className="p-0">
                                         <Tabs defaultValue="core" className="w-full">
-                                          <TabsList className="grid w-full grid-cols-3 bg-zinc-50 dark:bg-zinc-900/50 p-1 rounded-none border-b border-zinc-100 dark:border-zinc-800 h-12">
+                                          <TabsList className="grid w-full grid-cols-3 bg-zinc-50 bg-[#f2ece4]/50 p-1 rounded-none border-b border-[#d8d0c8]/30 h-12">
                                             <TabsTrigger value="core" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Core Info</TabsTrigger>
                                             <TabsTrigger value="schedule" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Schedule</TabsTrigger>
                                             <TabsTrigger value="notes" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Context & Notes</TabsTrigger>
@@ -3236,7 +3251,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     placeholder="Define the core mission or feature..."
                                                     value={item.topic}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'topic', e.target.value)}
-                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
+                                                    className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
                                                   />
                                                 </div>
                                                 <div className="space-y-3">
@@ -3248,7 +3263,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     placeholder="Assigned mission owner..."
                                                     value={item.presenter}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'presenter', e.target.value)}
-                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
+                                                    className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
                                                   />
                                                 </div>
                                               </div>
@@ -3263,10 +3278,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     value={item.status}
                                                     onValueChange={(value: string) => updateDemoItem(item.id, 'status', value)}
                                                   >
-                                                    <SelectTrigger className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
+                                                    <SelectTrigger className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
                                                       <SelectValue placeholder="Select status" />
                                                     </SelectTrigger>
-                                                    <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                                                    <SelectContent className="rounded-xl border-[#d8d0c8]/40 shadow-2xl">
                                                       <SelectItem value="scheduled" className="focus:bg-blue-50 dark:focus:bg-blue-900/20 rounded-lg">
                                                         <div className="flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400">
                                                           <div className="h-2 w-2 rounded-full bg-blue-500" />
@@ -3274,7 +3289,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                         </div>
                                                       </SelectItem>
                                                       <SelectItem value="in_progress" className="focus:bg-amber-50 dark:focus:bg-amber-900/20 rounded-lg">
-                                                        <div className="flex items-center gap-2 font-bold text-amber-600 dark:text-amber-400">
+                                                        <div className="flex items-center gap-2 font-bold text-[#c2652a]">
                                                           <div className="h-2 w-2 rounded-full bg-amber-500" />
                                                           In Progress
                                                         </div>
@@ -3303,10 +3318,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     value={item.duration}
                                                     onValueChange={(value: string) => updateDemoItem(item.id, 'duration', value)}
                                                   >
-                                                    <SelectTrigger className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
+                                                    <SelectTrigger className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus:ring-2 focus:ring-violet-500/20 rounded-xl font-bold">
                                                       <SelectValue placeholder="Select duration" />
                                                     </SelectTrigger>
-                                                    <SelectContent className="rounded-xl border-zinc-200 dark:border-zinc-800 shadow-2xl">
+                                                    <SelectContent className="rounded-xl border-[#d8d0c8]/40 shadow-2xl">
                                                       <SelectItem value="15" className="rounded-lg font-bold">15 minutes</SelectItem>
                                                       <SelectItem value="30" className="rounded-lg font-bold">30 minutes</SelectItem>
                                                       <SelectItem value="45" className="rounded-lg font-bold">45 minutes</SelectItem>
@@ -3330,7 +3345,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       <Button
                                                         variant="outline"
                                                         className={cn(
-                                                          "w-full h-12 justify-start text-left font-bold bg-zinc-50 dark:bg-zinc-900/50 border-0 rounded-xl focus:ring-2 focus:ring-violet-500/20 transition-all",
+                                                          "w-full h-12 justify-start text-left font-bold bg-zinc-50 bg-[#f2ece4]/50 border-0 rounded-xl focus:ring-2 focus:ring-violet-500/20 transition-all",
                                                           !item.dueDate && "text-muted-foreground"
                                                         )}
                                                       >
@@ -3357,7 +3372,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     type="time"
                                                     value={item.dueTime}
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'dueTime', e.target.value)}
-                                                    className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-black"
+                                                    className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-black"
                                                   />
                                                 </div>
                                               </div>
@@ -3373,7 +3388,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   placeholder="e.g., Tactical Leadership, Stakeholders..."
                                                   value={item.attendees}
                                                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDemoItem(item.id, 'attendees', e.target.value)}
-                                                  className="h-12 bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
+                                                  className="h-12 bg-zinc-50 bg-[#f2ece4]/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-xl font-medium"
                                                 />
                                               </div>
                                               <div className="space-y-3">
@@ -3385,7 +3400,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   placeholder="Strategic overview of the demonstration sequence..."
                                                   value={item.description}
                                                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDemoItem(item.id, 'description', e.target.value)}
-                                                  className="min-h-[120px] bg-zinc-50 dark:bg-zinc-900/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-2xl font-medium resize-none p-4"
+                                                  className="min-h-[120px] bg-zinc-50 bg-[#f2ece4]/50 border-0 focus-visible:ring-2 focus-visible:ring-violet-500/20 rounded-2xl font-medium resize-none p-4"
                                                 />
                                               </div>
                                             </TabsContent>
@@ -3397,9 +3412,9 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                   {/* Empty State */}
                                   {demoItems.length === 0 && (
-                                    <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
-                                      <Presentation className="h-12 w-12 text-zinc-300 dark:text-zinc-600 mb-4" />
-                                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">No demos scheduled</h3>
+                                    <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-[#d8d0c8]/40 bg-zinc-50/50 dark:bg-zinc-900/20">
+                                      <Presentation className="h-12 w-12 text-zinc-300 mb-4" />
+                                      <h3 className="text-lg font-semibold text-zinc-900">No demos scheduled</h3>
                                       <p className="text-muted-foreground max-w-sm mt-2">
                                         Add demo topics to plan your sprint review presentation.
                                       </p>
@@ -3462,7 +3477,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <>
                                           {/* Progress Card */}
                                           <div className="relative group">
-                                            <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                            <div className="absolute inset-0 bg-white/30 rounded-2xl blur group-hover:blur-md transition-all" />
                                             <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
                                               <div className="flex items-center justify-between mb-3">
                                                 <div className="text-5xl font-black text-white drop-shadow-lg">{percentage}%</div>
@@ -3479,7 +3494,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                           {/* Duration Card */}
                                           <div className="relative group">
-                                            <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                            <div className="absolute inset-0 bg-white/30 rounded-2xl blur group-hover:blur-md transition-all" />
                                             <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
                                               <div className="flex items-center justify-between mb-3">
                                                 <div className="text-5xl font-black text-white drop-shadow-lg">{calculateSprintDays()}</div>
@@ -3496,7 +3511,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                           {/* Goals Card */}
                                           <div className="relative group">
-                                            <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                            <div className="absolute inset-0 bg-white/30 rounded-2xl blur group-hover:blur-md transition-all" />
                                             <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
                                               <div className="flex items-center justify-between mb-3">
                                                 <div className="text-5xl font-black text-white drop-shadow-lg">{sprintGoals.length}</div>
@@ -3511,7 +3526,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                           {/* Milestones Card */}
                                           <div className="relative group">
-                                            <div className="absolute inset-0 bg-white/30 dark:bg-white/10 rounded-2xl blur group-hover:blur-md transition-all" />
+                                            <div className="absolute inset-0 bg-white/30 rounded-2xl blur group-hover:blur-md transition-all" />
                                             <div className="relative p-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-xl">
                                               <div className="flex items-center justify-between mb-3">
                                                 <div className="text-5xl font-black text-white drop-shadow-lg">{milestones.length}</div>
@@ -3533,8 +3548,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               {/* Detailed Review Cards */}
                               <div className="space-y-6">
                                 {/* General Information Review */}
-                                <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow">
-                                  <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900 shadow-lg hover:shadow-xl transition-shadow">
+                                  <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                     <div className="flex items-center gap-3">
                                       <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                                         <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -3546,13 +3561,13 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <div className="grid grid-cols-2 gap-4">
                                       <div>
                                         <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Start Date</div>
-                                        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        <div className="text-sm font-medium text-zinc-900">
                                           {date?.from ? format(date.from, 'MMMM dd, yyyy') : 'Not set'}
                                         </div>
                                       </div>
                                       <div>
                                         <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">End Date</div>
-                                        <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                        <div className="text-sm font-medium text-zinc-900">
                                           {date?.to ? format(date.to, 'MMMM dd, yyyy') : 'Not set'}
                                         </div>
                                       </div>
@@ -3562,12 +3577,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                 {/* Project Priorities Review */}
                                 {projects.length > 0 && (
-                                  <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                  <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
+                                    <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                            <FileText className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                            <FileText className="h-4 w-4 text-[#c2652a]" />
                                           </div>
                                           <CardTitle className="text-base font-semibold">Project Priorities</CardTitle>
                                         </div>
@@ -3577,12 +3592,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <CardContent className="pt-4">
                                       <div className="space-y-2">
                                         {projects.map((project, index) => (
-                                          <div key={project.id} className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
-                                            <div className="h-8 w-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-600 dark:text-zinc-400">
+                                          <div key={project.id} className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40">
+                                            <div className="h-8 w-8 rounded-lg bg-[#f2ece4] bg-[#ece6dc] flex items-center justify-center text-xs font-bold text-zinc-600">
                                               {index + 1}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                                              <div className="text-sm font-medium text-zinc-900 truncate">
                                                 {project.name || 'Untitled Project'}
                                               </div>
                                               {project.remarks && (
@@ -3605,8 +3620,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                 {/* Platform Metrics Review */}
                                 {platforms.length > 0 && (
-                                  <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                  <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
+                                    <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
@@ -3620,27 +3635,27 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <CardContent className="pt-4">
                                       <div className="grid gap-4">
                                         {platforms.map((platform) => (
-                                          <div key={platform.id} className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                          <div key={platform.id} className="p-4 rounded-lg bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40">
                                             <div className="flex items-center justify-between mb-3">
-                                              <div className="font-medium text-zinc-900 dark:text-zinc-100">{platform.name || 'Untitled Platform'}</div>
+                                              <div className="font-medium text-zinc-900">{platform.name || 'Untitled Platform'}</div>
                                               <Badge variant="outline">{platform.members.length} members</Badge>
                                             </div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                                               <div>
                                                 <div className="text-muted-foreground">Story Points</div>
-                                                <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.totalStoryPoints}</div>
+                                                <div className="font-semibold text-zinc-900 mt-1">{platform.totalStoryPoints}</div>
                                               </div>
                                               <div>
                                                 <div className="text-muted-foreground">Target Velocity</div>
-                                                <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.targetVelocity}</div>
+                                                <div className="font-semibold text-zinc-900 mt-1">{platform.targetVelocity}</div>
                                               </div>
                                               <div>
                                                 <div className="text-muted-foreground">Improvement</div>
-                                                <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{platform.targetImprovement}%</div>
+                                                <div className="font-semibold text-zinc-900 mt-1">{platform.targetImprovement}%</div>
                                               </div>
                                               <div>
                                                 <div className="text-muted-foreground">Holidays</div>
-                                                <div className="font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
+                                                <div className="font-semibold text-zinc-900 mt-1">
                                                   {platform.members.reduce((total, member) => {
                                                     const details = platform.developerLeaves.find(d => d.name === member);
                                                     const cluster = regionalClusters.find(rc => rc.id === details?.country || (rc.name || rc.id) === details?.country || rc.countryCode === details?.country);
@@ -3658,12 +3673,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                 {/* Sprint Goals Review */}
                                 {sprintGoals.length > 0 && (
-                                  <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                  <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
+                                    <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                          <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                                            <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                                          <div className="h-8 w-8 rounded-lg bg-[#fbe8d8] bg-[#fbe8d8]/30 flex items-center justify-center">
+                                            <Target className="h-4 w-4 text-[#c2652a]" />
                                           </div>
                                           <CardTitle className="text-base font-semibold">Sprint Goals</CardTitle>
                                         </div>
@@ -3673,12 +3688,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <CardContent className="pt-4">
                                       <div className="space-y-2">
                                         {sprintGoals.map((goal, index) => (
-                                          <div key={goal.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
-                                            <div className="h-7 w-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">
+                                          <div key={goal.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40">
+                                            <div className="h-7 w-7 rounded-full bg-[#fbe8d8] bg-[#fbe8d8]/30 flex items-center justify-center text-xs font-bold text-[#c2652a] shrink-0 mt-0.5">
                                               {index + 1}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{goal.description || 'Untitled Goal'}</div>
+                                              <div className="text-sm font-medium text-zinc-900">{goal.description || 'Untitled Goal'}</div>
                                               {goal.remark && (
                                                 <div className="text-xs text-muted-foreground mt-1">{goal.remark}</div>
                                               )}
@@ -3693,12 +3708,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                 {/* Milestones Review */}
                                 {milestones.length > 0 && (
-                                  <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                  <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
+                                    <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                            <Milestone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                            <Milestone className="h-4 w-4 text-[#c2652a]" />
                                           </div>
                                           <CardTitle className="text-base font-semibold">Milestones</CardTitle>
                                         </div>
@@ -3708,10 +3723,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <CardContent className="pt-4">
                                       <div className="space-y-3">
                                         {milestones.map((milestone) => (
-                                          <div key={milestone.id} className="p-4 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                          <div key={milestone.id} className="p-4 rounded-lg bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40">
                                             <div className="flex items-start justify-between mb-3">
                                               <div className="flex-1">
-                                                <div className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{milestone.name}</div>
+                                                <div className="font-medium text-zinc-900 mb-1">{milestone.name}</div>
                                                 {milestone.description && (
                                                   <div className="text-xs text-muted-foreground">{milestone.description}</div>
                                                 )}
@@ -3736,8 +3751,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                 {/* Demo Items Review */}
                                 {demoItems.filter(d => d.topic).length > 0 && (
-                                  <Card className="border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-                                    <CardHeader className="border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                                  <Card className="border-[#d8d0c8]/40 bg-white dark:bg-zinc-900">
+                                    <CardHeader className="border-b border-[#d8d0c8]/30 pb-4">
                                       <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                           <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
@@ -3751,12 +3766,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <CardContent className="pt-4">
                                       <div className="space-y-2">
                                         {demoItems.filter(d => d.topic).map((demo) => (
-                                          <div key={demo.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800">
+                                          <div key={demo.id} className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50 bg-[#f2ece4]/50 border border-[#d8d0c8]/40">
                                             <div className="h-8 w-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
                                               <Presentation className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                              <div className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">{demo.topic}</div>
+                                              <div className="font-medium text-zinc-900 mb-1">{demo.topic}</div>
                                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                 <span className="flex items-center gap-1">
                                                   <Users className="h-3 w-3" />
@@ -3798,7 +3813,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                         <Save className="h-8 w-8 text-white" />
                                       </div>
                                       <div>
-                                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-2">Ready to Save?</h3>
+                                        <h3 className="text-lg font-bold text-zinc-900 mb-2">Ready to Save?</h3>
                                         <p className="text-sm text-muted-foreground max-w-md">
                                           Review the information above and click save to persist all your planning data to the database.
                                         </p>
@@ -3839,11 +3854,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                           )}
 
                           {activeSection === 'security' && (
-                            <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20">
-                              <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
+                            <div className="flex flex-col items-center justify-center p-12 text-center rounded-lg border-2 border-dashed border-[#d8d0c8]/40 bg-zinc-50/50 dark:bg-zinc-900/20">
+                              <div className="h-12 w-12 rounded-full bg-[#f2ece4] flex items-center justify-center mb-4">
                                 <ShieldCheck className="h-6 w-6 text-zinc-400" />
                               </div>
-                              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+                              <h3 className="text-lg font-semibold text-zinc-900">
                                 Security Audit Content
                               </h3>
                               <p className="text-muted-foreground max-w-sm mt-2">
@@ -3871,8 +3886,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       <AlertDialog open={deleteConfig.isOpen} onOpenChange={(open: boolean) => !open && setDeleteConfig(prev => ({ ...prev, isOpen: false }))}>
         <AlertDialogContent className="rounded-3xl border-0 shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-slate-900">{deleteConfig.title}</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-500 font-medium">
+            <AlertDialogTitle className="text-2xl font-black text-[#3a302a]">{deleteConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#605850] font-medium">
               {deleteConfig.description}
             </AlertDialogDescription>
           </AlertDialogHeader>
