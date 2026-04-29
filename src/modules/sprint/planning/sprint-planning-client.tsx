@@ -44,7 +44,13 @@ import {
   List,
   Globe,
   Pen,
-  Kanban
+  Kanban,
+  Bell,
+  Settings,
+  ArrowRight,
+  Check,
+  Edit3,
+  X
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -487,6 +493,55 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   };
 
   const [expandedProjectId, setExpandedProjectId] = React.useState<string | null>(null);
+  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(null);
+  const [projectBackup, setProjectBackup] = React.useState<any[] | null>(null);
+  const [platformBackup, setPlatformBackup] = React.useState<Platform[] | null>(null);
+
+  const handleStartEditing = (projectId: string) => {
+    setProjectBackup(JSON.parse(JSON.stringify(projects)));
+    setPlatformBackup(JSON.parse(JSON.stringify(platforms)));
+    setEditingProjectId(projectId);
+  };
+
+  const handleCancelEditing = () => {
+    if (!editingProjectId) return;
+
+    const currentProject = projects.find(p => p.id === editingProjectId);
+    const backupProject = projectBackup?.find(p => p.id === editingProjectId);
+
+    // Check for project changes
+    const projectChanged = JSON.stringify(currentProject) !== JSON.stringify(backupProject);
+
+    // Check for platform allocation changes
+    const currentAllocations = platforms.map(p => ({
+      id: p.id,
+      alloc: p.allocations?.find(a => a.projectId === editingProjectId)
+    }));
+    const backupAllocations = platformBackup?.map(p => ({
+      id: p.id,
+      alloc: p.allocations?.find(a => a.projectId === editingProjectId)
+    }));
+    const allocationsChanged = JSON.stringify(currentAllocations) !== JSON.stringify(backupAllocations);
+
+    if (projectChanged || allocationsChanged) {
+      confirmDelete(
+        'Discard Changes?',
+        'You have unsaved changes. Are you sure you want to discard them?',
+        () => {
+          if (projectBackup) setProjects(projectBackup);
+          if (platformBackup) setPlatforms(platformBackup);
+          setEditingProjectId(null);
+          setProjectBackup(null);
+          setPlatformBackup(null);
+        }
+      );
+    } else {
+      setEditingProjectId(null);
+      setProjectBackup(null);
+      setPlatformBackup(null);
+    }
+  };
+
   const toggleProjectExpand = (id: string) => {
     setExpandedProjectId(prev => prev === id ? null : id);
   };
@@ -708,13 +763,13 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
       if (pt.id !== platformId) return pt;
       const existingAllocIndex = pt.allocations?.findIndex(a => a.projectId === projectId) ?? -1;
       const validAllocations = pt.allocations || [];
-      
+
       let newAllocations;
       if (existingAllocIndex >= 0) {
-         newAllocations = [...validAllocations];
-         newAllocations[existingAllocIndex] = { ...newAllocations[existingAllocIndex], allocatedPercent: percent };
+        newAllocations = [...validAllocations];
+        newAllocations[existingAllocIndex] = { ...newAllocations[existingAllocIndex], allocatedPercent: percent };
       } else {
-         newAllocations = [...validAllocations, { projectId, allocatedPercent: percent }];
+        newAllocations = [...validAllocations, { projectId, allocatedPercent: percent }];
       }
       return { ...pt, allocations: newAllocations };
     }));
@@ -1077,7 +1132,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   if (!sprint) return null;
 
   return (
-    <div className="min-h-screen w-full bg-[#faf5ee] font-sans selection:bg-[#fbe8d8] text-[#3a302a] overflow-x-hidden">
+    <div className="h-screen w-full bg-[#faf5ee] font-sans selection:bg-[#fbe8d8] text-[#3a302a] overflow-hidden">
       {/* Google Fonts - Sahara Theme */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -1092,45 +1147,45 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
-      <div className="relative z-10 flex flex-col min-h-screen transition-all duration-500">
-        {/* Navigation Bar - Refined Glassmorphism */}
-        <header className="sticky top-0 z-50 w-full border-b border-[#d8d0c8]/60 bg-[#faf5ee]/80 backdrop-blur-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)]">
-          <div className="max-w-[1600px] mx-auto flex h-16 items-center justify-between px-6 lg:px-12">
-            <div className="flex items-center gap-6">
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-[#605850] hover:text-[#3a302a] hover:bg-[#f2ece4] transition-all" onClick={() => router.back()}>
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Logo />
-              <div className="h-6 w-px bg-[#d8d0c8]/60" />
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="bg-[#fbe8d8]/50 text-[#8a4518] border-[#f0a878]/40 px-2 py-0.5 text-[10px] uppercase tracking-tighter font-bold shadow-none">
-                  Beta
-                </Badge>
-                <div className="h-1 w-1 rounded-full bg-[#d8d0c8]" />
-                <span className="text-sm font-semibold text-[#605850]">Strategy Module</span>
-              </div>
+      <div className="relative z-10 flex flex-col h-full transition-all duration-500">
+        {/* Navigation Bar - Sahara Style */}
+        <header className="shrink-0 sticky top-0 z-50 w-full border-b border-stone-200/60 bg-[#faf5ee]/90 backdrop-blur-md shadow-sm" style={{ fontFamily: "'Manrope', sans-serif" }}>
+          <div className="max-w-[1600px] mx-auto flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-8">
+              <div className="text-2xl italic text-orange-900 cursor-pointer active:opacity-70" style={{ fontFamily: "'EB Garamond', serif" }} onClick={() => router.push('/')}>AgileSuit</div>
+              <nav className="hidden md:flex items-center gap-6">
+                <span className="text-stone-500 hover:text-orange-700 transition-colors cursor-pointer active:opacity-70 text-sm">Dashboard</span>
+              </nav>
             </div>
             <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/50 backdrop-blur-md rounded-full border border-[#d8d0c8]/40 shadow-sm transition-all hover:shadow-md group">
-                <Target className="h-3.5 w-3.5 text-[#c2652a] transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-[#3a302a]">
-                  {sprint ? sprint.sprintName : 'Loading...'}
-                </span>
-                <Badge className="ml-1 bg-[#3a302a] text-white text-[9px] hover:bg-[#3a302a] shadow-none px-1.5 h-4">
-                  #{sprint?.sprintNumber}
-                </Badge>
+              <div className="relative hidden sm:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Search resources..."
+                  className="pl-10 pr-4 py-2 bg-[#f6f0e8] border border-[#d8d0c8] rounded-full text-sm focus:ring-1 focus:ring-[#c2652a] focus:border-[#c2652a] outline-none transition-all w-64"
+                  style={{ fontFamily: "'Manrope', sans-serif" }}
+                />
               </div>
-              {user && <UserNav user={user} />}
+              <div className="flex items-center gap-3">
+                <button className="text-stone-500 hover:text-[#c2652a] transition-colors cursor-pointer active:opacity-70">
+                  <Bell className="h-5 w-5" />
+                </button>
+                <button className="text-stone-500 hover:text-[#c2652a] transition-colors cursor-pointer active:opacity-70">
+                  <Settings className="h-5 w-5" />
+                </button>
+                {user && <UserNav user={user} />}
+              </div>
             </div>
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar relative mx-auto w-full max-w-[1600px] h-full" ref={containerRef}>
-          
+
           {/* Floating Command Dock - Premium OS-Level Navigation */}
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-10 fade-in duration-700">
             <div className="flex items-center gap-2 p-2 bg-[#3a302a]/95 backdrop-blur-2xl border border-white/10 rounded-[24px] shadow-[0_20px_40px_-15px_rgba(58,48,42,0.3),_0_0_0_1px_rgba(255,255,255,0.05)_inset]">
-              
+
               <div className="flex items-center gap-1">
                 {PLANNING_SECTIONS.filter(s => ['board', 'general', 'team', 'priority', 'metrics', 'goals', 'milestones', 'demo'].includes(s.id)).map(section => {
                   const Icon = section.icon;
@@ -1142,18 +1197,18 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                       className={cn(
                         "relative flex flex-col items-center justify-center w-[60px] h-[60px] rounded-[18px] transition-all duration-300 group",
                         isActive
-                          ? "bg-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)_inset]" 
+                          ? "bg-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.05)_inset]"
                           : "hover:bg-white/5 active:scale-95"
                       )}
                     >
                       <Icon className={cn(
-                        "h-6 w-6 transition-transform duration-500", 
+                        "h-6 w-6 transition-transform duration-500",
                         isActive ? "text-[#f0a878] scale-110 drop-shadow-sm" : "text-[#fbe8d8]/70 group-hover:-translate-y-1 group-hover:text-[#fbe8d8]"
                       )} />
                       {isActive && (
                         <div className="absolute -bottom-1 h-1 w-1 rounded-full bg-[#c2652a]" />
                       )}
-                      
+
                       {/* Tooltip on Hover */}
                       {!isActive && (
                         <div className="absolute -top-10 scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none px-3 py-1.5 bg-[#3a302a] text-[#fbe8d8] text-[10px] font-black tracking-widest uppercase rounded-lg shadow-xl outline outline-1 outline-white/10">
@@ -1191,7 +1246,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           <main className="w-full h-full lg:pt-12 lg:px-20 pb-40 p-6 flex justify-center">
             <div className="w-full max-w-[1200px]">
               {/* Premium Header Section */}
-              {activeSection !== 'team' && (
+              {activeSection !== 'team' && activeSection !== 'priority' && (
                 <div className="mb-8 space-y-4 gsap-stagger-item border-b border-[#d8d0c8]/40 pb-6">
                   <div className="space-y-2">
                     <h1 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight italic" style={{ fontFamily: "'EB Garamond', serif" }}>
@@ -1211,9 +1266,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                   <div className="gsap-stagger-item">
 
 
-                    {activeSection !== 'team' && <Separator />}
-
-                    {/* Content Switcher */}
+                    {activeSection !== 'team' && activeSection !== 'priority' && <Separator />}                    {/* Content Switcher */}
                     <div className="min-h-[400px]">
                       {isPlanningDataLoading ? (
                         <SectionLoadingSkeleton />
@@ -1223,7 +1276,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
                               {/* BENTO GRID: Core Parameters */}
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                
+
                                 {/* Tile 1: Start Date — Sahara Card */}
                                 <div className="col-span-1 bg-white p-8 rounded-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] border border-[#d8d0c8]/40 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_4px_20px_rgba(58,48,42,0.08)]">
                                   <div>
@@ -1349,14 +1402,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                       {regionalClusters.map((cluster, cIdx) => {
                                         const totalDaysOff = cluster.holidays.reduce((sum, h) => sum + (h.days || 0), 0);
                                         const sprintDays = calculateSprintDays() || 10;
-                                        
+
                                         const impactLevel = totalDaysOff === 0 ? 'NO IMPACT' : totalDaysOff < 3 ? 'LOW IMPACT' : totalDaysOff < 6 ? 'MEDIUM' : 'HIGH IMPACT';
                                         const impactTextColor = totalDaysOff === 0 ? 'text-[#78706a]' : totalDaysOff < 3 ? 'text-[#c2652a]' : totalDaysOff < 6 ? 'text-amber-600' : 'text-[#8c3c3c]';
 
                                         return (
                                           <div key={cluster.id} className="group bg-[#f6f0e8] rounded-xl border border-[#d8d0c8]/60 overflow-hidden transition-all duration-300">
                                             {/* Card Header */}
-                                            <div 
+                                            <div
                                               onClick={() => setRegionalClusters(prev => prev.map(c => c.id === cluster.id ? { ...c, isExpanded: !c.isExpanded } : c))}
                                               className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/30 transition-colors"
                                             >
@@ -1408,7 +1461,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               <div className="px-8 pb-8 pt-2 animate-in slide-in-from-top-2 duration-300">
                                                 <div className="border-t border-[#d8d0c8]/30 pt-6">
                                                   <h5 className="text-sm font-bold uppercase tracking-wider text-[#78706a] mb-4" style={{ fontFamily: "'Manrope', sans-serif" }}>Availability Adjustments</h5>
-                                                  
+
                                                   {/* Table Header */}
                                                   <div className="flex items-center px-2 pb-2 text-[10px] font-bold text-[#9a9088] uppercase tracking-widest">
                                                     <span className="flex-1">Holiday / Event Name</span>
@@ -1506,7 +1559,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 <div className="space-y-2">
                                   <h3 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight italic" style={{ fontFamily: "'EB Garamond', serif" }}>Engineering Resources</h3>
                                   <p className="text-[14px] text-[#605850] max-w-3xl leading-relaxed" style={{ fontFamily: "'Manrope', sans-serif" }}>
-                                    Strategic orchestration of team availability and resource distribution across core<br/>
+                                    Strategic orchestration of team availability and resource distribution across core<br />
                                     platform domains. Managing velocity and global talent alignment.
                                   </p>
                                 </div>
@@ -1547,14 +1600,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             <div className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#c2652a]/70 mt-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Force Responsibility</div>
                                           </div>
                                         </div>
-                                        
+
                                         <div className="flex items-center gap-3">
                                           <button onClick={() => confirmDelete('Delete Role?', `Are you sure you want to remove "${role.label || 'this'}"?`, () => deleteForceRole(role.id))} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/role:opacity-100">
                                             <Trash2 className="h-4 w-4" />
                                           </button>
                                         </div>
                                       </div>
-                                      
+
                                       <div className="w-full">
                                         <Select onValueChange={(val: string) => {
                                           setForceRoles(prev => prev.map(r => r.id === role.id ? { ...r, assignedMember: val } : r));
@@ -1569,7 +1622,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                 <div className="flex items-center gap-3">
                                                   <Avatar className="h-10 w-10 border border-[#d8d0c8] dark:border-slate-800 shrink-0">
                                                     <AvatarFallback className="bg-[#fbe8d8] text-[#8a4518] text-xs font-bold">
-                                                      {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
+                                                      {(member.display_name || member.email || 'U').substring(0, 2).toUpperCase()}
                                                     </AvatarFallback>
                                                   </Avatar>
                                                   <div className="flex flex-col items-start overflow-hidden">
@@ -1597,541 +1650,601 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                               </div>
 
                               <div className="space-y-6 pt-10">
-                                  <div className="flex justify-between items-center border-b border-[#d8d0c8]/40 pb-4">
-                                    <h4 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Platform Matrix</h4>
-                                    <div className="flex items-center gap-3">
-                                      <div className="flex gap-2 items-center">
-                                        <Input
-                                          placeholder="New platform name..."
-                                          value={newPlatformName}
-                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
-                                          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
-                                          className="h-10 w-48 bg-white border border-[#d8d0c8]/40 rounded-lg text-sm shadow-sm focus-visible:ring-0 focus-visible:border-[#c2652a]/40 placeholder:text-[#d8d0c8] transition-all"
-                                          style={{ fontFamily: "'Manrope', sans-serif" }}
-                                        />
-                                        <button
-                                          onClick={addPlatform}
-                                          disabled={!newPlatformName.trim()}
-                                          className="flex items-center gap-2 bg-[#f2ece4] text-[#c2652a] px-4 py-2 rounded-lg font-medium text-xs shadow-sm hover:bg-[#c2652a]/10 transition-all active:scale-95 h-10 border-none disabled:opacity-50 disabled:cursor-not-allowed" 
-                                          style={{ fontFamily: "'Manrope', sans-serif" }}
-                                        >
-                                          <Plus className="h-4 w-4" /> <span className="uppercase tracking-widest font-bold text-[10px]">Add</span>
-                                        </button>
-                                      </div>
-                                      {platforms.length > 0 && (
-                                        <div className="text-xs font-bold text-[#9a9088] uppercase tracking-widest ml-2" style={{ fontFamily: "'Manrope', sans-serif" }}>{platforms.length} Active</div>
-                                      )}
+                                <div className="flex justify-between items-center border-b border-[#d8d0c8]/40 pb-4">
+                                  <h4 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Platform Matrix</h4>
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex gap-2 items-center">
+                                      <Input
+                                        placeholder="New platform name..."
+                                        value={newPlatformName}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPlatformName(e.target.value)}
+                                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && addPlatform()}
+                                        className="h-10 w-48 bg-white border border-[#d8d0c8]/40 rounded-lg text-sm shadow-sm focus-visible:ring-0 focus-visible:border-[#c2652a]/40 placeholder:text-[#d8d0c8] transition-all"
+                                        style={{ fontFamily: "'Manrope', sans-serif" }}
+                                      />
+                                      <button
+                                        onClick={addPlatform}
+                                        disabled={!newPlatformName.trim()}
+                                        className="flex items-center gap-2 bg-[#f2ece4] text-[#c2652a] px-4 py-2 rounded-lg font-medium text-xs shadow-sm hover:bg-[#c2652a]/10 transition-all active:scale-95 h-10 border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        style={{ fontFamily: "'Manrope', sans-serif" }}
+                                      >
+                                        <Plus className="h-4 w-4" /> <span className="uppercase tracking-widest font-bold text-[10px]">Add</span>
+                                      </button>
                                     </div>
+                                    {platforms.length > 0 && (
+                                      <div className="text-xs font-bold text-[#9a9088] uppercase tracking-widest ml-2" style={{ fontFamily: "'Manrope', sans-serif" }}>{platforms.length} Active</div>
+                                    )}
                                   </div>
+                                </div>
 
-                                  <div className="flex flex-col gap-3">
-                                    {platforms.map((platform) => (
-                                      <div key={platform.id} className={cn(
-                                        "bg-white rounded-xl overflow-hidden group/acc transition-all duration-300 border border-[#d8d0c8]/40",
-                                        platform.isExpanded 
-                                          ? "shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] border-[#c2652a]/40"
-                                          : "shadow-[0_2px_8px_rgba(58,48,42,0.02)] hover:shadow-[0_4px_16px_rgba(58,48,42,0.04)]"
-                                      )}>
-                                        
-                                        {/* ACCORDION ROW HEADER */}
-                                        <div 
-                                          onClick={() => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, isExpanded: !p.isExpanded } : p))}
-                                          className={cn(
-                                            "flex items-center justify-between p-5 cursor-pointer transition-colors select-none relative overflow-hidden",
-                                            platform.isExpanded ? "bg-[#f2ece4]/50" : "hover:bg-[#f2ece4]/30"
-                                          )}
-                                        >
-                                          <div className="flex items-center gap-4 w-1/4 relative z-10">
-                                            <div className={cn(
-                                              "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border group-hover/acc:scale-105 transition-all duration-300",
-                                              platform.isExpanded
-                                                ? "bg-white border-[#d8d0c8]/40 text-[#c2652a] shadow-sm"
-                                                : "bg-[#f2ece4] border-transparent text-[#605850]"
-                                            )}>
-                                               <LayoutDashboard className="h-6 w-6" />
-                                            </div>
-                                            <div className="flex flex-col">
-                                              <h4 className="text-xl md:text-2xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{platform.name}</h4>
-                                              <span className="text-[10px] uppercase tracking-widest text-[#78706a] mt-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>Domain</span>
-                                            </div>
+                                <div className="flex flex-col gap-3">
+                                  {platforms.map((platform) => (
+                                    <div key={platform.id} className={cn(
+                                      "bg-white rounded-xl overflow-hidden group/acc transition-all duration-300 border border-[#d8d0c8]/40",
+                                      platform.isExpanded
+                                        ? "shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] border-[#c2652a]/40"
+                                        : "shadow-[0_2px_8px_rgba(58,48,42,0.02)] hover:shadow-[0_4px_16px_rgba(58,48,42,0.04)]"
+                                    )}>
+
+                                      {/* ACCORDION ROW HEADER */}
+                                      <div
+                                        onClick={() => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, isExpanded: !p.isExpanded } : p))}
+                                        className={cn(
+                                          "flex items-center justify-between p-5 cursor-pointer transition-colors select-none relative overflow-hidden",
+                                          platform.isExpanded ? "bg-[#f2ece4]/50" : "hover:bg-[#f2ece4]/30"
+                                        )}
+                                      >
+                                        <div className="flex items-center gap-4 w-1/4 relative z-10">
+                                          <div className={cn(
+                                            "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border group-hover/acc:scale-105 transition-all duration-300",
+                                            platform.isExpanded
+                                              ? "bg-white border-[#d8d0c8]/40 text-[#c2652a] shadow-sm"
+                                              : "bg-[#f2ece4] border-transparent text-[#605850]"
+                                          )}>
+                                            <LayoutDashboard className="h-6 w-6" />
                                           </div>
-
-                                          <div className="flex items-center gap-6 w-1/2 justify-center px-4 relative z-10">
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Total SP</span>
-                                              <Input 
-                                                type="number" 
-                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#3a302a] transition-all"
-                                                style={{ fontFamily: "'EB Garamond', serif" }}
-                                                value={platform.totalStoryPoints || ''} 
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))} 
-                                                placeholder="0"
-                                              />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Alpha %</span>
-                                              <Input 
-                                                type="number" 
-                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
-                                                style={{ fontFamily: "'EB Garamond', serif" }}
-                                                value={platform.targetImprovement || ''} 
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))} 
-                                                placeholder="0"
-                                              />
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>SP/Day</span>
-                                              <Input 
-                                                type="number" 
-                                                className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
-                                                style={{ fontFamily: "'EB Garamond', serif" }}
-                                                value={platform.targetVelocity || ''} 
-                                                onClick={(e) => e.stopPropagation()}
-                                                onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))} 
-                                                placeholder="0"
-                                              />
-                                            </div>
-                                          </div>
-
-                                          <div className="flex items-center gap-3 w-1/4 justify-end relative z-10">
-                                            <div className="flex items-center justify-center h-8 px-3 rounded-lg bg-[#f2ece4] border border-[#d8d0c8]/40 shadow-sm transition-colors">
-                                              <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-px text-[#c2652a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{platform.members.length} Devs</span>
-                                            </div>
-                                            <button 
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                confirmDelete('Delete Platform?', `Are you sure you want to remove "${platform.name}"?`, () => deletePlatform(platform.id))
-                                              }} 
-                                              className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/acc:opacity-100"
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </button>
-                                            <div className={cn("transition-transform duration-300", platform.isExpanded ? "rotate-180 text-[#3a302a]" : "text-[#d8d0c8] group-hover/acc:text-[#9a9088]")}>
-                                              <ChevronDown className="h-5 w-5" />
-                                            </div>
+                                          <div className="flex flex-col">
+                                            <h4 className="text-xl md:text-2xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{platform.name}</h4>
+                                            <span className="text-[10px] uppercase tracking-widest text-[#78706a] mt-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>Domain</span>
                                           </div>
                                         </div>
 
-                                        {/* ACCORDION BODY (EXPANDED) */}
-                                        {platform.isExpanded && (
-                                          <div className="border-t border-[#d8d0c8]/40 bg-[#f6f0e8]/50  p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
-                                            
-                                            {/* Inject Button */}
-                                            <div className="w-full relative group/member">
-                                              <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                  <button className="w-full text-left h-12 pl-12 pr-6 bg-white/80  border-[2px] border-dashed border-[#d8d0c8]/60 dark:border-slate-800 rounded-xl text-xs font-black text-[#9a9088] hover:text-[#c2652a] hover:border-[#f0a878]  dark:hover:text-white focus:outline-none focus:ring-0 transition-all uppercase tracking-widest shadow-sm block relative overflow-hidden">
-                                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9a9088] group-hover/member:text-[#c2652a] transition-colors">
-                                                      <Plus className="h-4 w-4" />
-                                                    </div>
-                                                    Inject Resource Node
-                                                  </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 backdrop-blur-2xl border-white/20  border">
-                                                  <div className="text-[10px] font-black text-[#9a9088] uppercase tracking-widest px-4 py-3">Available Org Members</div>
-                                                  <div className="max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                                                    {orgMembers.length > 0 ? orgMembers.map((member: any) => (
-                                                      <DropdownMenuItem 
-                                                        key={member.id} 
-                                                        className="rounded-[1.25rem] py-3 px-3 cursor-pointer hover:bg-[#f6f0e8] transition-colors flex items-center gap-4"
-                                                        onClick={() => {
-                                                          const val = member.id;
-                                                          if (val && !platform.members.includes(val)) {
-                                                            setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: [...p.members, val] } : p));
-                                                          }
-                                                        }}
-                                                      >
-                                                        <Avatar className="h-10 w-10 border border-[#d8d0c8] dark:border-slate-800 shrink-0 shadow-sm">
-                                                          <AvatarFallback className="bg-[#fbe8d8] text-[#8a4518] font-bold">
-                                                            {(member.display_name||member.email||'U').substring(0,2).toUpperCase()}
-                                                          </AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex flex-col overflow-hidden">
-                                                          <span className="font-bold text-[#3a302a] truncate text-sm">{member.display_name || member.email}</span>
-                                                          <div className="flex items-center gap-1.5 mt-0.5">
-                                                            <span className="text-[10px] font-medium text-[#605850] truncate">{member.email}</span>
-                                                            {member.department?.name && (
-                                                              <>
-                                                                <span className="text-[8px] text-[#d8d0c8] dark:text-[#3a302a]">•</span>
-                                                                <span className="text-[9px] text-[#c2652a]/80 font-black uppercase tracking-widest">{member.department.name}</span>
-                                                              </>
-                                                            )}
-                                                          </div>
-                                                        </div>
-                                                      </DropdownMenuItem>
-                                                    )) : (
-                                                      <div className="p-4 text-sm font-medium text-[#605850] text-center">No unassigned members</div>
-                                                    )}
-                                                  </div>
-                                                </DropdownMenuContent>
-                                              </DropdownMenu>
-                                            </div>
-
-                                            {/* Deployment List */}
-                                            {platform.members.length > 0 && (
-                                              <div className="space-y-2">
-                                                {/* Header */}
-                                                <div className="grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 px-3 pb-2 border-b border-[#d8d0c8]/40">
-                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Node Identity</label>
-                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Geo</label>
-                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Alloc %</label>
-                                                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Out (D)</label>
-                                                  <div />
-                                                </div>
-
-                                                <div className="space-y-2">
-                                                  {platform.members.map((member, idx) => {
-                                                    const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
-                                                    const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
-                                                    const initials = displayName
-                                                        .trim()
-                                                        .split(/\s+/)
-                                                        .map((n: string) => n[0])
-                                                        .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
-                                                        .join('')
-                                                        .substring(0, 2)
-                                                        .toUpperCase();
-                                                    
-                                                    const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
-                                                    
-                                                    const updateDetails = (field: keyof DeveloperLeave, value: any) => {
-                                                      setPlatforms(prev => prev.map(p => p.id === platform.id ? {
-                                                        ...p,
-                                                        developerLeaves: (() => {
-                                                          const textExists = p.developerLeaves.find(d => d.name === member);
-                                                          if (textExists) {
-                                                            return p.developerLeaves.map(d => d.name === member ? { ...d, [field]: value } : d);
-                                                          }
-                                                          return [...p.developerLeaves, { id: Date.now().toString(), name: member, country: '', capacity: 1, plannedLeave: 0, [field]: value }];
-                                                        })()
-                                                      } : p));
-                                                    };
-
-                                                    return (
-                                                      <div key={idx} className="group/row p-2 rounded-xl bg-white border border-[#d8d0c8]/40 shadow-sm focus-within:shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] focus-within:border-[#c2652a]/40 transition-all grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 items-center">
-                                                        <div className="flex items-center gap-3 min-w-0 pr-1">
-                                                          <Avatar className="h-8 w-8 rounded-lg border border-[#d8d0c8]/40 shrink-0">
-                                                            {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
-                                                            <AvatarFallback className="bg-[#f2ece4] text-[#c2652a] font-bold text-[10px]" style={{ fontFamily: "'Manrope', sans-serif" }}>{initials}</AvatarFallback>
-                                                          </Avatar>
-                                                          <div className="flex flex-col min-w-0">
-                                                            <span className="text-sm font-medium text-[#3a302a] leading-none truncate mb-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>{displayName}</span>
-                                                            <span className="text-[10px] text-[#9a9088] uppercase tracking-widest truncate leading-none" style={{ fontFamily: "'Manrope', sans-serif" }}>{memberObj?.department?.name || 'Engineer'}</span>
-                                                          </div>
-                                                        </div>
-
-                                                        <div className="w-[90px]">
-                                                          <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
-                                                            <SelectTrigger className="h-9 bg-[#f2ece4] rounded-lg border-none focus:ring-0 text-xs font-medium text-[#3a302a] px-3 shadow-none group-focus-within/row:bg-white transition-all" style={{ fontFamily: "'Manrope', sans-serif" }}>
-                                                              {details.country ? (regionalClusters.find(rc => rc.id === details.country)?.countryCode || details.country) : "REG"}
-                                                            </SelectTrigger>
-                                                            <SelectContent className="rounded-xl border border-[#d8d0c8]/40 shadow-xl bg-white p-1">
-                                                              {regionalClusters.map(rc => {
-                                                                const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H` : 'None';
-                                                                return (
-                                                                  <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors">
-                                                                    <div className="flex items-center justify-between gap-4 w-[120px]">
-                                                                      <span className="font-medium text-[#3a302a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{rc.countryCode || 'Node'}</span>
-                                                                      <span className="text-[10px] text-[#9a9088] font-bold">{holidaySummary}</span>
-                                                                    </div>
-                                                                  </SelectItem>
-                                                                );
-                                                              })}
-                                                              <SelectItem value="Other" className="rounded-lg text-xs font-medium text-[#9a9088] py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors" style={{ fontFamily: "'Manrope', sans-serif" }}>OTHER</SelectItem>
-                                                            </SelectContent>
-                                                          </Select>
-                                                        </div>
-
-                                                        <div className="relative w-full">
-                                                          <Input
-                                                            type="number"
-                                                            className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#3a302a] group-focus-within/row:bg-white transition-all"
-                                                            style={{ fontFamily: "'EB Garamond', serif" }}
-                                                            value={Math.round(details.capacity * 100) || ''}
-                                                            placeholder="100"
-                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value) / 100)}
-                                                          />
-                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">%</span>
-                                                        </div>
-
-                                                        <div className="relative w-full">
-                                                          <Input
-                                                            type="number"
-                                                            className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#8c3c3c] group-focus-within/row:bg-white transition-all"
-                                                            style={{ fontFamily: "'EB Garamond', serif" }}
-                                                            value={details.plannedLeave || ''}
-                                                            placeholder="0"
-                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
-                                                          />
-                                                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">D</span>
-                                                        </div>
-
-                                                        <button
-                                                          onClick={() => confirmDelete('Disengage Node', `Are you sure you want to disengage ${displayName} from ${platform.name}?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
-                                                          className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/row:opacity-100 ml-auto"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
-                                                      </div>
-                                                    );
-                                                  })}
-                                                </div>
-                                              </div>
-                                            )}
+                                        <div className="flex items-center gap-6 w-1/2 justify-center px-4 relative z-10">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Total SP</span>
+                                            <Input
+                                              type="number"
+                                              className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#3a302a] transition-all"
+                                              style={{ fontFamily: "'EB Garamond', serif" }}
+                                              value={platform.totalStoryPoints || ''}
+                                              onClick={(e) => e.stopPropagation()}
+                                              onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
+                                              placeholder="0"
+                                            />
                                           </div>
-                                        )}
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Alpha %</span>
+                                            <Input
+                                              type="number"
+                                              className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
+                                              style={{ fontFamily: "'EB Garamond', serif" }}
+                                              value={platform.targetImprovement || ''}
+                                              onClick={(e) => e.stopPropagation()}
+                                              onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetImprovement: Number(e.target.value) } : p))}
+                                              placeholder="0"
+                                            />
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>SP/Day</span>
+                                            <Input
+                                              type="number"
+                                              className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
+                                              style={{ fontFamily: "'EB Garamond', serif" }}
+                                              value={platform.targetVelocity || ''}
+                                              onClick={(e) => e.stopPropagation()}
+                                              onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, targetVelocity: Number(e.target.value) } : p))}
+                                              placeholder="0"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 w-1/4 justify-end relative z-10">
+                                          <div className="flex items-center justify-center h-8 px-3 rounded-lg bg-[#f2ece4] border border-[#d8d0c8]/40 shadow-sm transition-colors">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-px text-[#c2652a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{platform.members.length} Devs</span>
+                                          </div>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              confirmDelete('Delete Platform?', `Are you sure you want to remove "${platform.name}"?`, () => deletePlatform(platform.id))
+                                            }}
+                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/acc:opacity-100"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </button>
+                                          <div className={cn("transition-transform duration-300", platform.isExpanded ? "rotate-180 text-[#3a302a]" : "text-[#d8d0c8] group-hover/acc:text-[#9a9088]")}>
+                                            <ChevronDown className="h-5 w-5" />
+                                          </div>
+                                        </div>
                                       </div>
-                                    ))}
-                                  </div>
+
+                                      {/* ACCORDION BODY (EXPANDED) */}
+                                      {platform.isExpanded && (
+                                        <div className="border-t border-[#d8d0c8]/40 bg-[#f6f0e8]/50  p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
+
+                                          {/* Inject Button */}
+                                          <div className="w-full relative group/member">
+                                            <DropdownMenu>
+                                              <DropdownMenuTrigger asChild>
+                                                <button className="w-full text-left h-12 pl-12 pr-6 bg-white/80  border-[2px] border-dashed border-[#d8d0c8]/60 dark:border-slate-800 rounded-xl text-xs font-black text-[#9a9088] hover:text-[#c2652a] hover:border-[#f0a878]  dark:hover:text-white focus:outline-none focus:ring-0 transition-all uppercase tracking-widest shadow-sm block relative overflow-hidden">
+                                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9a9088] group-hover/member:text-[#c2652a] transition-colors">
+                                                    <Plus className="h-4 w-4" />
+                                                  </div>
+                                                  Inject Resource Node
+                                                </button>
+                                              </DropdownMenuTrigger>
+                                              <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 backdrop-blur-2xl border-white/20  border">
+                                                <div className="text-[10px] font-black text-[#9a9088] uppercase tracking-widest px-4 py-3">Available Org Members</div>
+                                                <div className="max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                                                  {orgMembers.length > 0 ? orgMembers.map((member: any) => (
+                                                    <DropdownMenuItem
+                                                      key={member.id}
+                                                      className="rounded-[1.25rem] py-3 px-3 cursor-pointer hover:bg-[#f6f0e8] transition-colors flex items-center gap-4"
+                                                      onClick={() => {
+                                                        const val = member.id;
+                                                        if (val && !platform.members.includes(val)) {
+                                                          setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: [...p.members, val] } : p));
+                                                        }
+                                                      }}
+                                                    >
+                                                      <Avatar className="h-10 w-10 border border-[#d8d0c8] dark:border-slate-800 shrink-0 shadow-sm">
+                                                        <AvatarFallback className="bg-[#fbe8d8] text-[#8a4518] font-bold">
+                                                          {(member.display_name || member.email || 'U').substring(0, 2).toUpperCase()}
+                                                        </AvatarFallback>
+                                                      </Avatar>
+                                                      <div className="flex flex-col overflow-hidden">
+                                                        <span className="font-bold text-[#3a302a] truncate text-sm">{member.display_name || member.email}</span>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                          <span className="text-[10px] font-medium text-[#605850] truncate">{member.email}</span>
+                                                          {member.department?.name && (
+                                                            <>
+                                                              <span className="text-[8px] text-[#d8d0c8] dark:text-[#3a302a]">•</span>
+                                                              <span className="text-[9px] text-[#c2652a]/80 font-black uppercase tracking-widest">{member.department.name}</span>
+                                                            </>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    </DropdownMenuItem>
+                                                  )) : (
+                                                    <div className="p-4 text-sm font-medium text-[#605850] text-center">No unassigned members</div>
+                                                  )}
+                                                </div>
+                                              </DropdownMenuContent>
+                                            </DropdownMenu>
+                                          </div>
+
+                                          {/* Deployment List */}
+                                          {platform.members.length > 0 && (
+                                            <div className="space-y-2">
+                                              {/* Header */}
+                                              <div className="grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 px-3 pb-2 border-b border-[#d8d0c8]/40">
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Node Identity</label>
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Geo</label>
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Alloc %</label>
+                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Out (D)</label>
+                                                <div />
+                                              </div>
+
+                                              <div className="space-y-2">
+                                                {platform.members.map((member, idx) => {
+                                                  const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
+                                                  const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
+                                                  const initials = displayName
+                                                    .trim()
+                                                    .split(/\s+/)
+                                                    .map((n: string) => n[0])
+                                                    .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
+                                                    .join('')
+                                                    .substring(0, 2)
+                                                    .toUpperCase();
+
+                                                  const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
+
+                                                  const updateDetails = (field: keyof DeveloperLeave, value: any) => {
+                                                    setPlatforms(prev => prev.map(p => p.id === platform.id ? {
+                                                      ...p,
+                                                      developerLeaves: (() => {
+                                                        const textExists = p.developerLeaves.find(d => d.name === member);
+                                                        if (textExists) {
+                                                          return p.developerLeaves.map(d => d.name === member ? { ...d, [field]: value } : d);
+                                                        }
+                                                        return [...p.developerLeaves, { id: Date.now().toString(), name: member, country: '', capacity: 1, plannedLeave: 0, [field]: value }];
+                                                      })()
+                                                    } : p));
+                                                  };
+
+                                                  return (
+                                                    <div key={idx} className="group/row p-2 rounded-xl bg-white border border-[#d8d0c8]/40 shadow-sm focus-within:shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] focus-within:border-[#c2652a]/40 transition-all grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 items-center">
+                                                      <div className="flex items-center gap-3 min-w-0 pr-1">
+                                                        <Avatar className="h-8 w-8 rounded-lg border border-[#d8d0c8]/40 shrink-0">
+                                                          {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
+                                                          <AvatarFallback className="bg-[#f2ece4] text-[#c2652a] font-bold text-[10px]" style={{ fontFamily: "'Manrope', sans-serif" }}>{initials}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col min-w-0">
+                                                          <span className="text-sm font-medium text-[#3a302a] leading-none truncate mb-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>{displayName}</span>
+                                                          <span className="text-[10px] text-[#9a9088] uppercase tracking-widest truncate leading-none" style={{ fontFamily: "'Manrope', sans-serif" }}>{memberObj?.department?.name || 'Engineer'}</span>
+                                                        </div>
+                                                      </div>
+
+                                                      <div className="w-[90px]">
+                                                        <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
+                                                          <SelectTrigger className="h-9 bg-[#f2ece4] rounded-lg border-none focus:ring-0 text-xs font-medium text-[#3a302a] px-3 shadow-none group-focus-within/row:bg-white transition-all" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                                            {details.country ? (regionalClusters.find(rc => rc.id === details.country)?.countryCode || details.country) : "REG"}
+                                                          </SelectTrigger>
+                                                          <SelectContent className="rounded-xl border border-[#d8d0c8]/40 shadow-xl bg-white p-1">
+                                                            {regionalClusters.map(rc => {
+                                                              const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H` : 'None';
+                                                              return (
+                                                                <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors">
+                                                                  <div className="flex items-center justify-between gap-4 w-[120px]">
+                                                                    <span className="font-medium text-[#3a302a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{rc.countryCode || 'Node'}</span>
+                                                                    <span className="text-[10px] text-[#9a9088] font-bold">{holidaySummary}</span>
+                                                                  </div>
+                                                                </SelectItem>
+                                                              );
+                                                            })}
+                                                            <SelectItem value="Other" className="rounded-lg text-xs font-medium text-[#9a9088] py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors" style={{ fontFamily: "'Manrope', sans-serif" }}>OTHER</SelectItem>
+                                                          </SelectContent>
+                                                        </Select>
+                                                      </div>
+
+                                                      <div className="relative w-full">
+                                                        <Input
+                                                          type="number"
+                                                          className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#3a302a] group-focus-within/row:bg-white transition-all"
+                                                          style={{ fontFamily: "'EB Garamond', serif" }}
+                                                          value={Math.round(details.capacity * 100) || ''}
+                                                          placeholder="100"
+                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value) / 100)}
+                                                        />
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">%</span>
+                                                      </div>
+
+                                                      <div className="relative w-full">
+                                                        <Input
+                                                          type="number"
+                                                          className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#8c3c3c] group-focus-within/row:bg-white transition-all"
+                                                          style={{ fontFamily: "'EB Garamond', serif" }}
+                                                          value={details.plannedLeave || ''}
+                                                          placeholder="0"
+                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
+                                                        />
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">D</span>
+                                                      </div>
+
+                                                      <button
+                                                        onClick={() => confirmDelete('Disengage Node', `Are you sure you want to disengage ${displayName} from ${platform.name}?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
+                                                        className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/row:opacity-100 ml-auto"
+                                                      >
+                                                        <Trash2 className="h-4 w-4" />
+                                                      </button>
+                                                    </div>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
+                              </div>
                             </div>
                           )}
 
                           {activeSection === 'priority' && (
-                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
-                              <div className="flex items-center justify-between px-2">
-                                <div className="space-y-1">
-                                  <h3 className="text-xl font-black text-[#3a302a] tracking-tight">Strategic Project Priorities</h3>
-                                  <p className="text-sm font-medium text-[#605850]">Prioritize mission-critical deliverables and service enhancements.</p>
-                                </div>
+                            <div className="animate-in fade-in slide-in-from-bottom-5 duration-700 pb-32">
+                              {/* Hero Section */}
+                              <div className="pb-12 pt-0 px-6">
+                                <h1 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight mb-4 italic" style={{ fontFamily: "'EB Garamond', serif" }}>
+                                  Project Priority
+                                </h1>
+                                <p className="text-lg text-[#605850] max-w-2xl font-light">
+                                  Orchestrating strategic momentum through curated resource allocation and disciplined focus.
+                                </p>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {[
-                                  { label: 'P0 - Critical', value: projects.filter(p => p.priority === 'critical').length, color: 'text-rose-500', bg: 'bg-[#fad0da]/50 dark:bg-rose-950/30 border border-white/40 dark:border-rose-900/40', icon: ShieldAlert },
-                                  { label: 'P1 - High', value: projects.filter(p => p.priority === 'high').length, color: 'text-[#c2652a]', bg: 'bg-[#fbe8d8]/50 border border-white/40 border-[#f0a878]/40', icon: Zap },
-                                  { label: 'P2 - Maintenance', value: projects.filter(p => p.priority === 'medium').length, color: 'text-[#8a7a81] dark:text-[#a08f97]', bg: 'bg-[#ede9eb]/70 dark:bg-[#201c1e] border border-white/40 dark:border-[#382f33]/60', icon: Target }
-                                ].map((stat, i) => (
-                                  <div key={i} className="p-6 rounded-[2.5rem] bg-[#eee8eb]/80 dark:bg-[#221e20]/80 backdrop-blur-2xl border-2 border-[#e3d2d8]/60 dark:border-[#3d3336]/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex items-center justify-between group hover:shadow-xl transition-all duration-500 hover:border-[#dbc6cd]/80 hover:-translate-y-1">
-                                    <div className="space-y-1">
-                                      <p className="text-[10px] font-black text-[#8a7a81] dark:text-[#a08f97] uppercase tracking-widest">{stat.label}</p>
-                                      <p className="text-3xl font-black text-[#362b2f]  tracking-tighter">{stat.value}</p>
-                                    </div>
-                                    <div className={cn("h-14 w-14 rounded-[1.2rem] shadow-inner flex items-center justify-center transition-transform group-hover:rotate-12", stat.bg)}>
-                                      <stat.icon className={cn("h-6 w-6 border-0", stat.color)} />
-                                    </div>
+                              {/* Strategic Project Priorities */}
+                              <section className="mb-16 px-6">
+                                <div className="flex items-end justify-between mb-8">
+                                  <div>
+                                    <h2 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Strategic Project Priorities</h2>
+                                    <div className="h-1 w-12 bg-[#c2652a] mt-2"></div>
                                   </div>
-                                ))}
-                              </div>
-
-                              <div className="mt-12 flex items-center justify-between px-2">
-                                <div className="space-y-1 mb-6">
-                                  <h3 className="text-xl font-black text-[#524147]  tracking-tight">Initiative Registry</h3>
-                                  <p className="text-sm font-medium text-[#baa1ad] dark:text-[#a08f97]">Formally track actionable items mapped against business value.</p>
+                                  <span className="text-sm font-medium text-[#c2652a] tracking-widest uppercase">Overview</span>
                                 </div>
-                              </div>
-                                
-                              <div className="flex flex-col gap-3">
-                                {projects.map((project, idx) => {
-                                  const isExpanded = expandedProjectId === project.id;
-                                  const netPts = platforms.reduce((sum, p) => {
-                                    const alloc = p.allocations?.find(a => a.projectId === project.id)?.allocatedPercent || 0;
-                                    return sum + Math.round((p.totalStoryPoints * alloc) / 100);
-                                  }, 0);
-                                  const allocatedPlatformCount = platforms.filter(p => (p.allocations?.find(a => a.projectId === project.id)?.allocatedPercent || 0) > 0).length;
-                                  return (
-                                    <div key={project.id} className={cn(
-                                      "backdrop-blur-2xl rounded-[1.5rem] overflow-hidden group/row transition-all duration-500 border relative flex flex-col group/p z-10 hover:z-20",
-                                      isExpanded
-                                        ? "bg-[#eee8eb]/80 dark:bg-[#1a1618]/80 border-[#dbc6cd] dark:border-[#382f33] shadow-2xl ring-1 ring-[#e3d1d8]/30 dark:ring-[#382f33]/30"
-                                        : "bg-white/60 dark:bg-[#1a1618]/60 border-white/60  hover:-translate-y-1 hover:border-[#dbc6cd]/80 dark:hover:border-[#382f33]/80 hover:shadow-xl"
-                                    )}>
-                                      
-                                      {/* Top Row: Index | Name | Priority | Remarks | Allocation Badge | Net Pts | Expand | Delete */}
-                                      <div className="flex items-center gap-4 w-full p-3 pr-3 relative">
-                                        <div className="h-10 w-10 shrink-0 ml-2 rounded-[0.8rem] bg-[#fcfafb] dark:bg-[#201c1e] border border-[#e3d1d8] dark:border-[#382f33] shadow-inner flex items-center justify-center text-xs font-black text-[#8a7a81] dark:text-[#a08f97]">
-                                          {idx + 1}
-                                        </div>
-                                        
-                                        <div className="flex-[2] min-w-[200px] relative z-10 w-1/4">
-                                          <Input
-                                            value={project.name}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'name', e.target.value)}
-                                            className="h-12 w-full bg-transparent border-transparent px-3 text-lg font-black text-[#362b2f]  tracking-tight leading-none hover:bg-white/60 focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] transition-all duration-300 relative z-[100]"
-                                            placeholder="Enter Project Name, ex: MyApp 1.2.0"
-                                          />
-                                        </div>
 
-                                        <div className="w-[140px] shrink-0 relative z-10">
-                                          <Select value={project.priority || 'medium'} onValueChange={(val: string) => updateProject(project.id, 'priority', val)}>
-                                            <SelectTrigger className={cn(
-                                              "h-10 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] border-0 transition-all shadow-sm focus:ring-0",
-                                              (project.priority || 'medium') === 'critical' ? "bg-gradient-to-r from-rose-100 via-white to-rose-100 dark:from-[#3a1a21] dark:via-[#1a1618] dark:to-[#3a1a21] text-[#8c3c3c] dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 shadow-inner" :
-                                              (project.priority || 'medium') === 'high' ? "bg-gradient-to-r from-[#fbe8d8] via-white to-[#fbe8d8] text-[#c2652a] border border-[#f0a878]/60 shadow-inner" :
-                                              (project.priority || 'medium') === 'medium' ? "bg-gradient-to-r from-[#e3d1d8] via-white to-[#e3d1d8] dark:from-[#2a2225] dark:via-[#1a1618] dark:to-[#2a2225] text-[#8a7a81] dark:text-[#baa1ad] border border-[#cdaec1] dark:border-[#382f33] shadow-inner" :
-                                              "bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-[#222222] dark:via-[#1a1618] dark:to-[#222222] text-gray-500 dark:text-gray-400 border border-gray-200  shadow-inner"
-                                            )}>
-                                              <SelectValue placeholder="PRIORITY">
-                                                {project.priority ? project.priority.toUpperCase() : 'MEDIUM'}
-                                              </SelectValue>
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-[1.2rem] border shadow-2xl p-2 bg-white/95 backdrop-blur-2xl border-[#d8d0c8]/40 z-[200]">
-                                              <SelectItem value="critical" className="rounded-xl font-bold text-[#8c3c3c] focus:bg-rose-50 dark:focus:bg-rose-950/40">Critical</SelectItem>
-                                              <SelectItem value="high" className="rounded-xl font-bold text-[#c2652a] focus:bg-[#fbe8d8] dark:focus:bg-[#fbe8d8]">High</SelectItem>
-                                              <SelectItem value="medium" className="rounded-xl font-bold text-[#baa1ad] focus:bg-[#fcfafb] dark:focus:bg-[#201c1e]">Medium</SelectItem>
-                                              <SelectItem value="low" className="rounded-xl font-bold text-[#8a7a81] focus:bg-[#fcfafb] dark:focus:bg-[#201c1e]">Low</SelectItem>
-                                            </SelectContent>
-                                          </Select>
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                                  {[
+                                    { label: 'P0 - CRITICAL', title: 'Critical', desc: 'Critical projects requiring immediate attention and focus.', value: projects.filter(p => p.priority === 'critical').length, colorClass: 'text-white', bgClass: 'bg-white/20', icon: ShieldAlert, mainBg: 'bg-[#8c3c3c]', border: 'border-[#8c3c3c]', textMain: 'text-white', textSub: 'text-white/80', borderTop: 'border-white/20' },
+                                    { label: 'P1 - HIGH', title: 'High', desc: 'High priority projects that drive growth and value.', value: projects.filter(p => p.priority === 'high').length, colorClass: 'text-white', bgClass: 'bg-white/20', icon: Zap, mainBg: 'bg-[#c2652a]', border: 'border-[#c2652a]', textMain: 'text-white', textSub: 'text-white/80', borderTop: 'border-white/20' },
+                                    { label: 'P2 - MEDIUM', title: 'Medium', desc: 'Standard priority projects and planned enhancements.', value: projects.filter(p => p.priority === 'medium').length, colorClass: 'text-white', bgClass: 'bg-white/20', icon: Target, mainBg: 'bg-[#605850]', border: 'border-[#605850]', textMain: 'text-white', textSub: 'text-white/80', borderTop: 'border-white/20' },
+                                    { label: 'P3 - LOW', title: 'Low', desc: 'Low priority projects, technical debt, and maintenance.', value: projects.filter(p => p.priority === 'low').length, colorClass: 'text-white', bgClass: 'bg-white/20', icon: Activity, mainBg: 'bg-[#78706a]', border: 'border-[#78706a]', textMain: 'text-white', textSub: 'text-white/80', borderTop: 'border-white/20' }
+                                  ].map((stat, i) => (
+                                    <div key={i} className={cn("p-8 rounded-xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] border relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300", stat.mainBg, stat.border)}>
+                                      <div className={cn("absolute top-0 right-0 p-4 opacity-10", stat.textMain)}>
+                                        <stat.icon className="h-16 w-16" />
+                                      </div>
+                                      <div className="flex flex-col h-full justify-between relative z-10">
+                                        <div>
+                                          <span className={cn("inline-block px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-6", stat.bgClass, stat.colorClass)}>
+                                            {stat.label}
+                                          </span>
+                                          <h3 className={cn("text-2xl mb-2", stat.textMain)} style={{ fontFamily: "'EB Garamond', serif" }}>{stat.title}</h3>
+                                          <p className={cn("text-sm leading-relaxed min-h-[60px]", stat.textSub)}>{stat.desc}</p>
                                         </div>
-
-                                        <div className="flex-[3] min-w-[250px] relative z-10 w-1/2">
-                                          <Input
-                                            value={project.remarks}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateProject(project.id, 'remarks', e.target.value)}
-                                            className="h-10 bg-transparent border-transparent px-3 text-sm font-bold text-[#8a7a81] dark:text-[#a08f97] transition-all rounded-xl shadow-none hover:bg-white/60 placeholder:text-[#d8d0c8] dark:placeholder:text-[#6a5a61] focus-visible:outline-none focus-visible:bg-[#fcfafb] dark:focus-visible:bg-[#1a1618] focus-visible:ring-4 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:border-[#cdaec1] dark:focus-visible:border-[#524147] focus-visible:shadow-[0_0_30px_rgba(205,174,193,0.6)] dark:focus-visible:shadow-[0_0_30px_rgba(56,47,51,0.8)] z-[100]"
-                                            placeholder="Strategic context..."
-                                          />
-                                        </div>
-
-                                        {/* Compact allocation badge (collapsed) */}
-                                        {!isExpanded && platforms.length > 0 && (
-                                          <div
-                                            onClick={() => toggleProjectExpand(project.id)}
-                                            className="shrink-0 cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#fcfafb] dark:bg-[#201c1e] border border-[#e3d1d8] dark:border-[#382f33] hover:border-[#cdaec1] dark:hover:border-[#524147] transition-all"
-                                          >
-                                            <span className="text-[9px] font-black text-[#baa1ad] dark:text-[#6a5a61] uppercase tracking-widest">{allocatedPlatformCount}/{platforms.length}</span>
-                                            <span className="text-[8px] font-bold text-[#cdaec1] dark:text-[#524147] uppercase">Platforms</span>
-                                          </div>
-                                        )}
-                                        
-                                        <div className="w-24 shrink-0 relative z-10 text-right pr-2">
-                                          <div className="flex flex-col">
-                                            <div className="flex items-baseline justify-end gap-0.5">
-                                              <span className="text-xl leading-none font-black tracking-tighter text-[#524147] ">{netPts}</span>
-                                              <span className="text-[10px] font-bold text-[#cdaec1] dark:text-[#524147]">/</span>
-                                              <span className="text-xs leading-none font-bold text-[#baa1ad] dark:text-[#6a5a61]">{platforms.reduce((s, p) => s + p.totalStoryPoints, 0)}</span>
-                                            </div>
-                                            <span className="text-[8px] font-black text-[#baa1ad] dark:text-[#6a5a61] uppercase tracking-widest leading-none">Total Points</span>
-                                          </div>
-                                        </div>
-
-                                        {/* Expand/Collapse toggle */}
-                                        {platforms.length > 0 && (
-                                          <div className="w-8 shrink-0 flex items-center justify-center relative z-10">
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              onClick={() => toggleProjectExpand(project.id)}
-                                              className="h-8 w-8 rounded-lg text-[#baa1ad] dark:text-[#6a5a61] hover:bg-[#fcfafb] dark:hover:bg-[#201c1e] hover:text-[#524147] dark:hover:text-white transition-all"
-                                            >
-                                              <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", isExpanded ? "rotate-180" : "")} />
-                                            </Button>
-                                          </div>
-                                        )}
-
-                                        <div className="w-8 shrink-0 flex items-center justify-end relative z-10">
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => confirmDelete('Delete Initiative', `Remove ${project.name || 'this initiative'}?`, () => deleteProject(project.id))}
-                                            className="h-8 w-8 rounded-lg text-[#d8d0c8] hover:bg-rose-50 hover:text-[#8c3c3c] dark:hover:bg-[#8c3c3c]/10 dark:hover:text-rose-400 opacity-0 group-hover/p:opacity-100 transition-opacity"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
+                                        <div className={cn("mt-8 flex items-center justify-between border-t pt-4", stat.borderTop)}>
+                                          <span className={cn("text-sm font-semibold", stat.textMain)}>
+                                            {stat.value} Active Projects
+                                          </span>
+                                          <ArrowRight className={cn("h-5 w-5 group-hover:translate-x-1 transition-transform", stat.textMain)} />
                                         </div>
                                       </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
 
-                                      {/* Expanded: Platform Allocation Sheet */}
-                                      {isExpanded && platforms.length > 0 && (
-                                        <div className="px-5 pb-5 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                          <div className="rounded-[1.2rem] bg-[#fcfafb]/80 dark:bg-[#201c1e]/80 border border-[#e3d1d8]/50 dark:border-[#382f33]/50 overflow-hidden">
-                                            
-                                            {/* Sheet Header */}
-                                            <div className="flex items-center px-5 py-3 border-b border-[#e3d1d8]/30 dark:border-[#382f33]/30">
-                                              <span className="flex-1 text-[9px] uppercase tracking-widest font-black text-[#cdaec1] dark:text-[#524147]">Platform</span>
-                                              <span className="w-28 text-center text-[9px] uppercase tracking-widest font-black text-[#cdaec1] dark:text-[#524147]">Weight</span>
-                                              <span className="w-40 text-right text-[9px] uppercase tracking-widest font-black text-[#cdaec1] dark:text-[#524147] pr-1">Net Points</span>
+                              {/* Initiative Registry */}
+                              <section className="px-6 mb-24">
+                                <div className="flex items-end justify-between mb-8">
+                                  <div>
+                                    <h2 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Initiative Registry</h2>
+                                    <div className="h-1 w-12 bg-[#c2652a] mt-2"></div>
+                                  </div>
+                                  <button
+                                    onClick={addProject}
+                                    className="bg-[#c2652a] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#c2652a]/90 transition-colors shadow-lg shadow-[#c2652a]/20 flex items-center gap-2"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Add New Initiative
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-col gap-6">
+                                  {projects.map((project, idx) => {
+                                    const isEditing = editingProjectId === project.id;
+                                    const netPts = platforms.reduce((sum, p) => {
+                                      const alloc = p.allocations?.find(a => a.projectId === project.id)?.allocatedPercent || 0;
+                                      return sum + Math.round((p.totalStoryPoints * alloc) / 100);
+                                    }, 0);
+
+                                    return (
+                                      <div key={project.id} className={cn(
+                                        "bg-white rounded-2xl shadow-[0_2px_16px_rgba(58,48,42,0.04)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 transition-all duration-300 relative group/card",
+                                        isEditing ? "border-2 border-[#c2652a]" : "border border-orange-200/60 hover:border-orange-300"
+                                      )}>
+                                        {/* Left Side: Detail */}
+                                        <div className="lg:col-span-5 p-8 border-b lg:border-b-0 lg:border-r border-orange-100 relative group/left">
+                                          {/* Action Buttons */}
+                                          <div className="absolute top-4 right-4 z-20 flex items-center gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                                            {/* Edit Button */}
+                                            <button
+                                              onClick={() => {
+                                                if (isEditing) {
+                                                  setEditingProjectId(null);
+                                                  setProjectBackup(null);
+                                                  setPlatformBackup(null);
+                                                } else {
+                                                  handleStartEditing(project.id);
+                                                }
+                                              }}
+                                              className={cn(
+                                                "p-2 rounded-full transition-all shadow-sm",
+                                                isEditing
+                                                  ? "bg-[#c2652a] text-white hover:bg-orange-800"
+                                                  : "bg-[#f6f0e8] text-stone-500 hover:text-[#c2652a] hover:bg-white"
+                                              )}
+                                              title={isEditing ? "Save Changes" : "Edit Project"}
+                                            >
+                                              {isEditing ? <Check className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                                            </button>
+
+                                            {/* Cancel Button */}
+                                            {isEditing && (
+                                              <button
+                                                onClick={handleCancelEditing}
+                                                className="p-2 text-stone-500 hover:text-stone-700 bg-[#f6f0e8] hover:bg-stone-200 rounded-full transition-colors shadow-sm"
+                                                title="Cancel & Discard Changes"
+                                              >
+                                                <X className="h-4 w-4" />
+                                              </button>
+                                            )}
+
+                                            {/* Delete Button */}
+                                            <button
+                                              onClick={() => confirmDelete('Delete Initiative', `Remove ${project.name || 'this initiative'}?`, () => { deleteProject(project.id); setEditingProjectId(null); })}
+                                              className="p-2 text-stone-400 hover:text-[#c0392b] bg-[#f6f0e8] hover:bg-[#fce4e0] rounded-full transition-colors shadow-sm"
+                                              title="Delete Project"
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </button>
+                                          </div>
+
+                                          <div className="flex items-center gap-4 mb-6 pr-32">
+                                            <div className="w-12 h-12 bg-[#e08850] rounded-xl flex items-center justify-center text-white shrink-0">
+                                              <Target className="h-6 w-6" />
                                             </div>
+                                            <div className="flex-1 w-full">
+                                              {isEditing ? (
+                                                <input
+                                                  value={project.name}
+                                                  onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                                                  className="w-full bg-orange-50/50 border border-orange-200 rounded-lg p-3 text-2xl text-[#3a302a] placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#c2652a] focus:border-[#c2652a] transition-all font-serif italic"
+                                                  placeholder="Project Name"
+                                                  style={{ fontFamily: "'EB Garamond', serif" }}
+                                                />
+                                              ) : (
+                                                <h3 className="text-3xl text-orange-900 truncate" style={{ fontFamily: "'EB Garamond', serif" }}>
+                                                  {project.name || 'Unnamed Project'}
+                                                </h3>
+                                              )}
+                                              <p className="text-xs text-[#605850] font-bold tracking-widest uppercase mt-1">Foundation Layer</p>
+                                            </div>
+                                          </div>
 
-                                            {/* Sheet Rows */}
-                                            {platforms.map((platform, pIdx) => {
+                                          <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-stone-500">Status</span>
+                                              <span className="px-3 py-1 bg-orange-100 text-orange-800 text-[10px] font-bold rounded-full uppercase">In Progress</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-stone-500">Timeline</span>
+                                              <span className="text-sm text-[#3a302a]">Q3 - Q4 2024</span>
+                                            </div>
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium text-stone-500">Priority</span>
+                                              {isEditing ? (
+                                                <Select value={project.priority || 'medium'} onValueChange={(val) => updateProject(project.id, 'priority', val)}>
+                                                  <SelectTrigger className="h-7 border-orange-200 text-xs w-32 font-bold uppercase tracking-wider">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="critical" className="text-[#8c3c3c] font-bold">Critical</SelectItem>
+                                                    <SelectItem value="high" className="text-[#c2652a] font-bold">High</SelectItem>
+                                                    <SelectItem value="medium" className="text-[#605850] font-bold">Medium</SelectItem>
+                                                    <SelectItem value="low" className="text-[#78706a] font-bold">Low</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              ) : (
+                                                <span className={cn(
+                                                  "text-sm font-semibold capitalize",
+                                                  project.priority === 'critical' ? 'text-[#8c3c3c]' :
+                                                    project.priority === 'high' ? 'text-[#c2652a]' :
+                                                      'text-[#605850]'
+                                                )}>
+                                                  {project.priority || 'Medium'}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-8 pt-6 border-t border-orange-100">
+                                            <label className="block text-[10px] font-bold tracking-widest uppercase text-stone-400 mb-2">Strategic Context</label>
+                                            {isEditing ? (
+                                              <textarea
+                                                className="w-full bg-orange-50/50 border border-orange-200 rounded-lg p-3 text-sm text-[#3a302a] placeholder:text-stone-400 focus:outline-none focus:ring-1 focus:ring-[#c2652a] focus:border-[#c2652a] transition-all resize-none font-body"
+                                                rows={3}
+                                                value={project.remarks}
+                                                onChange={(e) => updateProject(project.id, 'remarks', e.target.value)}
+                                                placeholder="Describe how this initiative aligns with our long-term roadmap..."
+                                              />
+                                            ) : (
+                                              <div className="w-full bg-[#f6f0e8] border border-orange-100 rounded-lg p-3 text-sm text-[#3a302a] min-h-[80px]">
+                                                {project.remarks || <span className="text-stone-400 italic">No context provided. Click edit to add context.</span>}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {/* Right Side: Weights & Breakdown */}
+                                        <div className="lg:col-span-7 p-8 bg-white relative">
+                                          <div className="flex items-center justify-between mb-8">
+                                            <h4 className="text-xs font-bold tracking-widest uppercase text-stone-400">Platform Breakdown & Weights</h4>
+                                            <div className="text-right">
+                                              <span className="text-sm font-bold text-[#c2652a] mr-1">{netPts}</span>
+                                              <span className="text-[10px] uppercase tracking-widest text-stone-400">Net Points</span>
+                                            </div>
+                                          </div>
+
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                                            {platforms.map(platform => {
                                               const alloc = platform.allocations?.find(a => a.projectId === project.id);
                                               const percent = alloc ? alloc.allocatedPercent : 0;
-                                              const platformPts = Math.round((platform.totalStoryPoints * percent) / 100);
+                                              const getPlatformIcon = (name: string) => {
+                                                const lower = name.toLowerCase();
+                                                if (lower.includes('android') || lower.includes('ios') || lower.includes('mobile')) return Globe;
+                                                if (lower.includes('backend') || lower.includes('server') || lower.includes('api')) return Network;
+                                                if (lower.includes('qa') || lower.includes('test')) return Bug;
+                                                if (lower.includes('web') || lower.includes('frontend')) return LayoutGrid;
+                                                return Code;
+                                              };
+                                              const PlatformIcon = getPlatformIcon(platform.name);
+
                                               return (
-                                                <div
-                                                  key={platform.id}
-                                                  className={cn(
-                                                    "flex items-center px-5 py-2.5 transition-all hover:bg-white/60 dark:hover:bg-[#1a1618]/60 group/sheet-row",
-                                                    pIdx < platforms.length - 1 && "border-b border-[#e3d1d8]/20 dark:border-[#382f33]/20"
-                                                  )}
-                                                >
-                                                  {/* Platform Name */}
-                                                  <div className="flex-1 flex items-center gap-3">
-                                                    <div className="h-2 w-2 rounded-full bg-[#baa1ad] dark:bg-[#524147] shrink-0" />
-                                                    <span className="text-sm font-bold text-[#524147]  truncate">{platform.name}</span>
-                                                  </div>
-
-                                                  {/* Percentage Input */}
-                                                  <div className="w-28 flex items-center justify-center">
-                                                    <div className="relative w-24">
-                                                      <Input
-                                                        type="number"
-                                                        value={percent || ''}
-                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updatePlatformAllocationForProject(platform.id, project.id, Number(e.target.value))}
-                                                        className="h-9 text-sm text-center font-black rounded-lg border border-transparent bg-transparent hover:bg-white dark:hover:bg-[#1a1b1e] hover:border-[#e3d1d8] dark:hover:border-[#382f33] text-[#362b2f]  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e3d1d8]/50 dark:focus-visible:ring-[#382f33]/50 focus-visible:shadow-[0_0_20px_rgba(205,174,193,0.4)] dark:focus-visible:shadow-[0_0_20px_rgba(56,47,51,0.6)] transition-all px-2 pr-7 shadow-none"
-                                                        placeholder="0"
-                                                      />
-                                                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-black text-[#baa1ad] pointer-events-none">%</span>
+                                                <div key={platform.id} className="space-y-3 group/platform relative">
+                                                  <div className="flex justify-between items-end">
+                                                    <div className="flex items-center gap-2">
+                                                      <PlatformIcon className="text-orange-700 h-5 w-5" />
+                                                      <span className="text-sm font-bold text-[#3a302a]">{platform.name}</span>
                                                     </div>
+                                                    {isEditing ? (
+                                                      <div className="relative w-24">
+                                                        <input
+                                                          type="number"
+                                                          value={percent || ''}
+                                                          onChange={(e) => {
+                                                            let val = parseInt(e.target.value);
+                                                            if (isNaN(val)) val = 0;
+                                                            if (val > 100) val = 100;
+                                                            if (val < 0) val = 0;
+                                                            updatePlatformAllocationForProject(platform.id, project.id, val);
+                                                          }}
+                                                          className="w-full h-9 text-right pr-8 text-sm font-bold text-[#3a302a] bg-orange-50/50 border border-orange-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#c2652a] focus:border-[#c2652a] transition-all"
+                                                        />
+                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c2652a] font-bold text-sm">%</span>
+                                                      </div>
+                                                    ) : (
+                                                      <span className="text-xl text-[#c2652a]" style={{ fontFamily: "'EB Garamond', serif" }}>{percent}%</span>
+                                                    )}
                                                   </div>
-
-                                                  {/* Net / Total Points */}
-                                                  <div className="w-40 flex items-baseline justify-end gap-1 pr-1">
-                                                    <span className="text-sm font-black text-[#524147] ">{platformPts}</span>
-                                                    <span className="text-[10px] font-bold text-[#cdaec1] dark:text-[#524147]">/</span>
-                                                    <span className="text-xs font-bold text-[#baa1ad] dark:text-[#6a5a61]">{platform.totalStoryPoints}</span>
-                                                    <span className="text-[8px] font-bold text-[#cdaec1] dark:text-[#524147] uppercase ml-1">points</span>
+                                                  <div className="w-full h-1.5 bg-[#f6f0e8] rounded-full overflow-hidden">
+                                                    <div
+                                                      className={cn("h-full rounded-full transition-all duration-500", percent > 0 ? "bg-[#c2652a]" : "bg-transparent")}
+                                                      style={{ width: `${Math.max(percent, 0)}%` }}
+                                                    ></div>
                                                   </div>
                                                 </div>
                                               );
                                             })}
+                                          </div>
 
-                                            {/* Sheet Footer */}
-                                            <div className="flex items-center px-5 py-3 border-t border-[#e3d1d8]/40 dark:border-[#382f33]/40 bg-white/40 dark:bg-[#1a1618]/40">
-                                              <span className="flex-1 text-[10px] font-black text-[#8a7a81] dark:text-[#a08f97] uppercase tracking-widest">{allocatedPlatformCount} of {platforms.length} allocated</span>
+                                          <div className="mt-12 p-6 rounded-xl bg-orange-50 border border-orange-100">
+                                            <div className="flex items-start gap-4">
+                                              <div className="p-2 bg-white rounded-lg border border-orange-200">
+                                                <Info className="h-5 w-5 text-[#c2652a]" />
+                                              </div>
+                                              <p className="text-xs text-[#605850] leading-relaxed">
+                                                <strong className="text-orange-900 block mb-1">Resource Advisory:</strong>
+                                                Weights are calculated based on engineering story points and infrastructure complexity. Platform sync is required bi-weekly.
+                                              </p>
                                             </div>
-
                                           </div>
                                         </div>
-                                      )}
+                                      </div>
+                                    );
+                                  })}
 
+                                  {projects.length === 0 && (
+                                    <div className="p-20 text-center space-y-6 group rounded-2xl border border-dashed border-orange-200 bg-[#f6f0e8]/50">
+                                      <div className="h-20 w-20 rounded-[2rem] bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-500 border border-orange-100 mx-auto">
+                                        <Target className="h-10 w-10 text-orange-200 group-hover:text-[#c2652a] transition-colors" />
+                                      </div>
+                                      <div>
+                                        <p className="font-serif text-[#3a302a] text-2xl mb-2" style={{ fontFamily: "'EB Garamond', serif" }}>No active initiatives</p>
+                                        <p className="text-sm text-[#605850] mb-6">Start by defining your primary mission targets.</p>
+                                        <button
+                                          onClick={addProject}
+                                          className="bg-[#c2652a] text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-[#c2652a]/90 transition-colors shadow-lg shadow-[#c2652a]/20 inline-flex items-center gap-2"
+                                        >
+                                          <Plus className="h-4 w-4" />
+                                          Define Initiative
+                                        </button>
+                                      </div>
                                     </div>
-                                  );
-                                })}
-
-                                {projects.length === 0 && (
-                                  <div className="p-20 text-center space-y-6 group rounded-[2.5rem] border-2 border-dashed border-[#e3d1d8] dark:border-[#382f33] bg-[#fcfafb]/50 dark:bg-[#1a1618]/50">
-                                    <div className="h-20 w-20 rounded-[2rem] bg-white dark:bg-[#201c1e] flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 border border-[#e3d1d8] dark:border-[#3d3336] mx-auto">
-                                      <Target className="h-10 w-10 text-[#baa1ad] dark:text-[#8a7a81] group-hover:text-[#ba4f6c] dark:group-hover:text-[#db839b] transition-colors" />
-                                    </div>
-                                    <div>
-                                      <p className="font-black text-[#524147]  tracking-tight text-xl mb-2">No active objectives</p>
-                                      <p className="text-sm font-medium text-[#baa1ad] dark:text-[#a08f97] mb-6">Start by defining your primary mission targets.</p>
-                                      <Button
-                                        onClick={addProject}
-                                        className="rounded-2xl h-11 bg-[#524147] text-white dark:text-[#1a1618] hover:bg-[#362b2f] dark:hover:bg-[#e3d1d8] font-bold text-xs uppercase tracking-widest px-8 shadow-xl hover:-translate-y-0.5 transition-all"
-                                      >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Define Objective
-                                      </Button>
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {projects.length > 0 && (
-                                  <Button 
-                                    onClick={addProject}
-                                    variant="outline"
-                                    className="h-16 rounded-[1.5rem] mt-2 border-2 border-dashed border-[#e3d1d8] dark:border-[#382f33] bg-transparent hover:bg-[#fcfafb] dark:hover:bg-[#1a1618]/50 text-[#baa1ad] dark:text-[#a08f97] hover:text-[#524147] dark:hover:text-[#e3d1d8] font-bold text-sm tracking-widest uppercase transition-all shadow-sm"
-                                  >
-                                    <Plus className="h-5 w-5 mr-3" />
-                                    Launch New Project
-                                  </Button>
-                                )}
-                              </div>
+                                  )}
+                                </div>
+                              </section>
                             </div>
                           )}
 
@@ -2500,24 +2613,24 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     <div className="pl-6 flex flex-col xl:flex-row gap-6 items-start w-full">
                                                       {/* Description */}
                                                       <div className="flex-1 w-full space-y-3">
-                                                          <div className="flex items-center gap-2">
-                                                            <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
-                                                              <Target className="h-3.5 w-3.5 text-[#c2652a]" />
-                                                            </div>
-                                                            <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Goal Definition</label>
+                                                        <div className="flex items-center gap-2">
+                                                          <div className="h-6 w-6 rounded-lg bg-[#fbe8d8] flex items-center justify-center">
+                                                            <Target className="h-3.5 w-3.5 text-[#c2652a]" />
                                                           </div>
-                                                          <div className="relative group/field mt-2">
-                                                            <Textarea
-                                                              value={goal.description}
-                                                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                                                                updateSprintGoal(goal.id, 'description', e.target.value);
-                                                                e.target.style.height = 'auto';
-                                                                e.target.style.height = `${e.target.scrollHeight}px`;
-                                                              }}
-                                                              placeholder="Define a primary goal for this sprint cycle..."
-                                                              className="min-h-[80px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] p-4 rounded-[1.5rem] text-[#3a302a] placeholder:text-[#d8d0c8] transition-all shadow-sm"
-                                                            />
-                                                          </div>
+                                                          <label className="text-[10px] font-black text-[#9a9088] uppercase tracking-[0.2em]">Goal Definition</label>
+                                                        </div>
+                                                        <div className="relative group/field mt-2">
+                                                          <Textarea
+                                                            value={goal.description}
+                                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                              updateSprintGoal(goal.id, 'description', e.target.value);
+                                                              e.target.style.height = 'auto';
+                                                              e.target.style.height = `${e.target.scrollHeight}px`;
+                                                            }}
+                                                            placeholder="Define a primary goal for this sprint cycle..."
+                                                            className="min-h-[80px] overflow-hidden text-lg font-bold tracking-tight resize-none bg-white dark:bg-[#3a302a] border-2 border-slate-100 dark:border-slate-800 focus-visible:ring-4 focus-visible:ring-[#c2652a]/10 focus-visible:border-[#c2652a] p-4 rounded-[1.5rem] text-[#3a302a] placeholder:text-[#d8d0c8] transition-all shadow-sm"
+                                                          />
+                                                        </div>
                                                       </div>
 
                                                       {/* Status & Remark Middle Layer */}
@@ -3231,14 +3344,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           </div>
                                         </div>
                                       </CardHeader>
-                                                                            <CardContent className="p-0">
+                                      <CardContent className="p-0">
                                         <Tabs defaultValue="core" className="w-full">
                                           <TabsList className="grid w-full grid-cols-3 bg-zinc-50 bg-[#f2ece4]/50 p-1 rounded-none border-b border-[#d8d0c8]/30 h-12">
                                             <TabsTrigger value="core" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Core Info</TabsTrigger>
                                             <TabsTrigger value="schedule" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Schedule</TabsTrigger>
                                             <TabsTrigger value="notes" className="rounded-md font-bold text-xs h-full data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm data-[state=active]:text-violet-600">Context & Notes</TabsTrigger>
                                           </TabsList>
-                                          
+
                                           <div className="p-6">
                                             <TabsContent value="core" className="mt-0 space-y-6 animate-in fade-in slide-in-from-left-2 duration-300">
                                               <div className="grid gap-6 md:grid-cols-2">
@@ -3267,7 +3380,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   />
                                                 </div>
                                               </div>
-                                              
+
                                               <div className="grid gap-6 md:grid-cols-2">
                                                 <div className="space-y-3">
                                                   <label className="text-xs font-black uppercase tracking-widest text-zinc-400 flex items-center gap-2">
