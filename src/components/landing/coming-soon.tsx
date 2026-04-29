@@ -152,12 +152,20 @@ export function ComingSoonPage() {
   const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
   const [error, setError] = useState('');
   const [honey, setHoney] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Staggered reveal
   const [show, setShow] = useState({ label: false, headline: false, sub: false, cta: false, cards: false, philosophy: false });
 
   useEffect(() => {
+    // Inject Turnstile script
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
     const timers = [
       setTimeout(() => setShow(s => ({ ...s, label: true })), 200),
       setTimeout(() => setShow(s => ({ ...s, headline: true })), 500),
@@ -166,7 +174,12 @@ export function ComingSoonPage() {
       setTimeout(() => setShow(s => ({ ...s, cards: true })), 600),
       setTimeout(() => setShow(s => ({ ...s, philosophy: true })), 1800),
     ];
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      timers.forEach(clearTimeout);
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
   }, []);
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -179,6 +192,11 @@ export function ComingSoonPage() {
     setIsAlreadySubscribed(false);
     if (!email.trim()) { setError('Please enter your email address.'); inputRef.current?.focus(); return; }
     if (!validateEmail(email)) { setError('Please enter a valid email address.'); inputRef.current?.focus(); return; }
+    
+    if (!turnstileToken) {
+      setError('Please complete the security check.');
+      return;
+    }
     
     // Rate Limiting (Cooldown)
     const lastSubmit = localStorage.getItem('last_waitlist_submit');
@@ -224,6 +242,7 @@ export function ComingSoonPage() {
       
       setIsSubmitted(true);
       setEmail('');
+      setTurnstileToken(null); // Reset after success
     } catch (err: any) {
       console.error('ComingSoon: Failed to join waitlist:', err);
       setError('Something went wrong. Please try again.');
@@ -231,6 +250,13 @@ export function ComingSoonPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Turnstile Callback
+  useEffect(() => {
+    (window as any).onTurnstileSuccess = (token: string) => {
+      setTurnstileToken(token);
+    };
+  }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col" style={{ backgroundColor: '#faf5ee', fontFamily: "'Manrope', sans-serif" }}>
@@ -351,6 +377,14 @@ export function ComingSoonPage() {
                       )}
                     </button>
                   </form>
+                  
+                  {/* Turnstile Widget */}
+                  <div 
+                    className="cf-turnstile mt-4 flex justify-center sm:justify-start" 
+                    data-sitekey="1x00000000000000000000AA"
+                    data-callback="onTurnstileSuccess"
+                    data-theme="light"
+                  ></div>
 
                   {error && (
                     <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
