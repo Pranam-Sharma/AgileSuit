@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import * as React from 'react';
 import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Twitter, Linkedin, Facebook, Instagram } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { joinWaitlist } from '@/services/waitlist.service';
 
 const footerNav = [
   {
@@ -41,6 +44,33 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = React.useState('');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsLoading(true);
+    try {
+      await joinWaitlist(email, 'footer_newsletter');
+      toast({
+        title: "You're on the list! 🚀",
+        description: "Check your inbox for a confirmation email.",
+      });
+      setEmail('');
+    } catch (error: any) {
+      toast({
+        title: "Subscription failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-8">
@@ -104,7 +134,7 @@ export function Footer() {
                 <p className="mt-2 text-sm leading-6 text-gray-400">
                   The latest news, articles, and resources, sent to your inbox weekly.
                 </p>
-                <form className="mt-6 sm:flex sm:max-w-md">
+                <form onSubmit={handleSubmit} className="mt-6 sm:flex sm:max-w-md">
                   <label htmlFor="email-address" className="sr-only">
                     Email address
                   </label>
@@ -114,12 +144,15 @@ export function Footer() {
                     id="email-address"
                     autoComplete="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                     className="w-full min-w-0 appearance-none rounded-md border-0 bg-white/5 px-3 py-1.5 text-base text-white shadow-sm ring-1 ring-inset ring-white/10 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-primary sm:w-64 sm:text-sm sm:leading-6"
                     placeholder="Enter your email"
                   />
                   <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-shrink-0">
-                    <Button type="submit" className="w-full">
-                      Subscribe
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? 'Subscribing...' : 'Subscribe'}
                     </Button>
                   </div>
                 </form>
