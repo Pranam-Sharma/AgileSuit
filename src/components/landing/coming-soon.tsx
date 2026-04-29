@@ -381,7 +381,7 @@ export function ComingSoonPage() {
                   {/* Turnstile Widget */}
                   <div 
                     className="cf-turnstile mt-4 flex justify-center sm:justify-start" 
-                    data-sitekey="1x00000000000000000000AA"
+                    data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
                     data-callback="onTurnstileSuccess"
                     data-theme="light"
                   ></div>
