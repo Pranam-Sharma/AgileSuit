@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, setDoc, getDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import { joinWaitlist } from '@/services/waitlist.service';
+import { joinWaitlistAction } from '@/app/actions/waitlist';
 import {
   Loader2,
   ArrowRight,
@@ -232,17 +232,26 @@ export function ComingSoonPage() {
         return;
       }
 
-      console.log('ComingSoon: Initiating joinWaitlist for', normalizedEmail);
-      await joinWaitlist(normalizedEmail, 'coming_soon_page');
-      console.log('ComingSoon: Waitlist joined successfully');
+      console.log('ComingSoon: Initiating joinWaitlistAction for', normalizedEmail);
+      const result = await joinWaitlistAction({
+        email: normalizedEmail,
+        source: 'coming_soon_page',
+        turnstileToken,
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown'
+      });
+      console.log('ComingSoon: Waitlist action result:', result);
 
-      history.push(normalizedEmail);
-      localStorage.setItem('waitlist_history', JSON.stringify(history));
-      localStorage.setItem('last_waitlist_submit', Date.now().toString());
+      if (result.success) {
+        history.push(normalizedEmail);
+        localStorage.setItem('waitlist_history', JSON.stringify(history));
+        localStorage.setItem('last_waitlist_submit', Date.now().toString());
 
-      setIsSubmitted(true);
-      setEmail('');
-      setTurnstileToken(null); // Reset after success
+        setIsSubmitted(true);
+        setEmail('');
+        setTurnstileToken(null); // Reset after success
+      } else {
+        setError(result.error || 'Failed to join waitlist. Please try again.');
+      }
     } catch (err: any) {
       console.error('ComingSoon: Failed to join waitlist:', err);
       setError('Something went wrong. Please try again.');
@@ -310,7 +319,7 @@ export function ComingSoonPage() {
             {/* CTA */}
             <div className={`w-full max-w-md space-y-3 transition-all duration-1000 delay-300 ease-out ${show.cta ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
 
-              {isAlreadySubscribed ? (
+              {isAlreadySubscribed && (
                 <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#fbe8d8] border-2 border-[#c2652a]/30 shadow-lg">
                   <div className="h-12 w-12 rounded-2xl bg-[#c2652a]/10 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="h-6 w-6 text-[#c2652a]" />
@@ -318,10 +327,12 @@ export function ComingSoonPage() {
                   <div>
                     <p className="text-base font-extrabold" style={{ color: '#3a302a', fontFamily: "'Manrope', sans-serif" }}>You&apos;re already on the list!</p>
                     <p className="text-sm mt-1 font-medium" style={{ color: '#8a4518' }}>Keep an eye on your inbox for updates.</p>
-                    <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); }} className="mt-3 text-xs font-bold underline transition-colors" style={{ color: '#c2652a' }}>Enter a different email</button>
+                    <button onClick={() => { setIsAlreadySubscribed(false); setEmail(''); if ((window as any).turnstile) (window as any).turnstile.reset(); }} className="mt-3 text-xs font-bold underline transition-colors" style={{ color: '#c2652a' }}>Enter a different email</button>
                   </div>
                 </div>
-              ) : isSubmitted ? (
+              )}
+              
+              {isSubmitted && (
                 <div className="flex items-center gap-4 p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-lg">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
                     <CheckCircle2 className="h-6 w-6 text-emerald-600" />
@@ -329,76 +340,76 @@ export function ComingSoonPage() {
                   <div>
                     <p className="text-base font-extrabold text-emerald-800" style={{ fontFamily: "'Manrope', sans-serif" }}>You&apos;re on the list! 🎉</p>
                     <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
-                    <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
+                    <button onClick={() => { setIsSubmitted(false); setEmail(''); if ((window as any).turnstile) (window as any).turnstile.reset(); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  <SpotsCounter firestore={firestore} />
-
-                  {/* Honeypot field for bot protection */}
-                  <div style={{ display: 'none' }} aria-hidden="true">
-                    <input
-                      type="text"
-                      name="full_name_verification"
-                      tabIndex={-1}
-                      autoComplete="off"
-                      value={honey}
-                      onChange={(e) => setHoney(e.target.value)}
-                    />
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
-                    <input
-                      ref={inputRef}
-                      type="email"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                      placeholder="Enter your work email"
-                      className="flex-grow h-14 px-6 rounded-xl border border-[#d8d0c8] bg-white focus:ring-2 focus:ring-[#c2652a] focus:border-transparent outline-none transition-all text-[#3a302a] placeholder-[#9a9088]"
-                      style={{ fontFamily: "'Manrope', sans-serif" }}
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="h-14 px-8 rounded-xl font-bold text-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:shadow-lg active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
-                      style={{
-                        backgroundColor: '#c2652a',
-                        fontFamily: "'Manrope', sans-serif",
-                      }}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <>
-                          Join the Waitlist
-                          <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  {/* Turnstile Widget */}
-                  <div
-                    className="cf-turnstile mt-4 flex justify-center sm:justify-start"
-                    data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                    data-callback="onTurnstileSuccess"
-                    data-theme="light"
-                  ></div>
-
-                  {error && (
-                    <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
-                  )}
-
-                  <div className="flex items-center gap-2 px-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-[#9a9088]" />
-                    <p className="text-[11px] uppercase tracking-wider" style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}>
-                      Privacy Guaranteed · Secure Onboarding
-                    </p>
-                  </div>
-                </>
               )}
+
+              <div style={{ display: (isAlreadySubscribed || isSubmitted) ? 'none' : 'block' }}>
+                <SpotsCounter firestore={firestore} />
+
+                {/* Honeypot field for bot protection */}
+                <div style={{ display: 'none' }} aria-hidden="true">
+                  <input
+                    type="text"
+                    name="full_name_verification"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honey}
+                    onChange={(e) => setHoney(e.target.value)}
+                  />
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
+                  <input
+                    ref={inputRef}
+                    type="email"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    placeholder="Enter your work email"
+                    className="flex-grow h-14 px-6 rounded-xl border border-[#d8d0c8] bg-white focus:ring-2 focus:ring-[#c2652a] focus:border-transparent outline-none transition-all text-[#3a302a] placeholder-[#9a9088]"
+                    style={{ fontFamily: "'Manrope', sans-serif" }}
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-14 px-8 rounded-xl font-bold text-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:shadow-lg active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                    style={{
+                      backgroundColor: '#c2652a',
+                      fontFamily: "'Manrope', sans-serif",
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        Join the Waitlist
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </button>
+                </form>
+
+                {/* Turnstile Widget */}
+                <div
+                  className="cf-turnstile mt-4 flex justify-center sm:justify-start"
+                  data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                  data-callback="onTurnstileSuccess"
+                  data-theme="light"
+                ></div>
+
+                {error && (
+                  <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
+                )}
+
+                <div className="flex items-center gap-2 px-1 mt-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#9a9088]" />
+                  <p className="text-[11px] uppercase tracking-wider" style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}>
+                    Privacy Guaranteed · Secure Onboarding
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
