@@ -41,22 +41,22 @@ service cloud.firestore {
     }
 
     // Waitlist:
-    // - Anyone can sign up for the waitlist
-    // - Allow both read and write to ensure setDoc and increment work correctly
+    // - Only read allowed for stats
+    // - Writes are strictly blocked (handled by Server Actions)
     match /waitlist_emails/{email} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
 
     match /waitlist_meta/stats {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
     
     // Email Trigger:
-    // - Anyone can trigger a mail doc (for waitlist)
-    // - Read/Update/Delete should be restricted to admin (via Extension)
+    // - Writes are strictly blocked (handled by Server Actions)
     match /mail/{mailId} {
-      allow create: if true;
-      allow read, update, delete: if false;
+      allow read, write: if false;
     }
     
     // Default deny for other collections

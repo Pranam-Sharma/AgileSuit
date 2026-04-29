@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, setDoc, getDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import { joinWaitlist } from '@/services/waitlist.service';
+import { joinWaitlistAction } from '@/app/actions/waitlist';
 import {
   Loader2,
   ArrowRight,
@@ -232,17 +232,26 @@ export function ComingSoonPage() {
         return;
       }
 
-      console.log('ComingSoon: Initiating joinWaitlist for', normalizedEmail);
-      await joinWaitlist(normalizedEmail, 'coming_soon_page');
-      console.log('ComingSoon: Waitlist joined successfully');
+      console.log('ComingSoon: Initiating joinWaitlistAction for', normalizedEmail);
+      const result = await joinWaitlistAction({
+        email: normalizedEmail,
+        source: 'coming_soon_page',
+        turnstileToken,
+        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'unknown'
+      });
+      console.log('ComingSoon: Waitlist action result:', result);
 
-      history.push(normalizedEmail);
-      localStorage.setItem('waitlist_history', JSON.stringify(history));
-      localStorage.setItem('last_waitlist_submit', Date.now().toString());
+      if (result.success) {
+        history.push(normalizedEmail);
+        localStorage.setItem('waitlist_history', JSON.stringify(history));
+        localStorage.setItem('last_waitlist_submit', Date.now().toString());
 
-      setIsSubmitted(true);
-      setEmail('');
-      setTurnstileToken(null); // Reset after success
+        setIsSubmitted(true);
+        setEmail('');
+        setTurnstileToken(null); // Reset after success
+      } else {
+        setError(result.error || 'Failed to join waitlist. Please try again.');
+      }
     } catch (err: any) {
       console.error('ComingSoon: Failed to join waitlist:', err);
       setError('Something went wrong. Please try again.');
