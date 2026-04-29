@@ -88,7 +88,7 @@ export const joinWaitlist = async (email: string, source: string = 'landing_page
 
                 <div style="margin-top: 48px; padding-top: 40px; border-top: 1px solid #d8d0c8;">
                    <p style="font-style: italic; color: #605850; font-size: 14px; margin-bottom: 32px; padding: 0 30px;">"We are onboarding in small batches to ensure every team has a high-quality experience."</p>
-                   <a href="https://agilesuit.com" style="background-color: #c2652a; color: #ffffff; padding: 16px 40px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block; text-transform: uppercase; letter-spacing: 1.5px;">Check your queue status</a>
+                   <a href="https://www.agilesuit.com" style="background-color: #c2652a; color: #ffffff; padding: 16px 40px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-block; text-transform: uppercase; letter-spacing: 1.5px;">Check your queue status</a>
                 </div>
 
                 <p style="margin-top: 60px; font-size: 11px; color: #9a9088; text-transform: uppercase; letter-spacing: 2px;">AgileSuit</p>
