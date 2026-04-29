@@ -151,6 +151,7 @@ export function ComingSoonPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isAlreadySubscribed, setIsAlreadySubscribed] = useState(false);
   const [error, setError] = useState('');
+  const [honey, setHoney] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Staggered reveal
@@ -172,13 +173,38 @@ export function ComingSoonPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (honey) return; // Honeypot trap
     setError('');
     setIsSubmitted(false);
     setIsAlreadySubscribed(false);
     if (!email.trim()) { setError('Please enter your email address.'); inputRef.current?.focus(); return; }
     if (!validateEmail(email)) { setError('Please enter a valid email address.'); inputRef.current?.focus(); return; }
+    
+    // Rate Limiting (Cooldown)
+    const lastSubmit = localStorage.getItem('last_waitlist_submit');
+    if (lastSubmit && Date.now() - parseInt(lastSubmit) < 60000) {
+      setError('Please wait a minute before trying again.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      // 1. Strict Email Validation
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        setError('Please enter a valid email address.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Rate Limiting (Cooldown)
+      const lastSubmit = localStorage.getItem('last_waitlist_submit');
+      if (lastSubmit && Date.now() - parseInt(lastSubmit) < 60000) {
+        setError('Please wait a minute before trying again.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const normalizedEmail = email.trim().toLowerCase();
       
       const history = JSON.parse(localStorage.getItem('waitlist_history') || '[]');
@@ -194,6 +220,7 @@ export function ComingSoonPage() {
       
       history.push(normalizedEmail);
       localStorage.setItem('waitlist_history', JSON.stringify(history));
+      localStorage.setItem('last_waitlist_submit', Date.now().toString());
       
       setIsSubmitted(true);
       setEmail('');
@@ -278,10 +305,21 @@ export function ComingSoonPage() {
                     <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
                     <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
                   </div>
-                </div>
-              ) : (
+      ) : (
                 <>
                   <SpotsCounter firestore={firestore} />
+
+                  {/* Honeypot field for bot protection */}
+                  <div style={{ display: 'none' }} aria-hidden="true">
+                    <input 
+                      type="text" 
+                      name="full_name_verification" 
+                      tabIndex={-1} 
+                      autoComplete="off" 
+                      value={honey}
+                      onChange={(e) => setHoney(e.target.value)}
+                    />
+                  </div>
 
                   <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
                     <input
