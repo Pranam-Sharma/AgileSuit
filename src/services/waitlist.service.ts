@@ -1,6 +1,6 @@
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/auth/firebase/client';
+import { db } from '@/lib/firebase';
 
 /**
  * Service to handle waitlist logic and trigger automated emails
