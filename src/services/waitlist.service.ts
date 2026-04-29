@@ -6,7 +6,13 @@ import { db } from '@/lib/firebase';
  * Service to handle waitlist logic and trigger automated emails
  * via the Firebase Trigger Email extension.
  */
-export const joinWaitlist = async (email: string, source: string = 'landing_page') => {
+export const joinWaitlist = async (email: string, source: string = 'unknown') => {
+  // Final validation gate
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email)) {
+    throw new Error('Invalid email format');
+  }
+
   if (!email) throw new Error("Email is required");
 
   try {
