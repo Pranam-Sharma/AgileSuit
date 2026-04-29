@@ -23,6 +23,7 @@ export const joinWaitlist = async (email: string, source: string = 'landing_page
     // Requirement: Happens only after Step 1 succeeds (sequential).
     try {
       const mailRef = collection(db, 'mail');
+      console.log('Waitlist Service: Attempting to create mail document...');
       await addDoc(mailRef, {
         to: [email],
         message: {
@@ -36,6 +37,7 @@ export const joinWaitlist = async (email: string, source: string = 'landing_page
           `,
         },
       });
+      console.log('Waitlist Service: Mail document created successfully');
     } catch (emailError) {
       // Requirement: If email trigger fails, log error but do not break the flow.
       console.error('Waitlist Service: Email trigger failed but entry was saved:', emailError);
