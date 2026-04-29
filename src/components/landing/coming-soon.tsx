@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { doc, setDoc, getDoc, collection, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
+import { joinWaitlist } from '@/services/waitlist.service';
 import {
   Loader2,
   ArrowRight,
@@ -187,11 +188,9 @@ export function ComingSoonPage() {
         return;
       }
 
-      await setDoc(doc(firestore, 'waitlist_emails', normalizedEmail), {
-        email: normalizedEmail,
-        updated_at: serverTimestamp(),
-        source: 'coming_soon_page',
-      }, { merge: true });
+      console.log('ComingSoon: Initiating joinWaitlist for', normalizedEmail);
+      await joinWaitlist(normalizedEmail, 'coming_soon_page');
+      console.log('ComingSoon: Waitlist joined successfully');
       
       history.push(normalizedEmail);
       localStorage.setItem('waitlist_history', JSON.stringify(history));
@@ -199,9 +198,7 @@ export function ComingSoonPage() {
       setIsSubmitted(true);
       setEmail('');
     } catch (err: any) {
-      console.error('Failed to save email:', err);
-      // Log the full error for easier debugging of things like permission issues
-      if (err.code) console.error('Error Code:', err.code);
+      console.error('ComingSoon: Failed to join waitlist:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
