@@ -51,6 +51,14 @@ service cloud.firestore {
       allow read, write: if true;
     }
     
+    // Email Trigger:
+    // - Anyone can trigger a mail doc (for waitlist)
+    // - Read/Update/Delete should be restricted to admin (via Extension)
+    match /mail/{mailId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+    
     // Default deny for other collections
     match /{document=**} {
       allow read, write: if false;
