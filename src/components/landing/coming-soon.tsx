@@ -192,12 +192,12 @@ export function ComingSoonPage() {
     setIsAlreadySubscribed(false);
     if (!email.trim()) { setError('Please enter your email address.'); inputRef.current?.focus(); return; }
     if (!validateEmail(email)) { setError('Please enter a valid email address.'); inputRef.current?.focus(); return; }
-    
+
     if (!turnstileToken) {
       setError('Please complete the security check.');
       return;
     }
-    
+
     // Rate Limiting (Cooldown)
     const lastSubmit = localStorage.getItem('last_waitlist_submit');
     if (lastSubmit && Date.now() - parseInt(lastSubmit) < 60000) {
@@ -224,7 +224,7 @@ export function ComingSoonPage() {
       }
 
       const normalizedEmail = email.trim().toLowerCase();
-      
+
       const history = JSON.parse(localStorage.getItem('waitlist_history') || '[]');
       if (history.includes(normalizedEmail)) {
         setIsAlreadySubscribed(true);
@@ -235,11 +235,11 @@ export function ComingSoonPage() {
       console.log('ComingSoon: Initiating joinWaitlist for', normalizedEmail);
       await joinWaitlist(normalizedEmail, 'coming_soon_page');
       console.log('ComingSoon: Waitlist joined successfully');
-      
+
       history.push(normalizedEmail);
       localStorage.setItem('waitlist_history', JSON.stringify(history));
       localStorage.setItem('last_waitlist_submit', Date.now().toString());
-      
+
       setIsSubmitted(true);
       setEmail('');
       setTurnstileToken(null); // Reset after success
@@ -331,88 +331,88 @@ export function ComingSoonPage() {
                     <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
                     <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
                   </div>
-      ) : (
-                <>
-                  <SpotsCounter firestore={firestore} />
+                  ) : (
+                  <>
+                    <SpotsCounter firestore={firestore} />
 
-                  {/* Honeypot field for bot protection */}
-                  <div style={{ display: 'none' }} aria-hidden="true">
-                    <input 
-                      type="text" 
-                      name="full_name_verification" 
-                      tabIndex={-1} 
-                      autoComplete="off" 
-                      value={honey}
-                      onChange={(e) => setHoney(e.target.value)}
-                    />
-                  </div>
+                    {/* Honeypot field for bot protection */}
+                    <div style={{ display: 'none' }} aria-hidden="true">
+                      <input
+                        type="text"
+                        name="full_name_verification"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honey}
+                        onChange={(e) => setHoney(e.target.value)}
+                      />
+                    </div>
 
-                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
-                    <input
-                      ref={inputRef}
-                      type="email"
-                      value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                      placeholder="Enter your work email"
-                      className="flex-grow h-14 px-6 rounded-xl border border-[#d8d0c8] bg-white focus:ring-2 focus:ring-[#c2652a] focus:border-transparent outline-none transition-all text-[#3a302a] placeholder-[#9a9088]"
-                      style={{ fontFamily: "'Manrope', sans-serif" }}
-                      disabled={isSubmitting}
-                    />
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="h-14 px-8 rounded-xl font-bold text-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:shadow-lg active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
-                      style={{
-                        backgroundColor: '#c2652a',
-                        fontFamily: "'Manrope', sans-serif",
-                      }}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <>
-                          Join the Waitlist
-                          <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                  
-                  {/* Turnstile Widget */}
-                  <div 
-                    className="cf-turnstile mt-4 flex justify-center sm:justify-start" 
-                    data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-                    data-callback="onTurnstileSuccess"
-                    data-theme="light"
-                  ></div>
+                    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-2">
+                      <input
+                        ref={inputRef}
+                        type="email"
+                        value={email}
+                        onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                        placeholder="Enter your work email"
+                        className="flex-grow h-14 px-6 rounded-xl border border-[#d8d0c8] bg-white focus:ring-2 focus:ring-[#c2652a] focus:border-transparent outline-none transition-all text-[#3a302a] placeholder-[#9a9088]"
+                        style={{ fontFamily: "'Manrope', sans-serif" }}
+                        disabled={isSubmitting}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="h-14 px-8 rounded-xl font-bold text-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:shadow-lg active:scale-[0.98] inline-flex items-center justify-center gap-2 whitespace-nowrap"
+                        style={{
+                          backgroundColor: '#c2652a',
+                          fontFamily: "'Manrope', sans-serif",
+                        }}
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <>
+                            Join the Waitlist
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </form>
 
-                  {error && (
-                    <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
-                  )}
+                    {/* Turnstile Widget */}
+                    <div
+                      className="cf-turnstile mt-4 flex justify-center sm:justify-start"
+                      data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                      data-callback="onTurnstileSuccess"
+                      data-theme="light"
+                    ></div>
 
-                  <div className="flex items-center gap-2 px-1">
-                    <ShieldCheck className="h-3.5 w-3.5 text-[#9a9088]" />
-                    <p className="text-[11px] uppercase tracking-wider" style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}>
-                      Privacy Guaranteed · Secure Onboarding
-                    </p>
-                  </div>
-                </>
+                    {error && (
+                      <p className="text-xs text-red-500 font-semibold pl-1">{error}</p>
+                    )}
+
+                    <div className="flex items-center gap-2 px-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#9a9088]" />
+                      <p className="text-[11px] uppercase tracking-wider" style={{ color: '#605850', fontFamily: "'Manrope', sans-serif" }}>
+                        Privacy Guaranteed · Secure Onboarding
+                      </p>
+                    </div>
+                  </>
               )}
-            </div>
+                </div>
           </div>
 
-          {/* Right: UI Cards Visualization */}
-          <div className={`lg:w-1/2 mt-20 lg:mt-0 relative transition-all duration-1000 delay-200 ease-out ${show.cards ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
-            {/* Decorative blobs behind cards */}
-            <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#fbe8d8] opacity-20 blur-[100px] rounded-full -z-10" />
-            <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-[#fce0e0] opacity-20 blur-[80px] rounded-full -z-10" />
+            {/* Right: UI Cards Visualization */}
+            <div className={`lg:w-1/2 mt-20 lg:mt-0 relative transition-all duration-1000 delay-200 ease-out ${show.cards ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-16'}`}>
+              {/* Decorative blobs behind cards */}
+              <div className="absolute -top-20 -right-20 w-80 h-80 bg-[#fbe8d8] opacity-20 blur-[100px] rounded-full -z-10" />
+              <div className="absolute -bottom-20 -left-10 w-60 h-60 bg-[#fce0e0] opacity-20 blur-[80px] rounded-full -z-10" />
 
-            <div className="grid grid-cols-2 gap-6 relative z-10">
-              <SprintProgressCard />
-              <TeamVelocityCard />
-              <ActivityFeedCard />
+              <div className="grid grid-cols-2 gap-6 relative z-10">
+                <SprintProgressCard />
+                <TeamVelocityCard />
+                <ActivityFeedCard />
+              </div>
             </div>
-          </div>
         </section>
 
         {/* ─── Product Philosophy Section ─── */}
