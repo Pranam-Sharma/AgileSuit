@@ -331,6 +331,7 @@ export function ComingSoonPage() {
                     <p className="text-sm text-emerald-600 mt-1 font-medium">We&apos;ll send you an invite when early access opens.</p>
                     <button onClick={() => { setIsSubmitted(false); setEmail(''); }} className="mt-3 text-xs font-bold text-emerald-600 underline hover:text-emerald-800 transition-colors">Enter a different email</button>
                   </div>
+                </div>
               ) : (
                 <>
                   <SpotsCounter firestore={firestore} />
