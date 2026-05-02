@@ -67,8 +67,14 @@ export type DeveloperLeaveData = {
     id: string;
     name: string;
     country: string;
-    capacity: number;
+    role?: string;
+    capacity: number; // For backward compatibility, but we will use daily_avail_percent
     planned_leave: number;
+    other_unavailability?: number;
+    business_hours: number;
+    allocated_sp?: number;
+    daily_avail_percent?: number;
+    include_in_capacity?: boolean;
 };
 
 export type PlatformData = {

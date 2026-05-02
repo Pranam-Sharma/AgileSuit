@@ -145,8 +145,14 @@ type DeveloperLeave = {
   id: string;
   name: string;
   country: string;
-  capacity: number;
-  plannedLeave: number;
+  role: string;
+  capacity: number; // Availability % (backward compatibility)
+  plannedLeave: number; // Days off
+  otherUnavailability: number; // Meeting/Other hours
+  businessHours: number; // Daily Hrs
+  allocatedSP: number;
+  dailyAvailPercent: number; // Availability % per day (default 80%)
+  includeInCapacity: boolean; // Toggle for SM/PO
 };
 
 export type RegionalCluster = {
@@ -779,20 +785,127 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     setChecklist(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const calculateSprintDays = React.useCallback(() => {
+  const calculateSprintDays = React.useCallback((countryId?: string) => {
     if (!date || !date.from || !date.to) return 0;
     let count = 0;
     let currentDate = new Date(date.from);
     const endDate = new Date(date.to);
     const dayBeforeEnd = new Date(endDate);
     dayBeforeEnd.setDate(endDate.getDate() - 1);
+    
+    const region = countryId ? regionalClusters.find(rc => rc.id === countryId) : null;
+    const holidays = region?.holidays || [];
+
     if (currentDate > dayBeforeEnd) return 0;
     while (currentDate <= dayBeforeEnd) {
-      if (!isWeekend(currentDate)) count++;
+      if (!isWeekend(currentDate)) {
+        const isHoliday = holidays.some(h => {
+          const hDate = (h as any).date ? new Date((h as any).date) : null;
+          return hDate && hDate.toDateString() === currentDate.toDateString();
+        });
+        if (!isHoliday) count++;
+      }
       currentDate.setDate(currentDate.getDate() + 1);
     }
     return count;
-  }, [date]);
+  }, [date, regionalClusters]);
+
+  // --- Capacity Calculations ---
+  const getCapacitySP = React.useCallback((details: DeveloperLeave) => {
+    const sDays = calculateSprintDays(details.country);
+    const totalBusinessHours = (details.businessHours || 8) * sDays;
+    const unavailHrs = ((details.plannedLeave || 0) * (details.businessHours || 8)) + (details.otherUnavailability || 0);
+    const dailyAvailFactor = (details.dailyAvailPercent || 80) / 100;
+    const availableHrs = Math.max(0, (totalBusinessHours - unavailHrs) * dailyAvailFactor);
+    const isSMorPO = ['Scrum Master', 'Product Owner'].includes(details.role || '');
+    const includeInCapacity = details.includeInCapacity ?? !isSMorPO;
+    return includeInCapacity ? (availableHrs / 8) : 0;
+  }, [calculateSprintDays]);
+
+  const redistributePlatformSP = React.useCallback((platform: Platform, newTotalSP: number) => {
+    // 1. Calculate capacities
+    let totalCap = 0;
+    const memberCapacities = platform.members.map(m => {
+      const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+        id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+      };
+      const cap = getCapacitySP(d);
+      totalCap += cap;
+      return { id: m, cap };
+    });
+
+    // 2. Initial proportional distribution
+    let distributed = platform.members.map(m => {
+      const mCap = memberCapacities.find(c => c.id === m);
+      const proportion = (mCap && totalCap > 0) ? (mCap.cap / totalCap) : 0;
+      return { id: m, sp: Number((proportion * newTotalSP).toFixed(1)) };
+    });
+
+    // 3. Remainder adjustment to ensure sum matches newTotalSP exactly
+    const currentSum = distributed.reduce((sum, d) => sum + d.sp, 0);
+    const remainder = Number((newTotalSP - currentSum).toFixed(1));
+    if (remainder !== 0 && distributed.length > 0) {
+      // Find highest capacity member (use reduce to be deterministic)
+      const maxCapMember = memberCapacities.reduce((prev, curr) => prev.cap >= curr.cap ? prev : curr);
+      distributed = distributed.map(d => d.id === maxCapMember.id ? { ...d, sp: Number((d.sp + remainder).toFixed(1)) } : d);
+    }
+
+    // 4. Return updated developerLeaves
+    return platform.members.map(m => {
+      const existing = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+        id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+      };
+      const dist = distributed.find(d => d.id === m);
+      return { ...existing, allocatedSP: dist ? dist.sp : 0 };
+    });
+  }, [getCapacitySP]);
+
+  // --- Capacity Calculations ---
+  const capacityMetrics = React.useMemo(() => {
+    let totalCapacityInStoryPoints = 0;
+    let totalAllocatedSP = 0;
+    let totalPlannedLoadSP = 0;
+    let totalPlannedDaysOff = 0;
+    let totalSprintCapacityHours = 0;
+    let totalUnavailableHours = 0;
+    let totalAvailPercentages = 0;
+    let totalMembersCount = 0;
+
+    platforms.forEach(platform => {
+      totalPlannedLoadSP += platform.totalStoryPoints || 0;
+      
+      platform.members.forEach(m => {
+        const details = platform.developerLeaves.find(dl => dl.id === m || dl.name === m);
+        if (!details) return;
+
+        const availableHrs = Math.max(0, ((details.businessHours || 8) * calculateSprintDays(details.country) - ((details.plannedLeave * (details.businessHours || 8)) + (details.otherUnavailability || 0))) * ((details.dailyAvailPercent || 80) / 100));
+        
+        const individualCapacitySP = getCapacitySP(details);
+        
+        totalCapacityInStoryPoints += individualCapacitySP;
+        totalSprintCapacityHours += availableHrs;
+        totalUnavailableHours += ((details.plannedLeave * (details.businessHours || 8)) + (details.otherUnavailability || 0));
+        totalPlannedDaysOff += details.plannedLeave || 0;
+        totalAllocatedSP += details.allocatedSP || 0;
+        totalAvailPercentages += (details.dailyAvailPercent || 80);
+        totalMembersCount++;
+      });
+    });
+
+    const netSPAvailability = totalCapacityInStoryPoints - totalPlannedLoadSP;
+    const avgAvailability = totalMembersCount > 0 ? Math.round(totalAvailPercentages / totalMembersCount) : 80;
+
+    return {
+      netSPAvailability: Number(netSPAvailability.toFixed(1)),
+      sprintCapacityHours: Math.round(totalSprintCapacityHours),
+      capacityInStoryPoints: Number(totalCapacityInStoryPoints.toFixed(2)),
+      totalAllocatedSP: Number(totalAllocatedSP.toFixed(2)),
+      totalPlannedLoadSP: Number(totalPlannedLoadSP.toFixed(2)),
+      totalPlannedDaysOff,
+      totalUnavailableHours: Math.round(totalUnavailableHours),
+      avgAvailability
+    };
+  }, [platforms, date, regionalClusters, calculateSprintDays]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -965,9 +1078,15 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
               developerLeaves: (p.developer_leaves || p.developerLeaves || []).map((d: any) => ({
                 id: d.id,
                 name: d.name || '',
-                country: d.country || '',
-                capacity: d.capacity ?? 0,
+                country: d.country || p.regional_cluster_id || p.regionalClusterId || '',
+                role: d.role || 'Developer',
+                capacity: d.capacity ?? 80,
                 plannedLeave: d.planned_leave ?? d.plannedLeave ?? 0,
+                otherUnavailability: d.other_unavailability ?? d.otherUnavailability ?? 0,
+                businessHours: d.business_hours ?? d.businessHours ?? 8,
+                allocatedSP: d.allocated_sp ?? d.allocatedSP ?? 0,
+                dailyAvailPercent: d.daily_avail_percent ?? d.dailyAvailPercent ?? 80,
+                includeInCapacity: d.include_in_capacity ?? d.includeInCapacity ?? (!['Scrum Master', 'Product Owner'].includes(d.role || '')),
               })),
               isExpanded: false,
             })));
@@ -1061,8 +1180,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
             id: d.id,
             name: d.name,
             country: d.country,
+            role: d.role,
             capacity: d.capacity,
             planned_leave: d.plannedLeave,
+            other_unavailability: d.otherUnavailability,
+            business_hours: d.businessHours || 8,
+            allocated_sp: d.allocatedSP,
+            daily_avail_percent: d.dailyAvailPercent,
+            include_in_capacity: d.includeInCapacity,
           })),
         })),
         goals: sprintGoals.map(g => ({
@@ -1235,7 +1360,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                   className="rounded-[16px] h-[48px] px-6 bg-[#c2652a] hover:bg-[#e08850] text-white shadow-[0_8px_16px_rgba(194,101,42,0.3)] transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest active:scale-95"
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Deploy
+                  Save & Apply
                 </Button>
               </div>
 
@@ -1401,7 +1526,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                     <div className="space-y-4">
                                       {regionalClusters.map((cluster, cIdx) => {
                                         const totalDaysOff = cluster.holidays.reduce((sum, h) => sum + (h.days || 0), 0);
-                                        const sprintDays = calculateSprintDays() || 10;
+                                        const sprintDays = calculateSprintDays();
 
                                         const impactLevel = totalDaysOff === 0 ? 'NO IMPACT' : totalDaysOff < 3 ? 'LOW IMPACT' : totalDaysOff < 6 ? 'MEDIUM' : 'HIGH IMPACT';
                                         const impactTextColor = totalDaysOff === 0 ? 'text-[#78706a]' : totalDaysOff < 3 ? 'text-[#c2652a]' : totalDaysOff < 6 ? 'text-amber-600' : 'text-[#8c3c3c]';
@@ -1447,7 +1572,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                       e.stopPropagation();
                                                       deleteRegionalCluster(cluster.id);
                                                     }}
-                                                    className="h-8 w-8 rounded-lg text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover:opacity-100"
+                                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover:opacity-100"
                                                   >
                                                     <Trash2 className="h-4 w-4" />
                                                   </Button>
@@ -1554,7 +1679,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                           )}
 
                           {activeSection === 'team' && (
-                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-32">
                               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-2">
                                   <h3 className="text-[3.5rem] leading-[1.1] text-[#3a302a] tracking-tight italic" style={{ fontFamily: "'EB Garamond', serif" }}>Engineering Resources</h3>
@@ -1654,6 +1779,7 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   <h4 className="text-3xl text-[#3a302a] tracking-tight" style={{ fontFamily: "'EB Garamond', serif" }}>Platform Matrix</h4>
                                   <div className="flex items-center gap-3">
                                     <div className="flex gap-2 items-center">
+                                      <div className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#c2652a]/70 mr-4" style={{ fontFamily: "'Manrope', sans-serif" }}>Global Velocity <span className="text-[#3a302a] ml-1">{(capacityMetrics.capacityInStoryPoints / (calculateSprintDays() || 1)).toFixed(3)} SP/Day</span></div>
                                       <Input
                                         placeholder="New platform name..."
                                         value={newPlatformName}
@@ -1677,7 +1803,129 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                   </div>
                                 </div>
 
+                                {/* CAPACITY OVERVIEW DASHBOARD */}
+                                <div className="bg-[#f9f6f2] rounded-[2rem] border border-[#d8d0c8]/40 overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12">
+                                  {/* Left Panel: Primary Metric */}
+                                  <div className="md:col-span-4 p-10 border-b md:border-b-0 md:border-r border-[#d8d0c8]/40 flex flex-col justify-between bg-[#eee7de]">
+                                    <div>
+                                      <span className="text-[10px] tracking-[0.2em] font-bold uppercase text-[#c2652a]/70" style={{ fontFamily: "'Manrope', sans-serif" }}>Net SP Availability</span>
+                                      <div className="flex items-baseline gap-2 mt-4">
+                                        <h3 className={cn("text-7xl", capacityMetrics.netSPAvailability > 0 ? "text-green-600" : capacityMetrics.netSPAvailability < 0 ? "text-red-600" : "text-[#3a302a]")} style={{ fontFamily: "'EB Garamond', serif" }}>
+                                          {capacityMetrics.netSPAvailability > 0 ? `+${capacityMetrics.netSPAvailability}` : capacityMetrics.netSPAvailability}
+                                        </h3>
+                                        <span className={cn("text-xl font-serif italic", capacityMetrics.netSPAvailability > 0 ? "text-green-400" : capacityMetrics.netSPAvailability < 0 ? "text-red-400" : "text-[#78706a]")}>SP</span>
+                                      </div>
+                                      <p className="text-[13px] text-[#605850] mt-4 leading-relaxed" style={{ fontFamily: "'Manrope', sans-serif" }}>
+                                        Remaining sprint capacity after current allocations and planned unavailability.
+                                      </p>
+                                    </div>
+                                    <div className="mt-10">
+                                      <div className="flex justify-between items-end mb-2">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#3a302a]" style={{ fontFamily: "'Manrope', sans-serif" }}>Sprint Progress</span>
+                                      </div>
+                                      <div className="h-2 w-full bg-[#ece6dc] rounded-full overflow-hidden shadow-inner">
+                                        <div 
+                                          className="h-full bg-[#c2652a] transition-all duration-700 ease-out shadow-[0_0_8px_rgba(194,101,42,0.4)]" 
+                                          style={{ width: `${Math.min((((sprint as any)?.completed_sp || 0) / (capacityMetrics.capacityInStoryPoints || 1)) * 100, 100)}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Right Panel: Detailed Breakdown */}
+                                  <div className="md:col-span-8 p-0 grid grid-cols-1 sm:grid-cols-2">
+                                    {/* Sub-section 1: Operational Bandwidth */}
+                                    <div className="p-10 border-b sm:border-b-0 sm:border-r border-[#d8d0c8]/40 space-y-8">
+                                      <h5 className="text-3xl text-[#3a302a] italic" style={{ fontFamily: "'EB Garamond', serif" }}>Resource Bandwidth</h5>
+                                      
+                                      <div className="grid grid-cols-2 gap-y-8 gap-x-4">
+                                        <div>
+                                          <p className="text-[9px] font-bold text-[#9a9088] uppercase tracking-widest mb-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Available Hours This Sprint</p>
+                                          <div className="flex items-baseline gap-1">
+                                            <span className="text-3xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.sprintCapacityHours}</span>
+                                            <span className="text-[10px] font-bold text-[#9a9088] uppercase">Hrs</span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <p className="text-[9px] font-bold text-[#9a9088] uppercase tracking-widest mb-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Leave Impact</p>
+                                          <div className="flex items-baseline gap-1">
+                                            <span className="text-3xl text-[#8c3c3c]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.totalUnavailableHours}</span>
+                                            <span className="text-[10px] font-bold text-[#9a9088] uppercase">Hrs</span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <p className="text-[9px] font-bold text-[#9a9088] uppercase tracking-widest mb-1" style={{ fontFamily: "'Manrope', sans-serif" }}>Avg. Availability (%)</p>
+                                          <div className="flex items-baseline gap-1">
+                                            <span className="text-3xl text-[#c2652a]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.avgAvailability}</span>
+                                            <span className="text-[10px] font-bold text-[#9a9088] uppercase">%</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Sub-section 2: Workload Summary */}
+                                    <div className="p-10 space-y-8">
+                                      <h5 className="text-3xl text-[#3a302a] italic" style={{ fontFamily: "'EB Garamond', serif" }}>Workload Summary</h5>
+                                      
+                                      <div className="space-y-6">
+                                        <div className="flex items-center justify-between group/metric transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-white border border-[#d8d0c8]/40 flex items-center justify-center shadow-sm group-hover/metric:border-[#c2652a]/30 transition-all">
+                                              <Target className="h-4 w-4 text-[#c2652a]" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-[#78706a] uppercase tracking-widest" style={{ fontFamily: "'Manrope', sans-serif" }}>Net SP Availability</span>
+                                          </div>
+                                          <span className={cn(
+                                            "text-lg font-bold",
+                                            capacityMetrics.netSPAvailability >= 0 ? "text-[#c2652a]" : "text-[#8c3c3c]"
+                                          )} style={{ fontFamily: "'EB Garamond', serif" }}>
+                                            {capacityMetrics.netSPAvailability > 0 ? `+${capacityMetrics.netSPAvailability}` : capacityMetrics.netSPAvailability} SP
+                                          </span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between group/metric transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-white border border-[#d8d0c8]/40 flex items-center justify-center shadow-sm group-hover/metric:border-blue-300 transition-all">
+                                              <Zap className="h-4 w-4 text-blue-500" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-[#78706a] uppercase tracking-widest" style={{ fontFamily: "'Manrope', sans-serif" }}>Sprint Capacity Hours</span>
+                                          </div>
+                                          <span className="text-lg font-bold text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.sprintCapacityHours} Hrs</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between group/metric transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-white border border-[#d8d0c8]/40 flex items-center justify-center shadow-sm group-hover/metric:border-green-300 transition-all">
+                                              <Activity className="h-4 w-4 text-green-500" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-[#78706a] uppercase tracking-widest" style={{ fontFamily: "'Manrope', sans-serif" }}>Avg Availability %</span>
+                                          </div>
+                                          <span className="text-lg font-bold text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.avgAvailability}%</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between group/metric transition-all">
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-lg bg-white border border-[#d8d0c8]/40 flex items-center justify-center shadow-sm group-hover/metric:border-red-300 transition-all">
+                                              <LogOut className="h-4 w-4 text-red-500" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-[#78706a] uppercase tracking-widest" style={{ fontFamily: "'Manrope', sans-serif" }}>Leave Impact Hours</span>
+                                          </div>
+                                          <span className="text-lg font-bold text-[#8c3c3c]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacityMetrics.totalUnavailableHours} Hrs</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
                                 <div className="flex flex-col gap-3">
+                                  {capacityMetrics.netSPAvailability < 0 && (
+                                    <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 mb-2">
+                                      <ShieldAlert className="h-5 w-5 text-red-600" />
+                                      <p className="text-sm font-bold text-red-700">
+                                        ⚠️ Over-committed by {Math.abs(capacityMetrics.netSPAvailability).toFixed(1)} SP — your team can handle {capacityMetrics.capacityInStoryPoints.toFixed(1)} SP but {capacityMetrics.totalPlannedLoadSP.toFixed(1)} SP is planned. Review and descope before starting the sprint.
+                                      </p>
+                                    </div>
+                                  )}
                                   {platforms.map((platform) => (
                                     <div key={platform.id} className={cn(
                                       "bg-white rounded-xl overflow-hidden group/acc transition-all duration-300 border border-[#d8d0c8]/40",
@@ -1705,25 +1953,34 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           </div>
                                           <div className="flex flex-col">
                                             <h4 className="text-xl md:text-2xl text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{platform.name}</h4>
-                                            <span className="text-[10px] uppercase tracking-widest text-[#78706a] mt-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>Domain</span>
+                                            <span className="text-[10px] uppercase tracking-widest text-[#78706a] mt-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>Platform / Team</span>
                                           </div>
                                         </div>
 
                                         <div className="flex items-center gap-6 w-1/2 justify-center px-4 relative z-10">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Total SP</span>
+                                          <div className="flex flex-col items-center gap-1">
+                                            <span className="text-[9px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Planned Load (SP)</span>
                                             <Input
                                               type="number"
-                                              className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#3a302a] transition-all"
+                                              className="h-8 w-20 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] font-bold transition-all"
                                               style={{ fontFamily: "'EB Garamond', serif" }}
                                               value={platform.totalStoryPoints || ''}
                                               onClick={(e) => e.stopPropagation()}
-                                              onChange={(e) => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, totalStoryPoints: Number(e.target.value) } : p))}
+                                                onChange={(e) => {
+                                                  const newTotal = Number(e.target.value);
+                                                  setPlatforms(prev => prev.map(p => {
+                                                    if (p.id === platform.id) {
+                                                      const updatedLeaves = redistributePlatformSP({ ...p, totalStoryPoints: newTotal }, newTotal);
+                                                      return { ...p, totalStoryPoints: newTotal, developerLeaves: updatedLeaves };
+                                                    }
+                                                    return p;
+                                                  }));
+                                                }}
                                               placeholder="0"
                                             />
                                           </div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Alpha %</span>
+                                          <div className="flex flex-col items-center gap-1">
+                                            <span className="text-[9px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Sprint Improvement Target %</span>
                                             <Input
                                               type="number"
                                               className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
@@ -1734,8 +1991,8 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                               placeholder="0"
                                             />
                                           </div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>SP/Day</span>
+                                          <div className="flex flex-col items-center gap-1">
+                                            <span className="text-[9px] tracking-[0.1em] font-bold uppercase text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Target Velocity (SP/day)</span>
                                             <Input
                                               type="number"
                                               className="h-8 w-14 bg-[#f2ece4] hover:bg-[#e8e1d7] border border-transparent focus-visible:bg-white focus-visible:border-[#c2652a]/40 rounded-lg text-lg shadow-none focus-visible:ring-0 px-1 text-center text-[#c2652a] transition-all"
@@ -1748,9 +2005,40 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 w-1/4 justify-end relative z-10">
-                                          <div className="flex items-center justify-center h-8 px-3 rounded-lg bg-[#f2ece4] border border-[#d8d0c8]/40 shadow-sm transition-colors">
-                                            <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-px text-[#c2652a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{platform.members.length} Devs</span>
+                                        <div className="flex items-center gap-6 w-1/4 justify-end relative z-10">
+                                          {(() => {
+                                            let tCap = 0;
+                                            platform.members.forEach(m => {
+                                              const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
+                                              const sDays = calculateSprintDays(d.country);
+                                              const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
+                                              const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
+                                              tCap += inc ? (availHrs / 8) : 0;
+                                            });
+                                            const platformCapSP = tCap.toFixed(1);
+                                            
+                                            return (
+                                              <>
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Capacity</span>
+                                                  <div className="flex items-baseline gap-1">
+                                                    <span className="text-sm font-black text-[#3a302a]">{platformCapSP}</span>
+                                                    <span className="text-[9px] font-bold text-[#9a9088] uppercase tracking-tighter">SP</span>
+                                                  </div>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-0.5">
+                                                  <span className="text-[9px] font-bold uppercase tracking-widest text-[#c2652a]" style={{ fontFamily: "'Manrope', sans-serif" }}>Planned</span>
+                                                  <div className="flex items-baseline gap-1">
+                                                    <span className="text-sm font-black text-[#c2652a]">{(platform.totalStoryPoints || 0).toFixed(1)}</span>
+                                                    <span className="text-[9px] font-bold text-[#c2652a] uppercase tracking-tighter opacity-70">SP</span>
+                                                  </div>
+                                                </div>
+                                              </>
+                                            );
+                                          })()}
+                                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#f2ece4] border border-[#d8d0c8]/40 shadow-sm transition-all hover:bg-[#eee7de]">
+                                            <span className="text-sm font-black text-[#3a302a]">{platform.members.length}</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#605850]">Devs</span>
                                           </div>
                                           <button
                                             onClick={(e) => {
@@ -1769,7 +2057,46 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
 
                                       {/* ACCORDION BODY (EXPANDED) */}
                                       {platform.isExpanded && (
-                                        <div className="border-t border-[#d8d0c8]/40 bg-[#f6f0e8]/50  p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
+                                        <div className="border-t border-[#d8d0c8]/40 bg-[#f6f0e8]/50 p-6 animate-in slide-in-from-top-2 fade-in duration-300 flex flex-col gap-6">
+                                          {/* Over-commitment Warning Banner */}
+                                          {(() => {
+                                            let tCap = 0;
+                                            platform.members.forEach(m => {
+                                              const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
+                                              const sDays = calculateSprintDays(d.country);
+                                              const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
+                                              const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
+                                              tCap += inc ? (availHrs / 8) : 0;
+                                            });
+                                            const planned = platform.totalStoryPoints || 0;
+                                            const isOver = planned > tCap;
+                                            const diff = Math.abs(planned - tCap).toFixed(1);
+                                            
+                                            return (
+                                              <div className={cn(
+                                                "p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500",
+                                                isOver ? "bg-red-50 border-red-100 text-red-700" : "bg-green-50 border-green-100 text-green-700"
+                                              )}>
+                                                {isOver ? (
+                                                  <>
+                                                    <ShieldAlert className="h-5 w-5 text-red-600" />
+                                                      <p className="text-sm font-bold">
+                                                        ⚠️ Over-committed: You have planned {planned} SP but your team can only handle {tCap.toFixed(1)} SP this sprint. You are over by {diff} SP.
+                                                        <br />
+                                                        <span className="text-[10px] mt-1 block font-medium opacity-80">Suggested action: Remove approximately {diff} SP worth of stories (roughly {Math.ceil(Number(diff) / 5)} stories if averaging 5 SP each) to bring the sprint within capacity.</span>
+                                                      </p>
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <CheckCircle2 className="h-5 w-5 text-green-600" />
+                                                    <p className="text-sm font-bold">
+                                                      ✅ Capacity confirmed: Your team can handle this sprint's planned workload.
+                                                    </p>
+                                                  </>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
 
                                           {/* Inject Button */}
                                           <div className="w-full relative group/member">
@@ -1779,10 +2106,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9a9088] group-hover/member:text-[#c2652a] transition-colors">
                                                     <Plus className="h-4 w-4" />
                                                   </div>
-                                                  Inject Resource Node
+                                                  Add Team Member
                                                 </button>
                                               </DropdownMenuTrigger>
-                                              <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 backdrop-blur-2xl border-white/20  border">
+                                              <DropdownMenuContent align="start" className="w-[300px] rounded-[1.5rem] border-0 shadow-2xl p-2 z-50 bg-white/95 backdrop-blur-2xl border-white/20 border">
                                                 <div className="text-[10px] font-black text-[#9a9088] uppercase tracking-widest px-4 py-3">Available Org Members</div>
                                                 <div className="max-h-72 overflow-y-auto pr-1 custom-scrollbar">
                                                   {orgMembers.length > 0 ? orgMembers.map((member: any) => (
@@ -1822,114 +2149,277 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             </DropdownMenu>
                                           </div>
 
-                                          {/* Deployment List */}
+                                          {/* Simplified Capacity Planning Table */}
                                           {platform.members.length > 0 && (
-                                            <div className="space-y-2">
-                                              {/* Header */}
-                                              <div className="grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 px-3 pb-2 border-b border-[#d8d0c8]/40">
-                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088]" style={{ fontFamily: "'Manrope', sans-serif" }}>Node Identity</label>
-                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Geo</label>
-                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Alloc %</label>
-                                                <label className="text-[10px] font-bold uppercase tracking-widest text-[#9a9088] text-center" style={{ fontFamily: "'Manrope', sans-serif" }}>Out (D)</label>
-                                                <div />
-                                              </div>
+                                            <div className="mt-4 overflow-x-auto rounded-2xl border border-[#d8d0c8]/40 bg-white/50 backdrop-blur-sm">
+                                              <table className="w-full text-left border-collapse min-w-[1200px]">
+                                                <thead>
+                                                  <tr className="bg-[#f9f6f2] border-b border-[#d8d0c8]/40">
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088]">Team Member Name</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088]">Role</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Region</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Daily Hrs</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Sprint Days</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Days Off</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Meeting Hrs (total)</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Avail %</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Total Hrs</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Unavail Hrs</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center bg-blue-50/30">Available Hrs</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center bg-[#c2652a]/5">Capacity (SP)</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#c2652a] text-center bg-[#c2652a]/10">Planned (SP)</th>
+                                                    <th className="p-3 text-[9px] font-bold uppercase tracking-widest text-[#9a9088] text-center">Balance</th>
+                                                    <th className="p-3 w-10"></th>
+                                                  </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-[#d8d0c8]/20">
+                                                  {platform.members.map((member, idx) => {
+                                                    const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
+                                                    const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
+                                                    const initials = displayName.trim().split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+                                                    
+                                                    const details = platform.developerLeaves.find(d => d.id === member || d.name === member) || { 
+                                                      id: member, name: member, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true
+                                                    };
 
-                                              <div className="space-y-2">
-                                                {platform.members.map((member, idx) => {
-                                                  const memberObj = orgMembers.find((m: any) => m.id === member || m.display_name === member || m.email === member);
-                                                  const displayName = memberObj ? (memberObj.display_name || memberObj.email) : member;
-                                                  const initials = displayName
-                                                    .trim()
-                                                    .split(/\s+/)
-                                                    .map((n: string) => n[0])
-                                                    .filter((_: string, i: number, arr: string[]) => i === 0 || i === arr.length - 1)
-                                                    .join('')
-                                                    .substring(0, 2)
-                                                    .toUpperCase();
+                                                    const sprintWorkingDays = calculateSprintDays(details.country);
+                                                    const totalBusinessHours = (details.businessHours || 8) * sprintWorkingDays;
+                                                    const unavailHrs = ((details.plannedLeave || 0) * (details.businessHours || 8)) + (details.otherUnavailability || 0);
+                                                    const dailyAvailFactor = (details.dailyAvailPercent || 80) / 100;
+                                                    const availableHrsPerSprint = Math.max(0, (totalBusinessHours - unavailHrs) * dailyAvailFactor);
+                                                    
+                                                    const isSMorPO = ['Scrum Master', 'Product Owner'].includes(details.role || '');
+                                                    const includeInCapacity = details.includeInCapacity ?? !isSMorPO;
+                                                    
+                                                    const capacitySP = getCapacitySP(details);
+                                                    const balance = capacitySP - (details.allocatedSP || 0);
 
-                                                  const details = platform.developerLeaves.find(d => d.name === member) || { id: '', name: member, country: '', capacity: 1, plannedLeave: 0 };
+                                                    const updateDetails = (field: keyof DeveloperLeave, value: any) => {
+                                                      setPlatforms(prev => prev.map(p => {
+                                                        if (p.id === platform.id) {
+                                                          // 1. Update the specific field
+                                                          const updatedLeavesStage1 = p.developerLeaves.map(d => 
+                                                            (d.id === member || d.name === member) ? { ...d, [field]: value } : d
+                                                          );
+                                                          // If not found, add it
+                                                          if (!p.developerLeaves.find(d => d.id === member || d.name === member)) {
+                                                            updatedLeavesStage1.push({ ...details, [field]: value });
+                                                          }
 
-                                                  const updateDetails = (field: keyof DeveloperLeave, value: any) => {
-                                                    setPlatforms(prev => prev.map(p => p.id === platform.id ? {
-                                                      ...p,
-                                                      developerLeaves: (() => {
-                                                        const textExists = p.developerLeaves.find(d => d.name === member);
-                                                        if (textExists) {
-                                                          return p.developerLeaves.map(d => d.name === member ? { ...d, [field]: value } : d);
+                                                          // 2. Re-distribute SP proportionally based on NEW capacities
+                                                          const platformWithUpdatedLeaves = { ...p, developerLeaves: updatedLeavesStage1 };
+                                                          const finalLeaves = redistributePlatformSP(platformWithUpdatedLeaves, p.totalStoryPoints || 0);
+
+                                                          return { ...p, developerLeaves: finalLeaves };
                                                         }
-                                                        return [...p.developerLeaves, { id: Date.now().toString(), name: member, country: '', capacity: 1, plannedLeave: 0, [field]: value }];
-                                                      })()
-                                                    } : p));
-                                                  };
+                                                        return p;
+                                                      }));
+                                                    };
 
-                                                  return (
-                                                    <div key={idx} className="group/row p-2 rounded-xl bg-white border border-[#d8d0c8]/40 shadow-sm focus-within:shadow-[0_4px_24px_rgba(194,101,42,0.12),0_0_0_3px_rgba(194,101,42,0.06)] focus-within:border-[#c2652a]/40 transition-all grid grid-cols-[1fr_90px_80px_80px_32px] gap-2 items-center">
-                                                      <div className="flex items-center gap-3 min-w-0 pr-1">
-                                                        <Avatar className="h-8 w-8 rounded-lg border border-[#d8d0c8]/40 shrink-0">
-                                                          {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
-                                                          <AvatarFallback className="bg-[#f2ece4] text-[#c2652a] font-bold text-[10px]" style={{ fontFamily: "'Manrope', sans-serif" }}>{initials}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div className="flex flex-col min-w-0">
-                                                          <span className="text-sm font-medium text-[#3a302a] leading-none truncate mb-0.5" style={{ fontFamily: "'Manrope', sans-serif" }}>{displayName}</span>
-                                                          <span className="text-[10px] text-[#9a9088] uppercase tracking-widest truncate leading-none" style={{ fontFamily: "'Manrope', sans-serif" }}>{memberObj?.department?.name || 'Engineer'}</span>
-                                                        </div>
-                                                      </div>
-
-                                                      <div className="w-[90px]">
-                                                        <Select value={details.country} onValueChange={(val: string) => updateDetails('country', val)}>
-                                                          <SelectTrigger className="h-9 bg-[#f2ece4] rounded-lg border-none focus:ring-0 text-xs font-medium text-[#3a302a] px-3 shadow-none group-focus-within/row:bg-white transition-all" style={{ fontFamily: "'Manrope', sans-serif" }}>
-                                                            {details.country ? (regionalClusters.find(rc => rc.id === details.country)?.countryCode || details.country) : "REG"}
-                                                          </SelectTrigger>
-                                                          <SelectContent className="rounded-xl border border-[#d8d0c8]/40 shadow-xl bg-white p-1">
-                                                            {regionalClusters.map(rc => {
-                                                              const holidaySummary = rc.holidays.length > 0 ? `${rc.holidays.length}H` : 'None';
-                                                              return (
-                                                                <SelectItem key={rc.id} value={rc.id} className="rounded-lg text-xs py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors">
-                                                                  <div className="flex items-center justify-between gap-4 w-[120px]">
-                                                                    <span className="font-medium text-[#3a302a]" style={{ fontFamily: "'Manrope', sans-serif" }}>{rc.countryCode || 'Node'}</span>
-                                                                    <span className="text-[10px] text-[#9a9088] font-bold">{holidaySummary}</span>
-                                                                  </div>
+                                                    return (
+                                                      <tr key={idx} className="hover:bg-white/80 transition-colors group">
+                                                        <td className="p-3">
+                                                          <div className="flex items-center gap-3">
+                                                            <Avatar className="h-7 w-7 rounded-lg border border-[#d8d0c8]/40 shadow-sm">
+                                                              {memberObj?.id && <AvatarImage src={`https://avatar.vercel.sh/${memberObj.id}?text=${initials}`} />}
+                                                              <AvatarFallback className="bg-[#f2ece4] text-[#c2652a] font-bold text-[9px]">{initials}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="flex flex-col min-w-0">
+                                                              <span className="text-xs font-bold text-[#3a302a] truncate" style={{ fontFamily: "'Manrope', sans-serif" }}>{displayName}</span>
+                                                            </div>
+                                                          </div>
+                                                        </td>
+                                                        <td className="p-3">
+                                                          <div className="text-[10px] text-[#605850]">{details.role || 'Developer'}</div>
+                                                        </td>
+                                                        <td className="p-3">
+                                                          <Select value={details.country} onValueChange={(val) => updateDetails('country', val)}>
+                                                            <SelectTrigger className="h-7 w-full bg-transparent border-transparent hover:border-[#d8d0c8]/40 text-[10px] text-center shadow-none focus:ring-0 px-1">
+                                                              <SelectValue placeholder="Reg" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                              {regionalClusters.map(rc => (
+                                                                <SelectItem key={rc.id} value={rc.id} className="text-[10px]">
+                                                                  {rc.countryCode || rc.name || 'Region'}
                                                                 </SelectItem>
-                                                              );
-                                                            })}
-                                                            <SelectItem value="Other" className="rounded-lg text-xs font-medium text-[#9a9088] py-1.5 pl-8 pr-3 cursor-pointer hover:bg-[#f2ece4] focus:bg-[#f2ece4] transition-colors" style={{ fontFamily: "'Manrope', sans-serif" }}>OTHER</SelectItem>
-                                                          </SelectContent>
-                                                        </Select>
-                                                      </div>
+                                                              ))}
+                                                            </SelectContent>
+                                                          </Select>
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            value={details.businessHours ? Number(details.businessHours).toString() : "8"}
+                                                            onChange={(e) => updateDetails('businessHours', Number(e.target.value))}
+                                                            className="h-7 w-10 mx-auto bg-transparent border-transparent hover:border-[#d8d0c8]/40 text-[10px] text-center shadow-none focus:ring-0 p-0"
+                                                          />
+                                                        </td>
+                                                        <td className="p-3 text-center text-[10px] font-medium text-[#78706a]">
+                                                          {sprintWorkingDays}
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            value={details.plannedLeave ? Number(details.plannedLeave).toString() : "0"}
+                                                            onChange={(e) => updateDetails('plannedLeave', Number(e.target.value))}
+                                                            className="h-7 w-10 mx-auto bg-transparent border-transparent hover:border-[#d8d0c8]/40 text-[10px] text-center shadow-none focus:ring-0 p-0 text-[#8c3c3c]"
+                                                          />
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            value={details.otherUnavailability ? Number(details.otherUnavailability).toString() : "0"}
+                                                            onChange={(e) => updateDetails('otherUnavailability', Number(e.target.value))}
+                                                            className="h-7 w-10 mx-auto bg-transparent border-transparent hover:border-[#d8d0c8]/40 text-[10px] text-center shadow-none focus:ring-0 p-0 text-[#8c3c3c]"
+                                                          />
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                          <Input
+                                                            type="number"
+                                                            value={details.dailyAvailPercent ? Number(details.dailyAvailPercent).toString() : "80"}
+                                                            onChange={(e) => updateDetails('dailyAvailPercent', Number(e.target.value))}
+                                                            className="h-7 w-10 mx-auto bg-transparent border-transparent hover:border-[#d8d0c8]/40 text-[10px] text-center shadow-none focus:ring-0 p-0"
+                                                          />
+                                                        </td>
+                                                        <td className="p-3 text-center text-[10px] text-[#78706a]">
+                                                          {totalBusinessHours}
+                                                        </td>
+                                                        <td className="p-3 text-center text-[10px] text-[#8c3c3c]">
+                                                          {unavailHrs}
+                                                        </td>
+                                                        <td className="p-3 text-center text-[10px] font-bold text-blue-600 bg-blue-50/30">
+                                                          {availableHrsPerSprint.toFixed(1)}
+                                                        </td>
+                                                        <td className="p-3 text-center bg-[#c2652a]/5">
+                                                          <div className="flex flex-col items-center gap-1">
+                                                            <span className="text-xs font-black text-[#3a302a]" style={{ fontFamily: "'EB Garamond', serif" }}>{capacitySP.toFixed(1)}</span>
+                                                            <TooltipProvider>
+                                                              <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                  <button 
+                                                                    onClick={() => updateDetails('includeInCapacity', !includeInCapacity)}
+                                                                    className={cn(
+                                                                      "h-3 w-6 rounded-full transition-colors relative",
+                                                                      includeInCapacity ? "bg-green-500" : "bg-[#d8d0c8]"
+                                                                    )}
+                                                                  >
+                                                                    <div className={cn("absolute top-0.5 w-2 h-2 rounded-full bg-white transition-all", includeInCapacity ? "left-3.5" : "left-0.5")} />
+                                                                  </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                  <p className="text-[10px]">Include in SP Capacity</p>
+                                                                </TooltipContent>
+                                                              </Tooltip>
+                                                            </TooltipProvider>
+                                                          </div>
+                                                        </td>
+                                                        <td className="p-3 text-center bg-[#c2652a]/10">
+                                                          <Input
+                                                            type="number"
+                                                            value={details.allocatedSP || 0}
+                                                            onChange={(e) => updateDetails('allocatedSP', Number(e.target.value))}
+                                                            className="h-7 w-14 mx-auto bg-white/50 border-[#c2652a]/20 hover:border-[#c2652a]/40 text-[10px] text-center shadow-sm focus:ring-0 text-[#c2652a] font-bold rounded-md"
+                                                          />
+                                                        </td>
+                                                        <td className="p-3 text-center">
+                                                          <div className={cn(
+                                                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter",
+                                                            balance > 0 ? "bg-green-100 text-green-700" : 
+                                                            balance === 0 ? "bg-gray-100 text-gray-600" : 
+                                                            "bg-red-100 text-red-700 shadow-[0_0_8px_rgba(239,68,68,0.2)]"
+                                                          )}>
+                                                            {balance < 0 && <ShieldAlert className="h-2.5 w-2.5 animate-pulse" />}
+                                                            {balance > 0 ? `+${balance.toFixed(1)}` : balance.toFixed(1)} SP
+                                                          </div>
+                                                        </td>
+                                                        <td className="p-3">
+                                                          <button
+                                                            onClick={() => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter(m => m !== member) } : p))}
+                                                            className="h-6 w-6 rounded-md flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover:opacity-100"
+                                                          >
+                                                            <X className="h-3 w-3" />
+                                                          </button>
+                                                        </td>
+                                                      </tr>
+                                                    );
+                                                  })}
+                                                </tbody>
+                                                <tfoot className="bg-[#f9f6f2] border-t-2 border-[#d8d0c8]/60 font-bold">
+                                                  {(() => {
+                                                    let tBusHrs = 0;
+                                                    let tUnavailHrs = 0;
+                                                    let tCapSP = 0;
+                                                    let tPlanSP = 0;
+                                                    
+                                                    platform.members.forEach(m => {
+                                                      const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
+                                                      const sDays = calculateSprintDays(d.country);
+                                                      const bHrs = (d.businessHours || 8) * sDays;
+                                                      const uHrs = ((d.plannedLeave || 0) * (d.businessHours || 8)) + (d.otherUnavailability || 0);
+                                                      
+                                                      tBusHrs += bHrs;
+                                                      tUnavailHrs += uHrs;
+                                                      tCapSP += getCapacitySP(d);
+                                                      tPlanSP += d.allocatedSP || 0;
+                                                    });
+                                                    
+                                                    const tBal = tCapSP - (platform.totalStoryPoints || 0);
+                                                    
+                                                    return (
+                                                      <tr>
+                                                        <td colSpan={8} className="p-3 text-[10px] text-right text-[#78706a] uppercase tracking-widest">Team Totals</td>
+                                                        <td className="p-3 text-center text-[10px] text-[#78706a]">{tBusHrs}</td>
+                                                        <td className="p-3 text-center text-[10px] text-[#8c3c3c]">{tUnavailHrs}</td>
+                                                        <td className="p-3 text-center text-[10px] text-blue-600 bg-blue-50/30">-</td>
+                                                        <td className="p-3 text-center text-sm text-[#3a302a] bg-[#c2652a]/5">{tCapSP.toFixed(1)}</td>
+                                                        <td className="p-3 text-center text-sm text-[#c2652a] bg-[#c2652a]/10">{tPlanSP.toFixed(1)}</td>
+                                                        <td className="p-3 text-center">
+                                                          <Badge className={cn("text-[10px] px-2", tBal >= 0 ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600")}>
+                                                            {tBal > 0 ? `+${tBal.toFixed(1)}` : tBal.toFixed(1)} SP
+                                                          </Badge>
+                                                        </td>
+                                                        <td></td>
+                                                      </tr>
+                                                    );
+                                                  })()}
+                                                </tfoot>
+                                              </table>
+                                            </div>
+                                          )}
 
-                                                      <div className="relative w-full">
-                                                        <Input
-                                                          type="number"
-                                                          className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#3a302a] group-focus-within/row:bg-white transition-all"
-                                                          style={{ fontFamily: "'EB Garamond', serif" }}
-                                                          value={Math.round(details.capacity * 100) || ''}
-                                                          placeholder="100"
-                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('capacity', Number(e.target.value) / 100)}
-                                                        />
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">%</span>
-                                                      </div>
-
-                                                      <div className="relative w-full">
-                                                        <Input
-                                                          type="number"
-                                                          className="h-9 bg-[#f2ece4] border-none rounded-lg text-base shadow-none focus-visible:ring-0 px-2 pr-5 text-center text-[#8c3c3c] group-focus-within/row:bg-white transition-all"
-                                                          style={{ fontFamily: "'EB Garamond', serif" }}
-                                                          value={details.plannedLeave || ''}
-                                                          placeholder="0"
-                                                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateDetails('plannedLeave', Number(e.target.value))}
-                                                        />
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[#9a9088] font-bold pointer-events-none">D</span>
-                                                      </div>
-
-                                                      <button
-                                                        onClick={() => confirmDelete('Disengage Node', `Are you sure you want to disengage ${displayName} from ${platform.name}?`, () => setPlatforms(prev => prev.map(p => p.id === platform.id ? { ...p, members: p.members.filter((_, i) => i !== idx) } : p)))}
-                                                        className="h-8 w-8 rounded-lg flex items-center justify-center text-[#d8d0c8] hover:text-[#8c3c3c] hover:bg-[#8c3c3c]/10 transition-all opacity-0 group-hover/row:opacity-100 ml-auto"
-                                                      >
-                                                        <Trash2 className="h-4 w-4" />
-                                                      </button>
-                                                    </div>
-                                                  );
-                                                })}
+                                          {/* AI Insight Panel */}
+                                          {platform.members.length > 0 && (
+                                            <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-[#c2652a]/5 to-transparent border border-[#c2652a]/10 flex gap-4 items-start animate-in fade-in slide-in-from-top-2 duration-500">
+                                              <div className="h-10 w-10 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
+                                                <Zap className="h-5 w-5 text-[#c2652a]" />
+                                              </div>
+                                              <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-black text-[#c2652a] uppercase tracking-widest">AI Allocation Insight</span>
+                                                <p className="text-sm text-[#3a302a] leading-relaxed">
+                                                  {(() => {
+                                                    let tCap = 0;
+                                                    let tPlan = 0;
+                                                    platform.members.forEach(m => {
+                                                      const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
+                                                      const sDays = calculateSprintDays(d.country);
+                                                      const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
+                                                      const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
+                                                      tCap += inc ? (availHrs / 8) : 0;
+                                                      tPlan += d.allocatedSP || 0;
+                                                    });
+                                                    const bal = tCap - tPlan;
+                                                    if (bal < 0) {
+                                                      return `⚠️ Your team is over-committed by ${Math.abs(bal).toFixed(1)} SP. At current capacity, you can realistically complete ${tCap.toFixed(1)} SP this sprint. Consider removing the lowest priority stories totalling approximately ${Math.abs(bal).toFixed(0)} SP before starting.`;
+                                                    }
+                                                    if (tPlan < tCap * 0.8) {
+                                                      return "Your team has significant buffer this sprint. Consider pulling in backlog items or reducing the sprint length.";
+                                                    }
+                                                    if (tPlan >= tCap * 0.9 && tPlan <= tCap) {
+                                                      return "✅ Your team is well-matched to the planned workload. Good sprint.";
+                                                    }
+                                                    return "Capacity is well-matched to planned workload. Team is close to optimal allocation.";
+                                                  })()}
+                                                </p>
                                               </div>
                                             </div>
                                           )}
