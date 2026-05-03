@@ -17,10 +17,15 @@ export default async function SprintDetailPage({ params }: { params: Promise<{ s
             .from('sprints')
             .select('*')
             .eq('id', sprintId)
-            .single();
+            .maybeSingle();
 
-        if (error || !sprint) {
-            console.error("Error fetching sprint:", error);
+        if (error) {
+            console.error("Database error fetching sprint:", error.message);
+            throw error; // Let the nearest error boundary handle it
+        }
+
+        if (!sprint) {
+            console.warn("No sprint record found for ID:", sprintId);
             notFound();
         }
 

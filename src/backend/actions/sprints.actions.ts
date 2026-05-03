@@ -350,6 +350,114 @@ export async function getSprintAction(sprintId: string) {
     };
 }
 
+export type SprintPerformanceMetric = {
+    sprintId: string;
+    sprintName: string;
+    sprintNumber: string;
+    plannedSP: number;
+    completedSP: number;
+    completionRate: number;
+    endedAt: string | null;
+};
+
+export async function getSprintPerformanceMetricsAction(sprintId: string): Promise<SprintPerformanceMetric[]> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error('Unauthorized');
+    }
+
+    const { createAdminClient } = await import('@/auth/supabase/admin');
+    const supabaseAdmin = createAdminClient();
+
+    // 1. Get context from the current sprint (Org, Team, Dept)
+    const { data: currentSprint, error: currentError } = await supabaseAdmin
+        .from('sprints')
+        .select('team, department, org_slug')
+        .eq('id', sprintId)
+        .single();
+
+    if (currentError || !currentSprint) {
+        console.error('Advisor Context Error:', currentError);
+        return [];
+    }
+
+    // 2. Fetch history for the SAME org/team/dept
+    let query = supabaseAdmin
+        .from('sprints')
+        .select('id, name, sprint_number, start_date, end_date, created_at')
+        .eq('org_slug', currentSprint.org_slug)
+        .in('status', ['completed', 'closed'])
+        .neq('id', sprintId);
+
+    if (currentSprint.team) query = query.eq('team', currentSprint.team);
+    if (currentSprint.department) query = query.eq('department', currentSprint.department);
+
+    const { data: sprints, error: sprintsError } = await query
+        .order('end_date', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+    if (sprintsError) {
+        console.warn('History Fetch Error:', sprintsError.message);
+        return [];
+    }
+
+    const sprintIds = (sprints || []).map((s: any) => s.id);
+    if (sprintIds.length === 0) {
+        return [];
+    }
+
+    const [{ data: stories }, { data: planningRows }] = await Promise.all([
+        supabaseAdmin
+            .from('stories')
+            .select('sprint_id, story_points, completed_story_points, status')
+            .in('sprint_id', sprintIds),
+        supabaseAdmin
+            .from('sprint_planning')
+            .select('sprint_id, platforms')
+            .in('sprint_id', sprintIds),
+    ]);
+
+    const storiesBySprint = new Map<string, any[]>();
+    (stories || []).forEach((story: any) => {
+        const list = storiesBySprint.get(story.sprint_id) || [];
+        list.push(story);
+        storiesBySprint.set(story.sprint_id, list);
+    });
+
+    const planningBySprint = new Map((planningRows || []).map((row: any) => [row.sprint_id, row]));
+
+    return (sprints || []).map((sprint: any) => {
+        const sprintStories = storiesBySprint.get(sprint.id) || [];
+        const planning = planningBySprint.get(sprint.id);
+        const plannedFromPlanning = Array.isArray(planning?.platforms)
+            ? planning.platforms.reduce((sum: number, platform: any) => sum + (platform.total_story_points ?? platform.totalStoryPoints ?? 0), 0)
+            : 0;
+        const plannedFromStories = sprintStories.reduce((sum, story) => sum + (story.story_points || 0), 0);
+        const completedFromPlanning = Array.isArray(planning?.platforms)
+            ? planning.platforms.reduce((sum: number, platform: any) => sum + (platform.target_velocity ?? platform.targetVelocity ?? 0), 0)
+            : 0;
+        const completedFromStories = sprintStories.reduce((sum, story) => {
+            if (story.status === 'done') return sum + (story.story_points || story.completed_story_points || 0);
+            return sum + (story.completed_story_points || 0);
+        }, 0);
+        const plannedSP = Number((plannedFromPlanning || plannedFromStories || 0).toFixed(1));
+        const completedSP = Number((completedFromStories || completedFromPlanning || 0).toFixed(1));
+
+        return {
+            sprintId: sprint.id,
+            sprintName: sprint.name,
+            sprintNumber: sprint.sprint_number,
+            plannedSP,
+            completedSP,
+            completionRate: plannedSP > 0 ? Number(((completedSP / plannedSP) * 100).toFixed(1)) : 0,
+            endedAt: sprint.end_date || sprint.created_at || null,
+        };
+    });
+}
+
 // Sprint Status Management Actions
 
 type SprintStatus = 'not_started' | 'planning' | 'preparing' | 'active' | 'retrospective' | 'closed' | 'cancelled';

@@ -45,6 +45,8 @@ import {
   Globe,
   Pen,
   Kanban,
+  Sparkles,
+  RefreshCw,
   Bell,
   Settings,
   ArrowRight,
@@ -222,6 +224,22 @@ type SprintDemoItem = {
 
 type SprintPlanningClientProps = {
   sprintId: string;
+};
+
+type SprintCommitmentAdvisorResult = {
+  recommendation: string;
+  riskScore: number;
+  suggestedSP: number;
+};
+
+type SprintPerformanceMetric = {
+  sprintId: string;
+  sprintName: string;
+  sprintNumber: string;
+  plannedSP: number;
+  completedSP: number;
+  completionRate: number;
+  endedAt: string | null;
 };
 
 // --- Constants ---
@@ -424,6 +442,12 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isPlanningDataLoading, setIsPlanningDataLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [aiResponse, setAiResponse] = React.useState<SprintCommitmentAdvisorResult | null>(null);
+  const [cacheHash, setCacheHash] = React.useState('');
+  const [isConsulting, setIsConsulting] = React.useState(false);
+  const [sprintHistory, setSprintHistory] = React.useState<SprintPerformanceMetric[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = React.useState(true);
+  const advisorCacheRef = React.useRef<Map<string, SprintCommitmentAdvisorResult | null>>(new Map());
   const [lastSaved, setLastSaved] = React.useState<Date | null>(null);
   const [activeSection, setActiveSection] = React.useState('general');
   const [checklist, setChecklist] = React.useState<ChecklistState>(() =>
@@ -907,6 +931,82 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
     };
   }, [platforms, date, regionalClusters, calculateSprintDays]);
 
+  const totalAdvisorMemberCount = React.useMemo(() => {
+    return new Set(platforms.flatMap(platform => platform.members)).size;
+  }, [platforms]);
+
+  const leaveDistributionByWeek = React.useMemo(() => {
+    const distribution: Record<string, number> = {};
+    const sprintStart = date?.from ? new Date(date.from) : null;
+
+    const addHoursToWeek = (weekKey: string, hours: number) => {
+      if (!Number.isFinite(hours) || hours <= 0) return;
+      distribution[weekKey] = Number(((distribution[weekKey] || 0) + hours).toFixed(2));
+    };
+
+    platforms.forEach(platform => {
+      platform.members.forEach(member => {
+        const details = platform.developerLeaves.find(dl => dl.id === member || dl.name === member);
+        if (!details) return;
+
+        const plannedLeaveHours = (details.plannedLeave || 0) * (details.businessHours || 8);
+        const plannedLeaveByWeek = (details as any).plannedLeaveByWeek || (details as any).planned_leave_by_week;
+        if (plannedLeaveByWeek && typeof plannedLeaveByWeek === 'object') {
+          Object.entries(plannedLeaveByWeek).forEach(([week, days]) => {
+            addHoursToWeek(`week-${week}-member-leave`, Number(days || 0) * (details.businessHours || 8));
+          });
+        } else {
+          const weekKey = sprintStart ? 'week-1-unassigned-leave' : 'unscheduled-leave';
+          addHoursToWeek(weekKey, plannedLeaveHours);
+        }
+        addHoursToWeek(sprintStart ? 'week-1-other-unavailability' : 'unscheduled-other-unavailability', details.otherUnavailability || 0);
+      });
+    });
+
+    regionalClusters.forEach(cluster => {
+      cluster.holidays.forEach(holiday => {
+        const holidayDate = (holiday as any).date ? new Date((holiday as any).date) : null;
+        const weekIndex = sprintStart && holidayDate
+          ? Math.max(1, Math.floor((holidayDate.getTime() - sprintStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1)
+          : 1;
+        addHoursToWeek(`week-${weekIndex}-holiday`, (holiday.days || 0) * 8);
+      });
+    });
+
+    return Object.keys(distribution)
+      .sort()
+      .reduce<Record<string, number>>((acc, key) => {
+        acc[key] = distribution[key];
+        return acc;
+      }, {});
+  }, [platforms, regionalClusters, date]);
+
+  const advisorCacheHash = React.useMemo(() => {
+    return JSON.stringify({
+      sprintId,
+      plannedLoadSP: capacityMetrics.totalPlannedLoadSP,
+      memberCount: totalAdvisorMemberCount,
+      totalLeaveHours: capacityMetrics.totalUnavailableHours,
+      leaveDistributionByWeek,
+    });
+  }, [
+    sprintId,
+    capacityMetrics.totalPlannedLoadSP,
+    capacityMetrics.totalUnavailableHours,
+    totalAdvisorMemberCount,
+    leaveDistributionByWeek,
+  ]);
+
+  const getRiskBadge = (riskScore: number) => {
+    if (riskScore <= 3) {
+      return { label: 'Low Risk', className: 'bg-green-100 text-green-700 border-green-200' };
+    }
+    if (riskScore <= 6) {
+      return { label: 'Medium Risk', className: 'bg-amber-100 text-amber-700 border-amber-200' };
+    }
+    return { label: 'High Risk', className: 'bg-red-100 text-red-700 border-red-200' };
+  };
+
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const resourceContainerRef = React.useRef<HTMLDivElement>(null);
@@ -981,6 +1081,80 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
   }, [user]);
 
   React.useEffect(() => {
+    if (!sprint) return;
+
+    let isMounted = true;
+    const fetchSprintHistory = async () => {
+      setIsHistoryLoading(true);
+      try {
+        const { getSprintPerformanceMetricsAction } = await import('@/backend/actions/sprints.actions');
+        const history = await getSprintPerformanceMetricsAction(sprintId);
+        if (isMounted) setSprintHistory(history);
+      } catch (err) {
+        console.error('Failed to load sprint performance metrics', err);
+        if (isMounted) setSprintHistory([]);
+      } finally {
+        if (isMounted) setIsHistoryLoading(false);
+      }
+    };
+
+    fetchSprintHistory();
+    return () => {
+      isMounted = false;
+    };
+  }, [sprint, sprintId]);
+
+  // Manual AI Advisor Trigger
+  const handleConsultAI = async () => {
+    if (sprintHistory.length < 2 || isConsulting) return;
+
+    // Check cache first
+    if (advisorCacheRef.current.has(advisorCacheHash)) {
+      setAiResponse(advisorCacheRef.current.get(advisorCacheHash) || null);
+      setCacheHash(advisorCacheHash);
+      return;
+    }
+
+    setIsConsulting(true);
+    try {
+      const { getSprintCommitmentAdvisorAction } = await import('@/backend/actions/ai.actions');
+      const result = await getSprintCommitmentAdvisorAction({
+        sprintId,
+        plannedLoadSP: capacityMetrics.totalPlannedLoadSP,
+        capacitySP: capacityMetrics.capacityInStoryPoints,
+        memberCount: totalAdvisorMemberCount,
+        totalLeaveHours: capacityMetrics.totalUnavailableHours,
+        leaveDistributionByWeek,
+        history: sprintHistory,
+      });
+
+      if (result.success && result.data) {
+        advisorCacheRef.current.set(advisorCacheHash, result.data);
+        setAiResponse(result.data);
+      } else {
+        setAiResponse(null);
+      }
+      setCacheHash(advisorCacheHash);
+    } catch (err) {
+      console.error('AI Advisor failed', err);
+      setAiResponse(null);
+    } finally {
+      setIsConsulting(false);
+    }
+  };
+
+  // Reset AI response if core inputs change and cache doesn't exist
+  React.useEffect(() => {
+    if (!advisorCacheRef.current.has(advisorCacheHash)) {
+      setAiResponse(null);
+      setCacheHash('');
+    } else {
+      setAiResponse(advisorCacheRef.current.get(advisorCacheHash) || null);
+      setCacheHash(advisorCacheHash);
+    }
+  }, [advisorCacheHash]);
+
+  React.useEffect(() => {
     if (isUserLoading) return;
     if (!user) return;
 
@@ -996,9 +1170,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
           setSprint(null);
           toast({
             title: 'Sprint Not Found',
-            description: "The sprint you are trying to plan for doesn't exist.",
+            description: "The sprint you are trying to plan for doesn't exist. Redirecting to dashboard...",
             variant: 'destructive',
           });
+          // Redirect to home/dashboard
+          router.push('/');
         }
       } catch (error: any) {
         toast({
@@ -1918,6 +2094,81 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                 </div>
 
                                 <div className="flex flex-col gap-3">
+                                  {!isHistoryLoading && (
+                                    <div
+                                      className={cn(
+                                        "p-5 rounded-xl bg-[#f9f6f2] border border-[#d8d0c8]/40 border-l-2 border-l-[#c2652a] flex gap-4 items-start shadow-sm transition-all",
+                                        isConsulting && "animate-pulse"
+                                      )}
+                                    >
+                                      <div className="h-10 w-10 rounded-lg bg-white shadow-sm border border-[#d8d0c8]/50 flex items-center justify-center shrink-0">
+                                        <Sparkles className={cn("h-5 w-5", isConsulting ? "text-[#c2652a] animate-spin" : "text-[#c2652a]")} />
+                                      </div>
+                                      <div className="flex-1 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black text-[#c2652a] uppercase tracking-widest">✨ AI Advisor</span>
+                                            {aiResponse && (() => {
+                                              const badge = getRiskBadge(aiResponse.riskScore);
+                                              return (
+                                                <Badge variant="outline" className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5", badge.className)}>
+                                                  {badge.label}
+                                                </Badge>
+                                              );
+                                            })()}
+                                          </div>
+                                          {aiResponse && (
+                                            <Button 
+                                              variant="ghost" 
+                                              size="icon" 
+                                              className="h-6 w-6 text-[#9a9088] hover:text-[#c2652a]"
+                                              onClick={handleConsultAI}
+                                              disabled={isConsulting}
+                                            >
+                                              <RefreshCw className={cn("h-3 w-3", isConsulting && "animate-spin")} />
+                                            </Button>
+                                          )}
+                                        </div>
+
+                                        {isConsulting ? (
+                                          <p className="text-sm font-semibold text-[#3a302a] leading-relaxed">
+                                            Analysing your team&apos;s sprint history...
+                                          </p>
+                                        ) : sprintHistory.length < 2 ? (
+                                          <p className="text-sm text-[#605850] leading-relaxed">
+                                            Complete at least 2 sprints to unlock AI recommendations. The advisor needs your team&apos;s history to give meaningful advice.
+                                          </p>
+                                        ) : aiResponse ? (
+                                          <div className="space-y-2">
+                                            <p className="text-sm text-[#3a302a] leading-relaxed italic">&quot;{aiResponse.recommendation}&quot;</p>
+                                            <div className="flex items-center gap-4 pt-1">
+                                              <div className="px-3 py-1 bg-white border border-[#d8d0c8]/40 rounded-lg shadow-sm">
+                                                <span className="text-[9px] font-bold text-[#9a9088] uppercase block leading-tight">Suggested Target</span>
+                                                <span className="text-sm font-black text-[#3a302a]">{aiResponse.suggestedSP.toFixed(1)} SP</span>
+                                              </div>
+                                              <div className="px-3 py-1 bg-white border border-[#d8d0c8]/40 rounded-lg shadow-sm">
+                                                <span className="text-[9px] font-bold text-[#9a9088] uppercase block leading-tight">Confidence</span>
+                                                <span className="text-sm font-black text-[#3a302a]">{Math.max(40, 100 - (aiResponse.riskScore * 8))}%</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex flex-col items-start gap-3">
+                                            <p className="text-sm text-[#605850] leading-relaxed">
+                                              Historical performance data is available. Get an AI-driven commitment risk assessment based on your team&apos;s past 5 sprints.
+                                            </p>
+                                            <Button 
+                                              onClick={handleConsultAI}
+                                              disabled={isConsulting || capacityMetrics.totalPlannedLoadSP <= 0}
+                                              className="bg-[#c2652a] hover:bg-[#a65624] text-white text-[10px] font-black uppercase tracking-widest px-4 h-8 shadow-md"
+                                            >
+                                              Consult AI Advisor
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                   {capacityMetrics.netSPAvailability < 0 && (
                                     <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 mb-2">
                                       <ShieldAlert className="h-5 w-5 text-red-600" />
@@ -2388,14 +2639,14 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                             </div>
                                           )}
 
-                                          {/* AI Insight Panel */}
+                                          {/* Capacity Insight Panel */}
                                           {platform.members.length > 0 && (
                                             <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-[#c2652a]/5 to-transparent border border-[#c2652a]/10 flex gap-4 items-start animate-in fade-in slide-in-from-top-2 duration-500">
                                               <div className="h-10 w-10 rounded-lg bg-white shadow-sm flex items-center justify-center shrink-0">
-                                                <Zap className="h-5 w-5 text-[#c2652a]" />
+                                                <Info className="h-5 w-5 text-[#c2652a]" />
                                               </div>
                                               <div className="flex flex-col gap-1">
-                                                <span className="text-[10px] font-black text-[#c2652a] uppercase tracking-widest">AI Allocation Insight</span>
+                                                <span className="text-[10px] font-black text-[#c2652a] uppercase tracking-widest">Capacity Insight</span>
                                                 <p className="text-sm text-[#3a302a] leading-relaxed">
                                                   {(() => {
                                                     let tCap = 0;
