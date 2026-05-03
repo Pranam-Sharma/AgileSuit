@@ -2009,11 +2009,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           {(() => {
                                             let tCap = 0;
                                             platform.members.forEach(m => {
-                                              const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
-                                              const sDays = calculateSprintDays(d.country);
-                                              const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
-                                              const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
-                                              tCap += inc ? (availHrs / 8) : 0;
+                                               const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+                                                 id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+                                               };
+                                               tCap += getCapacitySP(d);
                                             });
                                             const platformCapSP = tCap.toFixed(1);
                                             
@@ -2062,11 +2061,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                           {(() => {
                                             let tCap = 0;
                                             platform.members.forEach(m => {
-                                              const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
-                                              const sDays = calculateSprintDays(d.country);
-                                              const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
-                                              const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
-                                              tCap += inc ? (availHrs / 8) : 0;
+                                               const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+                                                 id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+                                               };
+                                               tCap += getCapacitySP(d);
                                             });
                                             const planned = platform.totalStoryPoints || 0;
                                             const isOver = planned > tCap;
@@ -2352,7 +2350,10 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     let tPlanSP = 0;
                                                     
                                                     platform.members.forEach(m => {
-                                                      const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
+                                                                                                            const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+                                                        id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+                                                      };
+
                                                       const sDays = calculateSprintDays(d.country);
                                                       const bHrs = (d.businessHours || 8) * sDays;
                                                       const uHrs = ((d.plannedLeave || 0) * (d.businessHours || 8)) + (d.otherUnavailability || 0);
@@ -2400,11 +2401,11 @@ export function SprintPlanningClient({ sprintId }: SprintPlanningClientProps) {
                                                     let tCap = 0;
                                                     let tPlan = 0;
                                                     platform.members.forEach(m => {
-                                                      const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { businessHours: 8, country: '', plannedLeave: 0, otherUnavailability: 0, dailyAvailPercent: 80, role: '', allocatedSP: 0, includeInCapacity: true };
-                                                      const sDays = calculateSprintDays(d.country);
-                                                      const availHrs = Math.max(0, ((d.businessHours || 8) * sDays - ((d.plannedLeave || 0) * (d.businessHours || 8) + (d.otherUnavailability || 0))) * ((d.dailyAvailPercent || 80) / 100));
-                                                      const inc = d.includeInCapacity ?? !['Scrum Master', 'Product Owner'].includes(d.role || '');
-                                                      tCap += inc ? (availHrs / 8) : 0;
+                                                                                                            const d = platform.developerLeaves.find(dl => dl.id === m || dl.name === m) || { 
+                                                        id: m, name: m, country: '', role: 'Developer', capacity: 80, plannedLeave: 0, otherUnavailability: 0, businessHours: 8, allocatedSP: 0, dailyAvailPercent: 80, includeInCapacity: true 
+                                                      };
+
+                                                      tCap += getCapacitySP(d);
                                                       tPlan += d.allocatedSP || 0;
                                                     });
                                                     const bal = tCap - tPlan;
