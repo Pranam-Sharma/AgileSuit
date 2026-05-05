@@ -1984,8 +1984,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                             {/* Status and Tags Row */}
                                                             <div className="flex items-center flex-wrap gap-1">
                                                                 {/* Status Badge */}
-                                                                <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status))}>
-                                                                    {getStatusLabel(story.status)}
+                                                                <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status || 'todo'))}>
+                                                                    {getStatusLabel(story.status || 'todo')}
                                                                 </Badge>
 
                                                                 {/* Tags */}
