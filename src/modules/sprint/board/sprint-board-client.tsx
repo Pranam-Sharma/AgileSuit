@@ -2247,7 +2247,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                             newStory.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'
                                         )} />
                                         <span className="text-[14px] font-bold text-[#3a302a] flex items-center gap-1.5">
-                                            {newStory.priority?.charAt(0).toUpperCase() + newStory.priority?.slice(1) || 'Medium'}
+                                            {newStory.priority ? (newStory.priority.charAt(0).toUpperCase() + newStory.priority.slice(1)) : 'Medium'}
                                             <ChevronDown className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover/select:text-[#c2652a] transition-colors" />
                                         </span>
                                     </div>
