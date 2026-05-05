@@ -24,18 +24,48 @@ import {
     RefreshCw,
     Users,
     Tag,
-    Calendar,
+    Calendar as CalendarIcon,
     ChevronRight,
     PanelRightClose,
     PanelRightOpen,
     AlertCircle,
     Sparkles,
+    Brain,
+    Activity,
+    Clock,
+    Hourglass,
     MessageSquare,
     History,
     CheckCircle2,
     Bookmark,
     ChevronDown,
-    Target
+    Target,
+    ShieldAlert,
+    AlertTriangle,
+    Zap,
+    Info,
+    TrendingUp,
+    Lightbulb,
+    Link,
+    Link2,
+    Copy,
+    ArrowRightLeft,
+    ThumbsUp,
+    Send,
+    ArrowRight,
+    Check,
+    MoreHorizontal,
+    Bold,
+    Italic,
+    List,
+    ListOrdered,
+    ListTodo,
+    Table,
+    Rows,
+    Columns,
+    FileText,
+    ExternalLink,
+    UserPlus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -57,6 +87,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
 import type { Sprint } from '@/modules/dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/cn';
@@ -218,14 +251,147 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         priority: 'medium',
         storyPoints: 0,
         completedStoryPoints: 0,
-        status: 'todo'
+        status: 'todo',
+        subtasks: [],
+        comments: [],
+        activity_log: [],
+        identified_risks: [],
+        acceptance_criteria: []
     });
     const [isSaving, setIsSaving] = React.useState(false);
     const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
+    const [visibleActivitiesCount, setVisibleActivitiesCount] = React.useState(5);
     const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = React.useState(false);
-    const [activeTab, setActiveTab] = React.useState<'subtasks' | 'comments' | 'activities'>('subtasks');
+    const [isDescriptionFocused, setIsDescriptionFocused] = React.useState(false);
+    const [isCommentFocused, setIsCommentFocused] = React.useState(false);
+    const descriptionRef = React.useRef<HTMLDivElement>(null);
+    const commentInputRef = React.useRef<HTMLDivElement>(null);
+    const [activeTab, setActiveTab] = React.useState<'subtasks' | 'checklist' | 'comments' | 'activities'>('checklist');
     const [editingStory, setEditingStory] = React.useState<Story | null>(null);
+
+    const handleFormat = (type: 'bold' | 'italic' | 'list' | 'ordered' | 'todo' | 'link' | 'copy' | 'table' | 'add-row' | 'add-col' | 'delete-row' | 'delete-col') => {
+        if (type === 'copy') {
+            const content = descriptionRef.current?.innerText || '';
+            navigator.clipboard.writeText(content);
+            toast({ title: "Copied to clipboard", description: "The description has been copied." });
+            return;
+        }
+
+        const editor = descriptionRef.current;
+        if (!editor) return;
+
+        editor.focus();
+
+        const getCell = () => {
+            const selection = window.getSelection();
+            if (!selection?.rangeCount) return null;
+            let node = selection.getRangeAt(0).startContainer;
+            while (node && node !== editor) {
+                if (node.nodeName === 'TD' || node.nodeName === 'TH') return node as HTMLTableCellElement;
+                node = node.parentNode as any;
+            }
+            return null;
+        };
+
+        switch (type) {
+            case 'bold':
+                document.execCommand('bold', false);
+                break;
+            case 'italic':
+                document.execCommand('italic', false);
+                break;
+            case 'list':
+                document.execCommand('insertUnorderedList', false);
+                break;
+            case 'ordered':
+                document.execCommand('insertOrderedList', false);
+                break;
+            case 'todo':
+                const todoHtml = '<ul style="list-style: none; padding-left: 0;"><li><input type="checkbox" style="margin-right: 8px;"> </li></ul>';
+                document.execCommand('insertHTML', false, todoHtml);
+                break;
+            case 'link':
+                const url = prompt('Enter the URL:');
+                if (url) document.execCommand('createLink', false, url);
+                break;
+            case 'table':
+                const tableHtml = `
+                    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #3a302a1a; border-radius: 12px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #faf5ee;">
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 1</th>
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 2</th>
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                            </tr>
+                        </tbody>
+                    </table><p></p>
+                `;
+                document.execCommand('insertHTML', false, tableHtml);
+                break;
+            case 'add-row':
+                const currentCell = getCell();
+                if (currentCell) {
+                    const row = currentCell.parentElement as HTMLTableRowElement;
+                    const table = row.parentElement as HTMLTableSectionElement;
+                    const newRow = table.insertRow(row.rowIndex);
+                    for (let i = 0; i < row.cells.length; i++) {
+                        const newCell = newRow.insertCell();
+                        newCell.innerHTML = 'New Cell';
+                        newCell.style.border = '1px solid #3a302a1a';
+                        newCell.style.padding = '12px';
+                        newCell.style.fontSize = '13px';
+                    }
+                }
+                break;
+            case 'add-col':
+                const cellForCol = getCell();
+                if (cellForCol) {
+                    const table = (cellForCol.closest('table') as HTMLTableElement);
+                    const colIndex = cellForCol.cellIndex;
+                    Array.from(table.rows).forEach(row => {
+                        const newCell = row.insertCell(colIndex + 1);
+                        newCell.innerHTML = 'New';
+                        newCell.style.border = '1px solid #3a302a1a';
+                        newCell.style.padding = '12px';
+                        newCell.style.fontSize = '13px';
+                    });
+                }
+                break;
+            case 'delete-row':
+                const cellToDeleteRow = getCell();
+                if (cellToDeleteRow) {
+                    const row = cellToDeleteRow.parentElement as HTMLTableRowElement;
+                    row.remove();
+                }
+                break;
+            case 'delete-col':
+                const cellToDeleteCol = getCell();
+                if (cellToDeleteCol) {
+                    const table = (cellToDeleteCol.closest('table') as HTMLTableElement);
+                    const colIndex = cellToDeleteCol.cellIndex;
+                    Array.from(table.rows).forEach(row => {
+                        if (row.cells[colIndex]) row.cells[colIndex].remove();
+                    });
+                }
+                break;
+        }
+        
+        // Update state
+        setNewStory(prev => ({ ...prev, description: editor.innerHTML }));
+    };
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
     const [dragOverStoryId, setDragOverStoryId] = React.useState<string | null>(null);
@@ -256,80 +422,6 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         };
     }, [newStory.title, newStory.description, newStory.status, newStory.assignee, newStory.storyPoints, newStory.due_date, newStory.subtasks, newStory.comments, newStory.tags, isEditStoryDialogOpen]);
 
-    const handleAddSubtask = (title: string) => {
-        const newSubtask = {
-            id: Math.random().toString(36).substr(2, 9),
-            title,
-            is_completed: false
-        };
-        const activity = {
-            id: Math.random().toString(36).substr(2, 9),
-            type: 'added a subtask',
-            user_name: user?.full_name || user?.email || 'User',
-            content: title,
-            created_at: new Date().toISOString()
-        };
-        setNewStory(prev => ({
-            ...prev,
-            subtasks: [...(prev.subtasks || []), newSubtask],
-            activity_log: [activity, ...(prev.activity_log || [])]
-        }));
-    };
-
-    const handleToggleSubtask = (id: string) => {
-        setNewStory(prev => {
-            const subtask = (prev.subtasks || []).find(s => s.id === id);
-            const activity = {
-                id: Math.random().toString(36).substr(2, 9),
-                type: subtask?.is_completed ? 'uncompleted a subtask' : 'completed a subtask',
-                user_name: user?.full_name || user?.email || 'User',
-                content: subtask?.title || '',
-                created_at: new Date().toISOString()
-            };
-            return {
-                ...prev,
-                subtasks: (prev.subtasks || []).map(s => 
-                    s.id === id ? { ...s, is_completed: !s.is_completed } : s
-                ),
-                activity_log: [activity, ...(prev.activity_log || [])]
-            };
-        });
-    };
-
-    const handleAddComment = (text: string) => {
-        if (!text.trim()) return;
-        const newComment = {
-            id: Math.random().toString(36).substr(2, 9),
-            content: text,
-            user_name: user?.full_name || user?.email || 'User',
-            created_at: new Date().toISOString()
-        };
-        const activity = {
-            id: Math.random().toString(36).substr(2, 9),
-            type: 'added a comment',
-            user_name: user?.full_name || user?.email || 'User',
-            content: text,
-            created_at: new Date().toISOString()
-        };
-        setNewStory(prev => ({
-            ...prev,
-            comments: [...(prev.comments || []), newComment],
-            activity_log: [activity, ...(prev.activity_log || [])]
-        }));
-    };
-    const addActivity = (type: string, content: string = '') => {
-        const newActivity = {
-            id: Math.random().toString(36).substr(2, 9),
-            type,
-            user_name: user?.full_name || user?.email || 'User',
-            content,
-            created_at: new Date().toISOString()
-        };
-        setNewStory(prev => ({
-            ...prev,
-            activity_log: [newActivity, ...(prev.activity_log || [])]
-        }));
-    };
 
     const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee' | 'newest'>('none');
     
@@ -672,6 +764,61 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             description: 'New column has been added to the board.'
         });
     };
+    
+    const addActivity = (text: string, type: 'status' | 'update' = 'update') => {
+        const newActivity = {
+            id: crypto.randomUUID(),
+            text,
+            type,
+            user_name: user?.displayName || user?.email?.split('@')[0] || 'User',
+            created_at: new Date().toISOString()
+        };
+        
+        setNewStory(prev => ({
+            ...prev,
+            activity_log: [newActivity, ...(prev.activity_log || [])]
+        }));
+    };
+
+    const handleToggleSubtask = async (subtaskId: string) => {
+        if (!editingStory) return;
+        
+        const updatedSubtasks = (newStory.subtasks || []).map(st => 
+            st.id === subtaskId ? { ...st, is_completed: !st.is_completed } : st
+        );
+        
+        setNewStory(prev => ({ ...prev, subtasks: updatedSubtasks }));
+        
+        // Auto-save logic
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+    };
+
+    const handleAddComment = async () => {
+        const text = commentInputRef.current?.innerText || '';
+        if (!editingStory || !text.trim()) return;
+        
+        const newComment = {
+            id: crypto.randomUUID(),
+            text,
+            user_name: user?.displayName || user?.email?.split('@')[0] || 'User',
+            created_at: new Date().toISOString()
+        };
+        
+        const updatedComments = [newComment, ...(newStory.comments || [])];
+        setNewStory(prev => ({ ...prev, comments: updatedComments }));
+        
+        if (commentInputRef.current) commentInputRef.current.innerText = '';
+        
+        await handleSaveEditStory();
+    };
+
+    const handleUpdateDescription = (html: string) => {
+        setNewStory(prev => ({ ...prev, description: html }));
+        
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 2000);
+    };
 
     const handleDeleteColumn = async (columnId: string) => {
         // Check if column has stories
@@ -714,7 +861,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: 'medium',
             storyPoints: 0,
             completedStoryPoints: 0,
-            status: 'todo'
+            status: 'todo',
+            subtasks: [],
+            comments: [],
+            activity_log: []
         });
         setSelectedColumnId(columnId);
         setIsAddStoryDialogOpen(true);
@@ -803,7 +953,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             description: '',
             priority: 'medium',
             storyPoints: 0,
-            status: 'todo'
+            status: 'todo',
+            subtasks: [],
+            comments: [],
+            activity_log: []
         });
 
         toast({
@@ -815,6 +968,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const handleEditStory = (story: Story) => {
         setEditingStory(story);
         setNewStory({
+            id: story.id,
             title: story.title,
             description: story.description,
             storyPoints: story.storyPoints,
@@ -826,7 +980,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             due_date: story.due_date,
             subtasks: story.subtasks || [],
             comments: story.comments || [],
-            activity_log: story.activity_log || []
+            activity_log: story.activity_log || [],
+            identified_risks: (story as any).identified_risks || [],
+            acceptance_criteria: (story as any).acceptance_criteria || []
         });
         setIsEditStoryDialogOpen(true);
     };
@@ -843,13 +999,15 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             story_points: newStory.storyPoints,
             completed_story_points: newStory.completedStoryPoints || 0,
             assignee: newStory.assignee,
-            priority: newStory.priority as 'low' | 'medium' | 'high' | 'critical',
-            status: newStory.status as Story['status'],
+            priority: newStory.priority as any,
+            status: newStory.status as any,
             tags: newStory.tags,
             due_date: newStory.due_date,
             subtasks: newStory.subtasks,
             comments: newStory.comments,
-            activity_log: newStory.activity_log
+            activity_log: newStory.activity_log,
+            identified_risks: (newStory as any).identified_risks,
+            acceptance_criteria: (newStory as any).acceptance_criteria
         });
         setIsSaving(false);
 
@@ -886,19 +1044,23 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         // Update local state with new values and potentially new column
         const updatedStory = {
             ...editingStory,
-            title: newStory.title || editingStory.title,
-            description: newStory.description || editingStory.description,
-            storyPoints: newStory.storyPoints ?? editingStory.storyPoints,
-            completedStoryPoints: newStory.completedStoryPoints ?? editingStory.completedStoryPoints,
-            assignee: newStory.assignee ?? editingStory.assignee,
-            priority: newStory.priority || editingStory.priority,
-            status: newStory.status || editingStory.status,
-            tags: newStory.tags ?? editingStory.tags,
-            due_date: newStory.due_date ?? editingStory.due_date,
+            title: newStory.title,
+            description: newStory.description,
+            storyPoints: newStory.storyPoints,
+            completedStoryPoints: newStory.completedStoryPoints,
+            assignee: newStory.assignee,
+            priority: newStory.priority,
+            status: newStory.status,
+            tags: newStory.tags,
+            due_date: newStory.due_date,
             subtasks: newStory.subtasks,
             comments: newStory.comments,
-            activity_log: newStory.activity_log
-        };
+            activity_log: newStory.activity_log,
+            identified_risks: (newStory as any).identified_risks,
+            acceptance_criteria: (newStory as any).acceptance_criteria
+        } as Story;
+
+        setEditingStory(updatedStory);
 
         // Check if target column exists
         const targetColumnExists = columns.some(col => col.id === newColumnId);
@@ -965,7 +1127,6 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
             case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
-            case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
             case 'high': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300';
             case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300';
             case 'low': return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300';
@@ -973,11 +1134,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
-    const getStatusColor = (status?: string) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
             case 'todo': return 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300';
             case 'in_progress': return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
             case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
             case 'done': return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300';
             case 'blocked': return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300';
@@ -985,11 +1145,21 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
-    const getStatusLabel = (status?: string) => {
+    const getStatusDotColor = (status: string) => {
+        switch (status) {
+            case 'todo': return 'bg-zinc-400';
+            case 'in_progress': return 'bg-[#c2652a]';
+            case 'in_review': return 'bg-purple-500';
+            case 'done': return 'bg-green-500';
+            case 'blocked': return 'bg-red-500';
+            default: return 'bg-zinc-400';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
         switch (status) {
             case 'todo': return 'To Do';
             case 'in_progress': return 'In Progress';
-            case 'in_review': return 'In Review';
             case 'in_review': return 'In Review';
             case 'done': return 'Done';
             case 'blocked': return 'Blocked';
@@ -1499,7 +1669,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     {[
                                         { value: 'none', label: 'None', icon: X },
                                         { value: 'priority', label: 'By Priority', icon: Tag },
-                                        { value: 'points', label: 'By Points', icon: Calendar },
+                                        { value: 'points', label: 'By Points', icon: CalendarIcon },
                                         { value: 'assignee', label: 'By Assignee', icon: Users },
                                         { value: 'newest', label: 'By Newest', icon: History }
                                     ].map((sort) => (
@@ -1827,7 +1997,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                             {/* Due Date */}
                                                             {story.due_date && (
                                                                 <div className={cn("flex items-center gap-1 text-[10px]", getDueDateColor(story.due_date))}>
-                                                                    <Calendar className="h-3 w-3" />
+                                                                    <CalendarIcon className="h-3 w-3" />
                                                                     <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
                                                                 </div>
                                                             )}
@@ -2060,570 +2230,843 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 } else {
                     setIsEditStoryDialogOpen(true);
                 }
-            }}>
-                <SheetContent 
+            }}>                <SheetContent 
                     hideClose={true}
-                    className="sm:max-w-xl w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-xl border-l border-none shadow-2xl flex flex-col"
+                    className="sm:max-w-[1100px] w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-3xl border-l border-none shadow-2xl flex flex-col"
                 >
                     <div className="sr-only">
                         <SheetHeader>
-                            <SheetTitle>Story Details</SheetTitle>
-                            <SheetDescription>View and edit the details of this user story.</SheetDescription>
+                            <SheetTitle>Decision Intelligence Center</SheetTitle>
+                            <SheetDescription>Strategic intelligence engine and execution guide.</SheetDescription>
                         </SheetHeader>
                     </div>
-                    {/* Top Action Bar */}
-                    <div className="flex items-center justify-between p-6 pb-2">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-[#c2652a]/10 p-1.5 rounded-md">
-                                <Bookmark className="h-3 w-3 text-[#c2652a]" />
+
+                    {/* Top Control Bar */}
+                    <div className="flex items-center justify-between p-8 pb-4">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-[#3a302a]/10 p-2 rounded-lg">
+                                <Brain className="h-4 w-4 text-[#3a302a]" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40">
-                                SAHARA-{newStory.id?.slice(-3) || '124'}
+                            <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3a302a]/40">
+                                SAHARA-{newStory.id?.slice(-4).toUpperCase() || 'NEW'}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            {isSaving && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-[#c2652a]/5 rounded-full border border-[#c2652a]/10 animate-pulse">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-[#c2652a]" />
-                                    <span className="text-[10px] font-bold text-[#c2652a] uppercase tracking-wider">Saving...</span>
-                                </div>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#3a302a]/40 hover:text-[#3a302a] hover:bg-transparent">
-                                <Upload className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#3a302a]/40 hover:text-[#3a302a] hover:bg-transparent">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 bg-[#3a302a]/5 p-1 rounded-xl">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
+                                    <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
+                                    <Link2 className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </div>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
                                 onClick={() => setIsEditStoryDialogOpen(false)}
-                                className="h-10 w-10 bg-[#3a302a]/5 hover:bg-[#c2652a]/10 text-[#3a302a] rounded-full ml-2 flex items-center justify-center transition-all group"
+                                className="h-11 w-11 bg-[#3a302a]/5 hover:bg-[#c2652a] text-[#3a302a]/40 hover:text-white rounded-full transition-all group"
                             >
-                                <X className="h-5 w-5 text-[#3a302a]/40 group-hover:text-[#c2652a] transition-colors" />
+                                <X className="h-5 w-5" />
                             </Button>
                         </div>
                     </div>
 
-                    <div className="flex-1 px-10 py-2 space-y-6">
-                        {/* Title - Moved Up */}
-                        <div className="pt-2">
-                            <textarea
-                                value={newStory.title || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, title: e.target.value }))}
-                                className="w-full text-[32px] font-eb-garamond font-bold text-[#3a302a] leading-[1.15] tracking-tight bg-transparent border-none p-0 focus:ring-0 resize-none h-auto outline-none"
-                                rows={2}
-                                placeholder="High-Fidelity Story Detail Drawer"
-                            />
-                        </div>
-                        <div className="space-y-4 pt-2">
-                            {/* Status Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <Target className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Status</span>
+                    <div className="flex-1 px-10 py-2 space-y-10 pb-12">
+                        {/* 1. Header & Metric Chips */}
+                        <div className="space-y-6">
+                            <h1 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                    const newTitle = e.currentTarget.innerText;
+                                    if (newTitle.trim()) {
+                                        setNewStory(prev => ({ ...prev, title: newTitle }));
+                                    }
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        e.currentTarget.blur();
+                                    }
+                                }}
+                                className="text-[42px] font-eb-garamond font-bold text-[#3a302a] leading-tight tracking-tight focus:outline-none focus:bg-[#3a302a]/5 px-2 -ml-2 rounded-xl transition-all cursor-text"
+                            >
+                                {newStory.title || "Untitled Story"}
+                            </h1>
+                            
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 px-4 py-2 bg-red-50/50 rounded-full border border-red-100/50">
+                                    <Clock className="h-3.5 w-3.5 text-red-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-red-700">ETA Risk: 48h Threshold</span>
                                 </div>
-                                <div className="relative group/select cursor-pointer w-fit">
-                                    <div className="flex items-center gap-2 px-1 hover:bg-[#3a302a]/[0.03] rounded-md transition-all">
-                                        <div className={cn("h-2 w-2 rounded-full shrink-0", 
-                                            newStory.status === 'done' ? 'bg-green-500' :
-                                            newStory.status === 'in_progress' ? 'bg-[#c2652a]' :
-                                            newStory.status === 'blocked' ? 'bg-red-500' : 'bg-[#c2652a]/30'
-                                        )} />
-                                        <span className="text-[14px] font-bold text-[#3a302a] flex items-center gap-1.5">
-                                            {newStory.status === 'todo' ? 'To Do' :
-                                             newStory.status === 'in_progress' ? 'In Progress' :
-                                             newStory.status === 'in_review' ? 'In Review' :
-                                             newStory.status === 'done' ? 'Done' : 'Blocked'}
-                                            <ChevronDown className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover/select:text-[#c2652a] transition-colors" />
-                                        </span>
+                                <div className="flex items-center gap-2 px-4 py-2 bg-orange-50/50 rounded-full border border-orange-100/50">
+                                    <Users className="h-3.5 w-3.5 text-orange-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-orange-700">3 Engineers Blocked</span>
+                                </div>
+                                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50/50 rounded-full border border-blue-100/50">
+                                    <Zap className="h-3.5 w-3.5 text-blue-500" />
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">High Velocity Opportunity</span>
+                                </div>
+                            </div>
+
+                            {/* 2. Strategic Recommendation (Dark) */}
+                            <div className="relative overflow-hidden bg-[#2a2420] rounded-[32px] p-8 text-white shadow-2xl">
+                                <div className="relative z-10 flex items-center justify-between gap-12">
+                                    <div className="space-y-3 flex-1">
+                                        <div className="flex items-center gap-2 text-[#c2652a]">
+                                            <Info className="h-4 w-4" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Strategic Recommendation</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-[16px] leading-relaxed">
+                                                <span className="font-bold">Immediate <span className="text-[#c2652a]">Technical Spike required</span> for Auth Gateway.</span>
+                                                <span className="text-white/40 ml-2">Historical data shows 85% probability of resolution if tackled before Sprint Midpoint.</span>
+                                            </p>
+                                        </div>
                                     </div>
-                                    <select
-                                        value={newStory.status || 'in_progress'}
-                                        onChange={(e) => {
-                                            const newStatus = e.target.value as any;
-                                            const activity = {
-                                                id: Math.random().toString(36).substr(2, 9),
-                                                type: `changed status to ${newStatus.replace('_', ' ')}`,
-                                                user_name: user?.full_name || user?.email || 'User',
-                                                content: '',
-                                                created_at: new Date().toISOString()
-                                            };
-                                            setNewStory(prev => ({ 
-                                                ...prev, 
-                                                status: newStatus,
-                                                activity_log: [activity, ...(prev.activity_log || [])]
-                                            }));
-                                        }}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    >
-                                        <option value="todo">To Do</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="in_review">In Review</option>
-                                        <option value="done">Done</option>
-                                        <option value="blocked">Blocked</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Due Date Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <Calendar className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Due date</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="date"
-                                        value={newStory.due_date || '2023-10-24'}
-                                        onClick={(e) => (e.currentTarget as any).showPicker?.()}
-                                        onChange={(e) => {
-                                            const newDate = e.target.value;
-                                            const activity = {
-                                                id: Math.random().toString(36).substr(2, 9),
-                                                type: `updated due date to ${newDate}`,
-                                                user_name: user?.full_name || user?.email || 'User',
-                                                content: '',
-                                                created_at: new Date().toISOString()
-                                            };
-                                            setNewStory(prev => ({ 
-                                                ...prev, 
-                                                due_date: newDate,
-                                                activity_log: [activity, ...(prev.activity_log || [])]
-                                            }));
-                                        }}
-                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] hover:text-[#c2652a] transition-all cursor-pointer outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Assignee Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <Users className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Assignee</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-6 w-6 shrink-0 ring-2 ring-[#c2652a]/5">
-                                        <AvatarFallback className="text-[9px] bg-[#c2652a]/10 text-[#c2652a] font-black">
-                                            {newStory.assignee?.charAt(0).toUpperCase() || 'A'}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <input
-                                        value={newStory.assignee || 'Alex Thompson'}
-                                        onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
-                                        onBlur={(e) => {
-                                            const val = e.target.value;
-                                            if (val !== editingStory?.assignee) {
-                                                const activity = {
-                                                    id: Math.random().toString(36).substr(2, 9),
-                                                    type: `assigned to ${val}`,
-                                                    user_name: user?.full_name || user?.email || 'User',
-                                                    content: '',
-                                                    created_at: new Date().toISOString()
-                                                };
-                                                setNewStory(prev => ({
-                                                    ...prev,
-                                                    activity_log: [activity, ...(prev.activity_log || [])]
-                                                }));
-                                            }
-                                        }}
-                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] w-full hover:bg-[#3a302a]/[0.05] rounded px-1 transition-all outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Priority Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <AlertCircle className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Priority</span>
-                                </div>
-                                <div className="relative group/select cursor-pointer w-fit">
-                                    <div className="flex items-center gap-2 px-1 hover:bg-[#3a302a]/[0.03] rounded-md transition-all">
-                                        <div className={cn("h-2 w-2 rounded-full shrink-0", 
-                                            newStory.priority === 'critical' ? 'bg-red-500' :
-                                            newStory.priority === 'high' ? 'bg-orange-500' :
-                                            newStory.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'
-                                        )} />
-                                        <span className="text-[14px] font-bold text-[#3a302a] flex items-center gap-1.5">
-                                            {newStory.priority ? (newStory.priority.charAt(0).toUpperCase() + newStory.priority.slice(1)) : 'Medium'}
-                                            <ChevronDown className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover/select:text-[#c2652a] transition-colors" />
-                                        </span>
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                        <Button className="bg-red-500 hover:bg-red-600 text-white border-none text-[10px] font-black px-6 py-2 rounded-full h-auto">URGENT ACTION</Button>
+                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Reason: Downstream Critical Path</span>
                                     </div>
-                                    <select
-                                        value={newStory.priority || 'medium'}
-                                        onChange={(e) => {
-                                            const newPriority = e.target.value as any;
-                                            const activity = {
-                                                id: Math.random().toString(36).substr(2, 9),
-                                                type: `set priority to ${newPriority}`,
-                                                user_name: user?.full_name || user?.email || 'User',
-                                                content: '',
-                                                created_at: new Date().toISOString()
-                                            };
-                                            setNewStory(prev => ({ 
-                                                ...prev, 
-                                                priority: newPriority,
-                                                activity_log: [activity, ...(prev.activity_log || [])]
-                                            }));
-                                        }}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    >
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
-                                        <option value="critical">Critical</option>
-                                    </select>
                                 </div>
                             </div>
 
-                            {/* Story Points Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <Sparkles className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Story Points</span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="number"
-                                        value={newStory.storyPoints || 8}
-                                        onChange={(e) => {
-                                            const points = parseInt(e.target.value) || 0;
-                                            const activity = {
-                                                id: Math.random().toString(36).substr(2, 9),
-                                                type: `updated story points to ${points}`,
-                                                user_name: user?.full_name || user?.email || 'User',
-                                                content: '',
-                                                created_at: new Date().toISOString()
-                                            };
-                                            setNewStory(prev => ({ 
-                                                ...prev, 
-                                                storyPoints: points,
-                                                activity_log: [activity, ...(prev.activity_log || [])]
-                                            }));
-                                        }}
-                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] w-12 hover:bg-[#3a302a]/[0.05] rounded px-1 transition-all outline-none"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Tags Row */}
-                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
-                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
-                                    <Tag className="h-4 w-4" />
-                                    <span className="text-[13px] font-medium tracking-tight">Tags</span>
-                                </div>
-                                <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
-                                    {(newStory.tags || []).map((tag, i) => (
-                                        <span key={i} className="px-3 py-1 bg-[#c2652a]/5 text-[#c2652a] text-[11px] font-bold rounded-full border border-[#c2652a]/10 group/tag relative flex items-center gap-1.5 transition-all hover:bg-[#c2652a]/10">
-                                            {tag}
-                                            <button 
-                                                onClick={() => {
-                                                    setNewStory(prev => ({
-                                                        ...prev,
-                                                        tags: (prev.tags || []).filter((_, idx) => idx !== i)
-                                                    }));
-                                                }}
-                                                className="h-3 w-3 hover:text-red-500 transition-colors"
-                                            >
-                                                <X className="h-2.5 w-2.5" />
-                                            </button>
-                                        </span>
-                                    ))}
+                            {/* Status and Progress Bar */}
+                            <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center gap-8 flex-1 max-w-2xl">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="flex items-center gap-3 px-5 py-2.5 bg-white border border-[#3a302a]/10 rounded-2xl shadow-sm cursor-pointer hover:border-[#c2652a]/30 hover:shadow-md transition-all active:scale-95 group">
+                                                <div className={cn("h-3 w-3 rounded-full", getStatusDotColor(newStory.status || 'todo'))} />
+                                                <span className="text-[14px] font-bold text-[#3a302a]">{getStatusLabel(newStory.status || 'todo')}</span>
+                                                <ChevronDown className="h-4 w-4 text-[#3a302a]/20 group-hover:text-[#c2652a] transition-all" />
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-[200px] p-2 bg-white border-[#3a302a]/5 rounded-2xl shadow-xl">
+                                            {['todo', 'in_progress', 'in_review', 'done', 'blocked'].map((status) => (
+                                                <DropdownMenuItem 
+                                                    key={status}
+                                                    onClick={() => {
+                                                        const oldStatus = newStory.status || 'todo';
+                                                        setNewStory(prev => ({ ...prev, status: status as any }));
+                                                        addActivity(`Changed status from ${getStatusLabel(oldStatus)} to ${getStatusLabel(status)}`, 'status');
+                                                        handleSaveEditStory();
+                                                    }}
+                                                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#c2652a]/5 focus:bg-[#c2652a]/5 outline-none transition-colors"
+                                                >
+                                                    <div className={cn("h-2.5 w-2.5 rounded-full", getStatusDotColor(status))} />
+                                                    <span className="text-[13px] font-bold text-[#3a302a]">{getStatusLabel(status)}</span>
+                                                    {newStory.status === status && <Check className="h-3.5 w-3.5 text-[#c2652a] ml-auto" />}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                     
-                                    {showTagInput ? (
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                autoFocus
-                                                value={tagInput}
-                                                onChange={(e) => setTagInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' && tagInput.trim()) {
-                                                        setNewStory(prev => ({
-                                                            ...prev,
-                                                            tags: [...(prev.tags || []), tagInput.trim()]
-                                                        }));
-                                                        setTagInput('');
-                                                        setShowTagInput(false);
-                                                    }
-                                                    if (e.key === 'Escape') {
-                                                        setShowTagInput(false);
-                                                        setTagInput('');
-                                                    }
-                                                }}
-                                                onBlur={() => {
-                                                    if (!tagInput.trim()) setShowTagInput(false);
-                                                }}
-                                                placeholder="Type & press Enter..."
-                                                className="text-[11px] font-bold bg-[#c2652a]/5 border border-[#c2652a]/20 rounded-full px-3 py-1 outline-none text-[#c2652a] placeholder:text-[#c2652a]/30 w-32 transition-all focus:border-[#c2652a] focus:ring-1 focus:ring-[#c2652a]/20"
+                                    <div className="flex-1 flex items-center gap-4">
+                                        <div className="h-2 flex-1 bg-[#3a302a]/5 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-[#c2652a] transition-all duration-1000 ease-out" 
+                                                style={{ width: `${newStory.storyPoints && newStory.storyPoints > 0 ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%` }} 
                                             />
                                         </div>
-                                    ) : (
-                                        <button 
-                                            onClick={() => setShowTagInput(true)}
-                                            className="h-7 w-7 rounded-full border border-dashed border-[#3a302a]/20 flex items-center justify-center text-[#3a302a]/40 hover:border-[#c2652a] hover:text-[#c2652a] hover:bg-[#c2652a]/5 transition-all"
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                        </button>
-                                    )}
+                                        <span className="text-[11px] font-black text-[#3a302a]/30 uppercase tracking-widest whitespace-nowrap">
+                                            {newStory.storyPoints && newStory.storyPoints > 0 ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}% Execution
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-12">
+                                    <div className="flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">Story Progress</span>
+                                            <Info className="h-3 w-3 text-[#3a302a]/20" />
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-white/50 border border-[#3a302a]/5 rounded-xl px-3 py-1">
+                                            <input 
+                                                type="number"
+                                                value={(newStory.completedStoryPoints === 0 || !newStory.completedStoryPoints) ? "" : newStory.completedStoryPoints}
+                                                placeholder="0"
+                                                onFocus={(e) => e.target.select()}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    setNewStory(prev => ({ ...prev, completedStoryPoints: val }));
+                                                    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                                                    autoSaveTimerRef.current = setTimeout(() => {
+                                                        addActivity(`Log: Completed ${val} SP out of ${newStory.storyPoints} SP`);
+                                                        handleSaveEditStory();
+                                                    }, 1500);
+                                                }}
+                                                className="w-14 bg-transparent text-right text-[18px] font-bold text-green-600 placeholder:text-green-600/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            />
+                                            <span className="text-[18px] font-bold text-[#3a302a]/20">/</span>
+                                            <span className="text-[18px] font-bold text-[#3a302a]/40">{newStory.storyPoints || 0}</span>
+                                            <span className="text-[10px] font-black text-[#3a302a]/20 ml-1 uppercase">SP</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">Total Value</span>
+                                        <span className="text-[20px] font-bold text-[#3a302a]">{newStory.storyPoints || 0} SP</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Three Card Grid */}
+                        <div className="grid grid-cols-3 gap-6">
+                            {/* Intelligence Summary */}
+                            <div className="bg-[#2a2420] rounded-[32px] p-8 text-white space-y-8 shadow-xl relative overflow-hidden">
+                                <div className="flex items-center justify-between relative z-10">
+                                    <div className="flex items-center gap-3">
+                                        <Sparkles className="h-4 w-4 text-[#c2652a]" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Intelligence Summary</span>
+                                    </div>
+                                    <Badge className="bg-green-500/20 text-green-400 border-none text-[8px] font-black px-2 py-1">92% MATCH</Badge>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4 relative z-10">
+                                    <div className="space-y-1">
+                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Recurrence</span>
+                                        <p className="text-[24px] font-bold">3x Sprints</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Success Prob.</span>
+                                        <p className="text-[24px] font-bold text-green-400">85.4%</p>
+                                    </div>
+                                </div>
 
-                        {/* Description Section */}
-                        <div className="space-y-6 pt-4">
-                            <h3 className="text-[20px] font-eb-garamond font-bold text-[#3a302a]">Description</h3>
-                            <div className="text-[15px] leading-[1.6] text-[#3a302a]/70 font-medium">
-                                <Textarea
-                                    value={newStory.description || ''}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, description: e.target.value }))}
-                                    className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none h-auto min-h-[200px] text-[15px] leading-[1.6] text-[#3a302a]/70 font-medium overflow-hidden"
-                                    placeholder="Add a description..."
-                                />
+                                <div className="space-y-3 relative z-10">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-[#c2652a] uppercase tracking-widest">Primary Recommendation</span>
+                                        <Badge className="bg-red-500 text-white border-none text-[8px] font-black px-2 py-0.5">HIGH TRUST</Badge>
+                                    </div>
+                                    <p className="text-[14px] leading-relaxed text-white/80">
+                                        Historical bottlenecks identified in Code Review. <span className="text-[#c2652a] font-bold underline cursor-pointer">Escalate for immediate review</span> to prevent the 3-day rollover risk.
+                                    </p>
+                                </div>
+                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#c2652a]/5 rounded-full blur-[40px] -mr-16 -mb-16" />
+                            </div>
+
+                            {/* Impact Analysis */}
+                            <div className="bg-white rounded-[32px] p-8 space-y-8 shadow-sm border border-[#3a302a]/5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40">Impact Analysis</span>
+                                    </div>
+                                    <Badge className="bg-red-50 text-red-500 border-none text-[8px] font-black px-2 py-1">CRITICAL</Badge>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <span className="text-[9px] font-black text-[#3a302a]/30 uppercase tracking-widest">Immediate Impact</span>
+                                    <div className="p-4 bg-red-50/30 border border-red-100 rounded-2xl flex items-center justify-between">
+                                        <span className="text-[13px] font-bold text-red-900">3 Engineers Blocked</span>
+                                        <span className="text-[9px] font-black text-red-600 uppercase">Active</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4 pt-2">
+                                    <span className="text-[9px] font-black text-[#3a302a]/30 uppercase tracking-widest">Downstream Consequence</span>
+                                    <ul className="space-y-3">
+                                        <li className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                                            2.5 Day Milestone Delay
+                                        </li>
+                                        <li className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                                            Auth Gateway Vulnerability
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Systemic Context */}
+                            <div className="bg-white rounded-[32px] p-8 space-y-6 shadow-sm border border-[#3a302a]/5">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40 block">Systemic Context</span>
+                                
+                                <div className="space-y-3">
+                                    {/* Assignee */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl cursor-pointer hover:bg-[#3a302a]/[0.05] transition-all active:scale-[0.98]">
+                                                <div className="flex items-center gap-3">
+                                                    <Users className="h-3.5 w-3.5 text-[#3a302a]/30" />
+                                                    <span className="text-[12px] font-bold text-[#3a302a]">Assignee</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[11px] font-bold text-[#3a302a]/60">{newStory.assignee || 'Unassigned'}</span>
+                                                    <Avatar className="h-6 w-6">
+                                                        <AvatarFallback className="bg-[#c2652a] text-white text-[9px] font-bold">
+                                                            {newStory.assignee ? newStory.assignee.substring(0, 2).toUpperCase() : '??'}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-[200px] p-2 bg-white border-[#3a302a]/5 rounded-2xl shadow-xl">
+                                            {['Pranam', 'Alice', 'Bob', 'Charlie'].map((name) => (
+                                                <DropdownMenuItem 
+                                                    key={name}
+                                                    onClick={() => {
+                                                        setNewStory(prev => ({ ...prev, assignee: name }));
+                                                        addActivity(`Assigned to ${name}`);
+                                                        handleSaveEditStory();
+                                                    }}
+                                                    className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-[#c2652a]/5 focus:bg-[#c2652a]/5 outline-none transition-colors"
+                                                >
+                                                    <Avatar className="h-5 w-5">
+                                                        <AvatarFallback className="bg-[#3a302a]/10 text-[#3a302a] text-[8px] font-bold">{name.substring(0,2).toUpperCase()}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="text-[12px] font-bold text-[#3a302a]">{name}</span>
+                                                    {newStory.assignee === name && <Check className="h-3 w-3 text-[#c2652a] ml-auto" />}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* Story Points */}
+                                    <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl group hover:border-[#c2652a]/30 transition-all">
+                                        <div className="flex items-center gap-3">
+                                            <Zap className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover:text-[#c2652a] transition-all" />
+                                            <span className="text-[12px] font-bold text-[#3a302a]">Story Points</span>
+                                        </div>                                        <input 
+                                            type="number"
+                                            value={(newStory.storyPoints === 0 || !newStory.storyPoints) ? "" : newStory.storyPoints}
+                                            placeholder="0"
+                                            onFocus={(e) => e.target.select()}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                setNewStory(prev => ({ ...prev, storyPoints: val }));
+                                                if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                                                autoSaveTimerRef.current = setTimeout(() => {
+                                                    addActivity(`Updated story points to ${val} SP`);
+                                                    handleSaveEditStory();
+                                                }, 1500);
+                                            }}
+                                            className="w-16 bg-transparent text-right text-[11px] font-black text-[#c2652a] placeholder:text-[#c2652a]/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        />
+
+                                    </div>
+
+                                    {/* Deadline Risk */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl group cursor-pointer hover:bg-[#3a302a]/[0.05] transition-all active:scale-[0.98]">
+                                                <div className="flex items-center gap-3">
+                                                    <CalendarIcon className="h-3.5 w-3.5 text-[#3a302a]/30" />
+                                                    <span className="text-[12px] font-bold text-[#3a302a]">Deadline Risk</span>
+                                                </div>
+                                                <span className={cn(
+                                                    "text-[11px] font-bold",
+                                                    newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) ? "text-red-500" : "text-[#3a302a]/40"
+                                                )}>
+                                                    {newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) 
+                                                        ? format(new Date(newStory.due_date), "MMM d, yyyy") 
+                                                        : 'Set Deadline'}
+                                                </span>
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-auto p-4 bg-white border-[#3a302a]/5 rounded-2xl shadow-2xl z-[100]" align="end">
+                                            <div className="space-y-4">
+                                                <Calendar
+                                                    mode="single"
+                                                    selected={newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) ? new Date(newStory.due_date) : undefined}
+                                                    onSelect={(date) => {
+                                                        if (!date) return;
+                                                        const dateStr = date.toISOString();
+                                                        const formattedDate = format(date, "MMM d, yyyy");
+                                                        setNewStory(prev => ({ ...prev, due_date: dateStr }));
+                                                        addActivity(`Set deadline risk to ${formattedDate}`);
+                                                    }}
+                                                    initialFocus
+                                                    className="rounded-2xl border-none"
+                                                />
+                                                <DropdownMenuItem className="p-0 focus:bg-transparent hover:bg-transparent">
+                                                    <Button 
+                                                        className="w-full bg-[#c2652a] hover:bg-[#a15423] text-white rounded-xl py-6 gap-2 shadow-lg shadow-[#c2652a]/20 transition-all active:scale-[0.98]"
+                                                        onClick={() => {
+                                                            handleSaveEditStory();
+                                                        }}
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                        <span className="font-bold text-[13px]">Confirm Selection</span>
+                                                    </Button>
+                                                </DropdownMenuItem>
+                                            </div>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    {/* Goal Mapping */}
+                                    <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl">
+                                        <div className="flex items-center gap-3">
+                                            <Target className="h-3.5 w-3.5 text-[#3a302a]/30" />
+                                            <span className="text-[12px] font-bold text-[#3a302a]">Goal Mapping</span>
+                                        </div>
+                                        <Badge className="bg-[#3a302a] text-white border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase cursor-pointer hover:bg-[#c2652a] transition-colors">
+                                            {newStory.tags?.[0] || 'Sprint 7 Core'}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Systemic Dependency Flow */}
+                        <div className="space-y-8">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-[20px] font-eb-garamond font-bold text-[#3a302a]">Systemic Dependency Flow</h4>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-blue-400" />
+                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Pressure flowing downstream</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between gap-0">
+                                {/* Upstream */}
+                                <div className="flex-1 bg-white border border-[#3a302a]/10 rounded-[24px] p-6 relative">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Blocked By</span>
+                                        <Badge className="bg-blue-50 text-blue-600 border-none text-[8px] font-black">STABLE</Badge>
+                                    </div>
+                                    <p className="text-[15px] font-bold text-[#3a302a]">Database Migration</p>
+                                    <p className="text-[10px] font-black text-[#3a302a]/20 uppercase mt-1">SAHARA-9281</p>
+                                </div>
+
+                                <div className="w-12 flex justify-center">
+                                    <ArrowRight className="h-5 w-5 text-[#3a302a]/10" />
+                                </div>
+
+                                {/* Current (Bottleneck) */}
+                                <div className="flex-[1.2] bg-[#c2652a] rounded-[28px] p-8 text-white shadow-2xl relative scale-105 z-10 border-4 border-[#faf5ee]">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Active Bottleneck</span>
+                                        <Sparkles className="h-4 w-4 text-white/60" />
+                                    </div>
+                                    <p className="text-[20px] font-bold">This Strategic Objective</p>
+                                    <div className="flex items-center gap-3 mt-4">
+                                        <Badge className="bg-white/20 text-white border-none text-[8px] font-black uppercase">High Load</Badge>
+                                        <span className="text-[10px] font-black text-white/60 uppercase">Impact Score: 9.2</span>
+                                    </div>
+                                </div>
+
+                                <div className="w-12 flex justify-center">
+                                    <ArrowRight className="h-5 w-5 text-[#3a302a]/10" />
+                                </div>
+
+                                {/* Downstream */}
+                                <div className="flex-1 bg-white border border-[#3a302a]/10 rounded-[24px] p-6 relative">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[9px] font-black text-red-600 uppercase tracking-widest">Blocking</span>
+                                        <Badge className="bg-red-50 text-red-600 border-none text-[8px] font-black">CRITICAL</Badge>
+                                    </div>
+                                    <p className="text-[15px] font-bold text-[#3a302a]">Frontend Integration</p>
+                                    <p className="text-[10px] font-black text-[#3a302a]/20 uppercase mt-1">SAHARA-9285</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Execution Workspace */}
+                        <div className="grid grid-cols-[1fr,320px] gap-12">
+                            <div className="space-y-12">
+                                <div className="space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-[24px] font-eb-garamond font-bold text-[#3a302a]">Execution Strategy</h4>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 gap-8">
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Target className="h-4 w-4 text-[#c2652a]" />
+                                                    <span className="text-[11px] font-black uppercase tracking-widest text-[#3a302a]/40">Description</span>
+                                                </div>
+                                                
+                                                {/* Toolbar moved inside the box container below */}
+                                            </div>
+                                            
+                                            <div className={cn(
+                                                "bg-white border transition-all duration-300 rounded-[32px] shadow-sm min-h-[220px] overflow-hidden flex flex-col",
+                                                isDescriptionFocused ? "border-[#c2652a] shadow-lg ring-4 ring-[#c2652a]/5" : "border-[#3a302a]/10"
+                                            )}>
+                                                {/* Integrated Toolbar - Only visible on focus */}
+                                                <AnimatePresence>
+                                                    {isDescriptionFocused && (
+                                                        <motion.div 
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden border-b border-[#3a302a]/5"
+                                                        >
+                                                            <div className="flex items-center gap-1 px-4 py-2 bg-[#faf5ee]/30">
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <Bold className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <Italic className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('list')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <List className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('ordered')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <ListOrdered className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('todo')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <ListTodo className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('table')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Insert Table">
+                                                                    <Table className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-row')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Add Row">
+                                                                    <Rows className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-col')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Add Column">
+                                                                    <Columns className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
+                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('link')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
+                                                                    <Link2 className="h-4 w-4 text-[#3a302a]/60" />
+                                                                </Button>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                                
+                                                <div
+                                                    ref={descriptionRef as any}
+                                                    contentEditable={true}
+                                                    onBlur={(e) => {
+                                                        handleUpdateDescription(e.currentTarget.innerHTML);
+                                                        setIsDescriptionFocused(false);
+                                                    }}
+                                                    onFocus={() => setIsDescriptionFocused(true)}
+                                                    className="w-full bg-transparent border-none p-8 focus-visible:outline-none min-h-[220px] h-full text-[15px] leading-relaxed text-[#3a302a]/70 font-medium cursor-text prose prose-sm max-w-none prose-p:my-0 prose-ul:my-2"
+                                                    dangerouslySetInnerHTML={{ __html: newStory.description || "" }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Tabs */}
+                                <div className="space-y-10">
+                                    <div className="flex gap-10 border-b border-[#3a302a]/5 overflow-x-auto no-scrollbar">
+                                        {[
+                                            { id: 'comments', label: 'Comments', count: newStory.comments?.length || 0 },
+                                            { id: 'checklist', label: 'Checklist', count: newStory.subtasks?.length || 0 },
+                                            { id: 'subtasks', label: 'Subtasks', count: 0 },
+                                            { id: 'activities', label: 'Activities', count: newStory.activity_log?.length || 0 },
+                                        ].map(tab => (
+                                            <button 
+                                                key={tab.id}
+                                                onClick={() => setActiveTab(tab.id as any)}
+                                                className={cn(
+                                                    "pb-5 text-[15px] font-bold transition-all relative flex items-center gap-3 whitespace-nowrap",
+                                                    activeTab === tab.id ? "text-[#3a302a]" : "text-[#3a302a]/30"
+                                                )}
+                                            >
+                                                {tab.label}
+                                                {tab.count && <span className="text-[10px] font-black bg-[#3a302a]/5 px-1.5 py-0.5 rounded-md">{tab.count}</span>}
+                                                {activeTab === tab.id && <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#c2652a]" />}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="min-h-[300px]">
+                                        <AnimatePresence mode="wait">
+                                            {activeTab === 'comments' && (
+                                                <motion.div key="comments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+                                                    {/* Comment Input */}
+                                                    <div className="flex items-center gap-4 py-2">
+                                                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
+                                                            <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a]/40 text-xs font-bold">ME</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className={cn(
+                                                            "flex-1 flex items-center bg-white border rounded-full px-6 py-1.5 transition-all duration-300",
+                                                            isCommentFocused ? "border-[#c2652a] shadow-md" : "border-[#3a302a]/10"
+                                                        )}>
+                                                            <div 
+                                                                ref={commentInputRef}
+                                                                contentEditable
+                                                                onFocus={() => setIsCommentFocused(true)}
+                                                                onBlur={() => setIsCommentFocused(false)}
+                                                                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#3a302a] leading-relaxed py-1 empty:before:content-[attr(data-placeholder)] empty:before:text-[#3a302a]/30 min-h-[24px] max-h-[120px] overflow-y-auto no-scrollbar"
+                                                                data-placeholder="Add a comment..."
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                                        e.preventDefault();
+                                                                        handleAddComment();
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <button 
+                                                                onClick={handleAddComment}
+                                                                className="ml-2 text-[#3a302a]/20 hover:text-[#c2652a] transition-all p-1"
+                                                            >
+                                                                <Send className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Comment Feed */}
+                                                    <div className="space-y-8 px-2">
+                                                        {(newStory.comments || []).map((comment: any, i: number) => (
+                                                            <div key={i} className="flex gap-4 group">
+                                                                <Avatar className="h-10 w-10 border-2 border-white shadow-md">
+                                                                    <AvatarFallback className={cn(
+                                                                        "text-white text-xs font-bold",
+                                                                        i === 0 ? "bg-[#c2652a]" : "bg-[#3a302a]"
+                                                                    )}>{comment.user_name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="text-[14px] font-bold text-[#3a302a]">{comment.user_name}</span>
+                                                                        <span className="text-[11px] font-medium text-[#3a302a]/20">{new Date(comment.created_at).toLocaleDateString()}</span>
+                                                                        {comment.pinned && <Badge className="bg-[#c2652a]/10 text-[#c2652a] border-none text-[8px] font-black px-1.5 py-0.5 uppercase tracking-widest">Pinned</Badge>}
+                                                                    </div>
+                                                                    <p className="text-[14px] leading-relaxed text-[#3a302a]/70 font-medium">
+                                                                        {comment.text}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-6 pt-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                                        <button className="text-[11px] font-bold text-[#3a302a]/30 hover:text-[#c2652a]">Reply</button>
+                                                                        <button className="flex items-center gap-1.5 text-[11px] font-bold text-[#3a302a]/30 hover:text-red-500">
+                                                                            <ThumbsUp className="h-3 w-3" />
+                                                                            {comment.likes > 0 && comment.likes}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {activeTab === 'checklist' && (
+                                                <motion.div key="checklist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                                                    <div className="bg-white/50 border border-[#3a302a]/5 rounded-[32px] p-8 space-y-6">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-3">
+                                                                <Sparkles className="h-4 w-4 text-purple-500" />
+                                                                <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">Intelligent Checklist Generator</span>
+                                                            </div>
+                                                            <button className="text-[9px] font-black text-purple-600 uppercase tracking-widest hover:underline">Regenerate</button>
+                                                        </div>
+                                                        
+                                                        <div className="space-y-3">
+                                                            {(newStory.subtasks || []).map((item: any, i: number) => (
+                                                                <div 
+                                                                    key={i} 
+                                                                    onClick={() => handleToggleSubtask(item.id)}
+                                                                    className="flex items-center justify-between p-5 bg-white border border-[#3a302a]/5 rounded-2xl group hover:border-[#c2652a]/20 transition-all cursor-pointer"
+                                                                >
+                                                                    <div className="flex items-center gap-4">
+                                                                        <div className={cn(
+                                                                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
+                                                                            item.is_completed ? "bg-[#c2652a] border-[#c2652a]" : "border-[#3a302a]/10"
+                                                                        )}>
+                                                                            {item.is_completed && <Check className="h-3 w-3 text-white" strokeWidth={4} />}
+                                                                        </div>
+                                                                        <span className={cn(
+                                                                            "text-[14px] font-bold transition-all",
+                                                                            item.is_completed ? "text-[#3a302a]/40 line-through" : "text-[#3a302a]"
+                                                                        )}>{item.title}</span>
+                                                                    </div>
+                                                                    <div className="h-8 w-8 rounded-full border-2 border-[#3a302a]/5 flex items-center justify-center group-hover:border-[#c2652a]/20 group-hover:bg-[#c2652a]/5 transition-all">
+                                                                        <Plus className="h-4 w-4 text-[#3a302a]/20 group-hover:text-[#c2652a]" />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {activeTab === 'subtasks' && (
+                                                <motion.div key="subtasks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                                                    <div className="flex items-center justify-between px-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <Link2 className="h-4 w-4 text-[#3a302a]/40" />
+                                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#3a302a]/40">Linked Evidence & References</span>
+                                                        </div>
+                                                        <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest text-[#c2652a] hover:bg-[#c2652a]/5">
+                                                            Attach Task
+                                                        </Button>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 gap-4">
+                                                        {[
+                                                            { id: 'SAHARA-9281', title: 'Auth Gateway Security Audit', status: 'Done', color: 'green' },
+                                                            { id: 'SAHARA-125', title: 'Firebase Admin SDK Implementation', status: 'In Progress', color: 'orange' }
+                                                        ].map((task, i) => (
+                                                            <div key={i} className="p-6 bg-white border border-[#3a302a]/5 rounded-[24px] flex items-center justify-between group hover:border-[#c2652a]/20 transition-all cursor-pointer">
+                                                                <div className="flex items-center gap-5">
+                                                                    <div className={cn(
+                                                                        "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                                                                        task.color === 'green' ? "bg-green-50" : "bg-orange-50"
+                                                                    )}>
+                                                                        <FileText className={cn(
+                                                                            "h-5 w-5",
+                                                                            task.color === 'green' ? "text-green-600" : "text-orange-600"
+                                                                        )} />
+                                                                    </div>
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">{task.id}</span>
+                                                                            <Badge className={cn(
+                                                                                "border-none text-[8px] font-black px-1.5 py-0.5 uppercase",
+                                                                                task.color === 'green' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                                                                            )}>{task.status}</Badge>
+                                                                        </div>
+                                                                        <p className="text-[14px] font-bold text-[#3a302a]">{task.title}</p>
+                                                                    </div>
+                                                                </div>
+                                                                <ExternalLink className="h-4 w-4 text-[#3a302a]/10 group-hover:text-[#c2652a] transition-all" />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {activeTab === 'activities' && (
+                                                <motion.div key="activities" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8 px-4 pb-12">
+                                                    {(newStory.activity_log || []).slice(0, visibleActivitiesCount).map((activity: any, i: number) => (
+                                                        <div key={i} className="flex gap-6 relative">
+                                                            {i !== (Math.min(visibleActivitiesCount, newStory.activity_log?.length || 0)) - 1 && <div className="absolute left-[15px] top-8 bottom-[-32px] w-[2px] bg-[#3a302a]/5" />}
+                                                            <div className="h-8 w-8 rounded-full bg-white border border-[#3a302a]/5 flex items-center justify-center shrink-0 shadow-sm z-10">
+                                                                {activity.type === 'status' ? <div className="h-2 w-2 rounded-full bg-[#c2652a]" /> : <Activity className="h-3 w-3 text-blue-500" />}
+                                                            </div>
+                                                            <div className="pt-1.5 space-y-1">
+                                                                <p className="text-[14px] font-bold text-[#3a302a]">{activity.text || activity.message}</p>
+                                                                <div className="flex items-center gap-2 text-[11px] font-medium text-[#3a302a]/30">
+                                                                    <span>{activity.user_name || 'System'}</span>
+                                                                    <span className="h-1 w-1 rounded-full bg-[#3a302a]/10" />
+                                                                    <span>{activity.created_at ? new Date(activity.created_at).toLocaleDateString() : 'Just now'}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+
+                                                    {(newStory.activity_log?.length || 0) > visibleActivitiesCount && (
+                                                        <div className="flex justify-center pt-4">
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                onClick={() => setVisibleActivitiesCount(prev => prev + 5)}
+                                                                className="group flex flex-col items-center gap-2 hover:bg-transparent"
+                                                            >
+                                                                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#c2652a]">
+                                                                    <span>Show 5 More</span>
+                                                                    <span className="text-[#3a302a]/20">({(newStory.activity_log?.length || 0) - visibleActivitiesCount} left)</span>
+                                                                </div>
+                                                                <ChevronDown className="h-4 w-4 text-[#c2652a] animate-bounce group-hover:scale-110 transition-all" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Sidebar Action Center */}
+                            <div className="space-y-12">
+                                <div className="space-y-6">
+                                    <h4 className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-[0.2em]">Ranked Strategic Actions</h4>
+                                    <div className="space-y-5">
+                                        {/* Priority 1 */}
+                                        <div className="p-8 bg-[#9333ea] rounded-[32px] text-white shadow-2xl space-y-6 relative overflow-hidden group">
+                                            <div className="flex items-center justify-between relative z-10">
+                                                <Badge className="bg-white/20 text-white border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Priority 1</Badge>
+                                                <TrendingUp className="h-4 w-4 text-white/40" />
+                                            </div>
+                                            <div className="space-y-2 relative z-10">
+                                                <p className="text-[18px] font-bold">CONVERT TO SPIKE</p>
+                                                <p className="text-[12px] text-white/60 italic leading-relaxed">
+                                                    "Issue is highly recurrent. Recommend permanent fix."
+                                                </p>
+                                            </div>
+                                            <div className="space-y-4 pt-4 border-t border-white/10 relative z-10">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="h-3 w-3 text-white/40" />
+                                                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Expected Outcome</span>
+                                                </div>
+                                                <p className="text-[11px] text-white/80">Reduces future sprint rollover probability by 45%.</p>
+                                                <Button className="w-full bg-white text-[#9333ea] hover:bg-white/90 font-black text-[12px] h-11 rounded-2xl border-none">
+                                                    Execute Strategy
+                                                </Button>
+                                            </div>
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] -mr-16 -mt-16" />
+                                        </div>
+
+                                        {/* Priority 2 */}
+                                        <div className="p-8 bg-[#f8f9fa] border border-[#3a302a]/5 rounded-[32px] space-y-6 group hover:border-[#c2652a]/20 transition-all">
+                                            <div className="flex items-center justify-between">
+                                                <Badge className="bg-[#3a302a]/5 text-[#3a302a]/30 border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Priority 2</Badge>
+                                                <Users className="h-4 w-4 text-[#3a302a]/10" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[15px] font-bold text-[#3a302a]">ARCHITECT REVIEW</p>
+                                                <p className="text-[11px] text-[#3a302a]/40 italic uppercase tracking-tighter">
+                                                    <span className="font-black">Expected Outcome:</span> unblocks 3 engineers.
+                                                </p>
+                                            </div>
+                                            <Button variant="ghost" className="w-full bg-[#3a302a]/5 text-[#3a302a]/40 font-black text-[11px] h-11 rounded-2xl border-none hover:bg-[#3a302a]/10">
+                                                Request Escalation
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-12 pt-8 border-t border-[#3a302a]/5">
+                                            <div className="space-y-6">
+                                                <div className="flex items-center gap-3">
+                                                    <AlertCircle className="h-4 w-4 text-orange-500" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/30">Identified Risks</span>
+                                                </div>
+                                                <ul className="space-y-4">
+                                                    {((newStory as any).identified_risks || []).length > 0 ? (
+                                                        (newStory as any).identified_risks.map((risk: any, i: number) => (
+                                                            <li key={i} className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
+                                                                <div className={cn(
+                                                                    "h-2 w-2 rounded-full",
+                                                                    risk.severity === 'high' ? "bg-red-500" : "bg-orange-500"
+                                                                )} />
+                                                                {risk.text}
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="text-[11px] font-medium text-[#3a302a]/20 italic">No risks identified</li>
+                                                    )}
+                                                </ul>
+                                            </div>
+
+                                            <div className="space-y-6">
+                                                <div className="flex items-center gap-3">
+                                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/30">Acceptance Criteria</span>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    {((newStory as any).acceptance_criteria || []).length > 0 ? (
+                                                        (newStory as any).acceptance_criteria.map((item: any, i: number) => (
+                                                            <div key={i} className="flex items-center gap-3 bg-green-50/50 p-4 rounded-2xl border border-green-100/50">
+                                                                <Check className="h-4 w-4 text-green-600" />
+                                                                <span className="text-[13px] font-bold text-green-900">{item.text || item}</span>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-[11px] font-medium text-[#3a302a]/20 italic px-2">No criteria defined</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                        {/* Tabs Navigation */}
-                        <div className="pt-8 space-y-6 px-10 pb-12">
-                            <div className="flex gap-8 border-b border-[#3a302a]/5">
-                                <button 
-                                    onClick={() => setActiveTab('subtasks')}
-                                    className={cn(
-                                        "pb-4 text-sm font-bold transition-all relative",
-                                        activeTab === 'subtasks' ? "text-[#3a302a]" : "text-[#3a302a]/30"
-                                    )}
-                                >
-                                    Subtasks
-                                    {activeTab === 'subtasks' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
-                                </button>
-                                <button 
-                                    onClick={() => setActiveTab('comments')}
-                                    className={cn(
-                                        "pb-4 text-sm font-bold transition-all relative",
-                                        activeTab === 'comments' ? "text-[#3a302a]" : "text-[#3a302a]/30"
-                                    )}
-                                >
-                                    Comments
-                                    {activeTab === 'comments' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
-                                </button>
-                                <button 
-                                    onClick={() => setActiveTab('activities')}
-                                    className={cn(
-                                        "pb-4 text-sm font-bold transition-all relative",
-                                        activeTab === 'activities' ? "text-[#3a302a]" : "text-[#3a302a]/30"
-                                    )}
-                                >
-                                    Activities
-                                    {activeTab === 'activities' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
-                                </button>
-                            </div>
-
-                            <div className="min-h-[400px]">
-                                <AnimatePresence mode="wait">
-                                    {activeTab === 'subtasks' && (
-                                        <motion.div 
-                                            key="subtasks"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-6"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Our Design Process</h4>
-                                                <div className="flex items-center gap-2 text-[13px] font-bold text-[#3a302a]/40">
-                                                    <div className="h-5 w-5 rounded-full border-2 border-[#c2652a] border-t-transparent animate-spin" style={{ animationDuration: '3s' }} />
-                                                    <span>2/4</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                {(newStory.subtasks || []).length === 0 ? (
-                                                    <div className="text-center py-8 text-[#3a302a]/20 font-bold text-sm">No subtasks yet. Create one below.</div>
-                                                ) : (
-                                                    newStory.subtasks?.map(subtask => (
-                                                        <div key={subtask.id} className={cn(
-                                                            "bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 transition-all group",
-                                                            subtask.is_completed && "opacity-60"
-                                                        )}>
-                                                            <div className="flex items-center gap-3">
-                                                                <button 
-                                                                    onClick={() => handleToggleSubtask(subtask.id)}
-                                                                    className={cn(
-                                                                        "h-5 w-5 rounded-md flex items-center justify-center transition-all",
-                                                                        subtask.is_completed ? "bg-[#c2652a]" : "border-2 border-[#3a302a]/10"
-                                                                    )}
-                                                                >
-                                                                    {subtask.is_completed && <CheckCircle2 className="h-3 w-3 text-white" />}
-                                                                </button>
-                                                                <span className={cn(
-                                                                    "text-sm font-bold text-[#3a302a]",
-                                                                    subtask.is_completed && "line-through text-[#3a302a]/40"
-                                                                )}>
-                                                                    {subtask.title}
-                                                                </span>
-                                                            </div>
-                                                            {subtask.note && (
-                                                                <div className="ml-8 mt-2 bg-[#3a302a]/[0.02] p-3 rounded-xl border border-[#3a302a]/5 text-[12px] text-[#3a302a]/60 leading-relaxed">
-                                                                    {subtask.note}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))
-                                                )}
-
-                                                <div className="bg-white/20 border-2 border-dashed border-[#3a302a]/10 rounded-2xl p-4 flex items-center gap-3 group hover:border-[#c2652a]/20 transition-all">
-                                                    <Plus className="h-4 w-4 text-[#3a302a]/20" />
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Add a subtask..."
-                                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-[#3a302a] placeholder:text-[#3a302a]/20 w-full"
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                handleAddSubtask((e.target as HTMLInputElement).value);
-                                                                (e.target as HTMLInputElement).value = '';
-                                                            }
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {activeTab === 'comments' && (
-                                        <motion.div 
-                                            key="comments"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-8"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Discussion</h4>
-                                                <div className="flex items-center gap-2 text-[11px] font-bold text-[#3a302a]/40 uppercase tracking-wider">
-                                                    <MessageSquare className="h-3 w-3" />
-                                                    <span>{(newStory.comments || []).length} Comments</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-8">
-                                                {(newStory.comments || []).length === 0 ? (
-                                                    <div className="text-center py-12 text-[#3a302a]/20 font-bold text-sm bg-white/20 rounded-3xl border border-dashed border-[#3a302a]/5">
-                                                        No comments yet. Start the conversation.
-                                                    </div>
-                                                ) : (
-                                                    newStory.comments?.map(comment => (
-                                                        <div key={comment.id} className="flex gap-4 group">
-                                                            <Avatar className="h-10 w-10 shrink-0">
-                                                                <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a] font-bold text-xs">
-                                                                    {comment.user_name?.split(' ').map(n => n[0]).join('') || 'U'}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="space-y-1.5 flex-1">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="text-sm font-bold text-[#3a302a]">{comment.user_name}</span>
-                                                                        <span className="text-[10px] text-[#3a302a]/30 font-medium">
-                                                                            {comment.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <MoreVertical className="h-3 w-3" />
-                                                                    </Button>
-                                                                </div>
-                                                                <div className="bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 shadow-sm text-sm text-[#3a302a]/70 leading-relaxed">
-                                                                    {comment.content}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-
-                                                <div className="bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl p-2 flex items-center gap-2">
-                                                    <input 
-                                                        id="new-comment-input"
-                                                        type="text" 
-                                                        placeholder="Write a comment..."
-                                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-[#3a302a] placeholder:text-[#3a302a]/20 w-full px-4"
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                handleAddComment((e.target as HTMLInputElement).value);
-                                                                (e.target as HTMLInputElement).value = '';
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Button 
-                                                        size="sm" 
-                                                        className="bg-[#c2652a] hover:bg-[#a65624] text-white rounded-xl font-bold px-6"
-                                                        onClick={() => {
-                                                            const input = document.getElementById('new-comment-input') as HTMLInputElement;
-                                                            handleAddComment(input.value);
-                                                            input.value = '';
-                                                        }}
-                                                    >
-                                                        Send
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {activeTab === 'activities' && (
-                                        <motion.div 
-                                            key="activities"
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="space-y-8"
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Activities</h4>
-                                                <button className="flex items-center gap-2 text-[11px] font-bold text-[#6366f1] hover:underline">
-                                                    <CheckCircle2 className="h-3 w-3" />
-                                                    Mark as read
-                                                </button>
-                                            </div>
-
-                                            <div className="space-y-8">
-                                                {(newStory.activity_log || []).length === 0 ? (
-                                                    <div className="text-center py-12 text-[#3a302a]/20 font-bold text-sm bg-white/20 rounded-3xl border border-dashed border-[#3a302a]/5">
-                                                        No activity logged yet.
-                                                    </div>
-                                                ) : (
-                                                    newStory.activity_log?.map(activity => (
-                                                        <div key={activity.id} className="flex gap-4">
-                                                            <Avatar className="h-10 w-10 shrink-0">
-                                                                <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a] font-bold text-xs">
-                                                                    {activity.user_name?.split(' ').map(n => n[0]).join('') || 'U'}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="space-y-3 flex-1">
-                                                                <div className="space-y-1">
-                                                                    <div className="text-[13px] text-[#3a302a]/50">
-                                                                        <span className="font-bold text-[#3a302a]">{activity.user_name}</span> {activity.type}
-                                                                    </div>
-                                                                    <div className="text-[11px] text-[#3a302a]/30 font-medium">
-                                                                        {new Date(activity.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
-                                                                    </div>
-                                                                </div>
-                                                                {activity.content && (
-                                                                    <div className="bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 shadow-sm text-sm text-[#3a302a]/70 leading-relaxed">
-                                                                        {activity.content}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                        </div>
-
                 </SheetContent>
             </Sheet>
         </div>
