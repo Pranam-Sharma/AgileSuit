@@ -152,7 +152,7 @@ type Story = {
     tags?: string[];
     due_date?: string;
     subtasks?: { id: string, title: string, is_completed: boolean, note?: string }[];
-    comments?: { id: string, content: string, user_name: string, created_at: string }[];
+    comments?: { id: string, text: string, user_name: string, created_at: string }[];
     activity_log?: { id: string, type: string, user_name: string, text: string, created_at: string }[];
     identified_risks?: { text: string, severity: 'low' | 'medium' | 'high' }[];
     acceptance_criteria?: any[];
