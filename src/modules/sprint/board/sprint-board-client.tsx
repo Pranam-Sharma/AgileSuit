@@ -2534,7 +2534,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                                     </Button>
                                                                 </div>
                                                                 <div className="bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 shadow-sm text-sm text-[#3a302a]/70 leading-relaxed">
-                                                                    {comment.content || comment.text}
+                                                                    {comment.content}
                                                                 </div>
                                                             </div>
                                                         </div>
