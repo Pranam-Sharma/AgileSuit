@@ -17,6 +17,17 @@ export interface Story {
   position: number;
   tags: string[] | null;
   due_date: string | null;
+  acceptance_criteria: string | null;
+  subtasks: {
+    id: string;
+    title: string;
+    is_completed: boolean;
+    note?: string;
+    blocker?: string;
+    assignee?: string;
+  }[] | null;
+  comments: any[] | null;
+  activity_log: any[] | null;
   created_by: string | null;
   created_at: string;
   updated_by: string | null;
@@ -36,6 +47,7 @@ export interface CreateStoryInput {
   position?: number;
   tags?: string[];
   due_date?: string;
+  acceptance_criteria?: string;
 }
 
 export interface UpdateStoryInput {
@@ -50,6 +62,10 @@ export interface UpdateStoryInput {
   position?: number;
   tags?: string[];
   due_date?: string;
+  acceptance_criteria?: string;
+  subtasks?: any[];
+  comments?: any[];
+  activity_log?: any[];
 }
 
 export interface MoveStoryInput {

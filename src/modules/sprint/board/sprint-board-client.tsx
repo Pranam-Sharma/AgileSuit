@@ -29,7 +29,13 @@ import {
     PanelRightClose,
     PanelRightOpen,
     AlertCircle,
-    Sparkles
+    Sparkles,
+    MessageSquare,
+    History,
+    CheckCircle2,
+    Bookmark,
+    ChevronDown,
+    Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -50,6 +56,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import type { Sprint } from '@/modules/dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/cn';
@@ -111,6 +118,9 @@ type Story = {
     status?: 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked';
     tags?: string[];
     due_date?: string;
+    subtasks?: { id: string, title: string, is_completed: boolean, note?: string }[];
+    comments?: { id: string, content: string, user_name: string, created_at: string }[];
+    activity_log?: { id: string, type: string, user_name: string, content: string, created_at: string }[];
 };
 
 type Column = {
@@ -210,7 +220,11 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         completedStoryPoints: 0,
         status: 'todo'
     });
+    const [isSaving, setIsSaving] = React.useState(false);
+    const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
     const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState<'subtasks' | 'comments' | 'activities'>('subtasks');
     const [editingStory, setEditingStory] = React.useState<Story | null>(null);
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
@@ -219,7 +233,105 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true);
     const [showCompletedStories, setShowCompletedStories] = React.useState(true);
     const [filterPriority, setFilterPriority] = React.useState<'all' | 'high' | 'medium' | 'low'>('all');
-    const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee'>('none');
+    const [tagInput, setTagInput] = React.useState('');
+    const [showTagInput, setShowTagInput] = React.useState(false);
+
+    // Auto-save logic for the Story Detail Drawer
+    React.useEffect(() => {
+        if (!isEditStoryDialogOpen || !editingStory) return;
+
+        // Debounce save for 1.5 seconds to avoid excessive database writes
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+        }
+
+        autoSaveTimerRef.current = setTimeout(async () => {
+            await handleSaveEditStory();
+        }, 1500);
+
+        return () => {
+            if (autoSaveTimerRef.current) {
+                clearTimeout(autoSaveTimerRef.current);
+            }
+        };
+    }, [newStory.title, newStory.description, newStory.status, newStory.assignee, newStory.storyPoints, newStory.due_date, newStory.subtasks, newStory.comments, newStory.tags, isEditStoryDialogOpen]);
+
+    const handleAddSubtask = (title: string) => {
+        const newSubtask = {
+            id: Math.random().toString(36).substr(2, 9),
+            title,
+            is_completed: false
+        };
+        const activity = {
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'added a subtask',
+            user_name: user?.full_name || user?.email || 'User',
+            content: title,
+            created_at: new Date().toISOString()
+        };
+        setNewStory(prev => ({
+            ...prev,
+            subtasks: [...(prev.subtasks || []), newSubtask],
+            activity_log: [activity, ...(prev.activity_log || [])]
+        }));
+    };
+
+    const handleToggleSubtask = (id: string) => {
+        setNewStory(prev => {
+            const subtask = (prev.subtasks || []).find(s => s.id === id);
+            const activity = {
+                id: Math.random().toString(36).substr(2, 9),
+                type: subtask?.is_completed ? 'uncompleted a subtask' : 'completed a subtask',
+                user_name: user?.full_name || user?.email || 'User',
+                content: subtask?.title || '',
+                created_at: new Date().toISOString()
+            };
+            return {
+                ...prev,
+                subtasks: (prev.subtasks || []).map(s => 
+                    s.id === id ? { ...s, is_completed: !s.is_completed } : s
+                ),
+                activity_log: [activity, ...(prev.activity_log || [])]
+            };
+        });
+    };
+
+    const handleAddComment = (text: string) => {
+        if (!text.trim()) return;
+        const newComment = {
+            id: Math.random().toString(36).substr(2, 9),
+            content: text,
+            user_name: user?.full_name || user?.email || 'User',
+            created_at: new Date().toISOString()
+        };
+        const activity = {
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'added a comment',
+            user_name: user?.full_name || user?.email || 'User',
+            content: text,
+            created_at: new Date().toISOString()
+        };
+        setNewStory(prev => ({
+            ...prev,
+            comments: [...(prev.comments || []), newComment],
+            activity_log: [activity, ...(prev.activity_log || [])]
+        }));
+    };
+    const addActivity = (type: string, content: string = '') => {
+        const newActivity = {
+            id: Math.random().toString(36).substr(2, 9),
+            type,
+            user_name: user?.full_name || user?.email || 'User',
+            content,
+            created_at: new Date().toISOString()
+        };
+        setNewStory(prev => ({
+            ...prev,
+            activity_log: [newActivity, ...(prev.activity_log || [])]
+        }));
+    };
+
+    const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee' | 'newest'>('none');
     
     // --- Quiet AI State ---
     const [sprintPlanning, setSprintPlanning] = React.useState<any>(null);
@@ -414,7 +526,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                         priority: dbStory.priority as 'low' | 'medium' | 'high' | 'critical',
                         status: dbStory.status as Story['status'],
                         tags: dbStory.tags || undefined,
-                        due_date: dbStory.due_date || undefined
+                        due_date: dbStory.due_date || undefined,
+                        subtasks: dbStory.subtasks || [],
+                        comments: dbStory.comments || [],
+                        activity_log: dbStory.activity_log || []
                     };
 
                     const columnStories = storyMap.get(dbStory.column_id) || [];
@@ -670,7 +785,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: createdStory.priority as Story['priority'],
             status: createdStory.status as Story['status'],
             tags: createdStory.tags || undefined,
-            due_date: createdStory.due_date || undefined
+            due_date: createdStory.due_date || undefined,
+            subtasks: [],
+            comments: [],
+            activity_log: []
         };
 
         setColumns(prev => prev.map(col =>
@@ -705,21 +823,20 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: story.priority,
             status: story.status,
             tags: story.tags,
-            due_date: story.due_date
+            due_date: story.due_date,
+            subtasks: story.subtasks || [],
+            comments: story.comments || [],
+            activity_log: story.activity_log || []
         });
         setIsEditStoryDialogOpen(true);
     };
 
     const handleSaveEditStory = async () => {
         if (!editingStory || !newStory.title?.trim()) {
-            toast({
-                title: 'Error',
-                description: 'Story title is required',
-                variant: 'destructive'
-            });
-            return;
+            return; // Don't save if no title or not editing
         }
 
+        setIsSaving(true);
         const { error } = await updateStory(editingStory.id, {
             title: newStory.title,
             description: newStory.description || undefined,
@@ -729,15 +846,20 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: newStory.priority as 'low' | 'medium' | 'high' | 'critical',
             status: newStory.status as Story['status'],
             tags: newStory.tags,
-            due_date: newStory.due_date
+            due_date: newStory.due_date,
+            subtasks: newStory.subtasks,
+            comments: newStory.comments,
+            activity_log: newStory.activity_log
         });
+        setIsSaving(false);
 
         if (error) {
             toast({
-                title: 'Error',
-                description: error,
+                title: 'Sync Error',
+                description: 'Failed to auto-save changes',
                 variant: 'destructive'
             });
+            setIsSaving(false);
             return;
         }
 
@@ -772,7 +894,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: newStory.priority || editingStory.priority,
             status: newStory.status || editingStory.status,
             tags: newStory.tags ?? editingStory.tags,
-            due_date: newStory.due_date ?? editingStory.due_date
+            due_date: newStory.due_date ?? editingStory.due_date,
+            subtasks: newStory.subtasks,
+            comments: newStory.comments,
+            activity_log: newStory.activity_log
         };
 
         // Check if target column exists
@@ -805,20 +930,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             })));
         }
 
-        setIsEditStoryDialogOpen(false);
-        setEditingStory(null);
-        setNewStory({
-            title: '',
-            description: '',
-            priority: 'medium',
-            storyPoints: 0,
-            status: 'todo'
-        });
 
-        toast({
-            title: 'Story updated',
-            description: 'The story has been successfully updated.'
-        });
     };
 
     const handleDeleteStory = async (columnId: string, storyId: string) => {
@@ -1114,6 +1226,18 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
+    const getDueDateColor = (dueDate?: string) => {
+        if (!dueDate) return 'text-zinc-600 dark:text-zinc-400';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+
+        if (due.getTime() < today.getTime()) return 'text-red-500 font-bold'; // Overdue
+        if (due.getTime() === today.getTime()) return 'text-amber-500 font-bold'; // Today
+        return 'text-zinc-600 dark:text-zinc-400';
+    };
+
     const filterAndSortStories = (stories: Story[]) => {
         // First, deduplicate stories by ID to prevent duplicate keys
         const uniqueStories = Array.from(
@@ -1205,9 +1329,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     }
 
     return (
-        <div className={cn("min-h-screen bg-slate-50 dark:bg-[#09090b] flex flex-col", isEmbedded && "min-h-0 bg-transparent")}>
+        <div className={cn("min-h-screen bg-[#f8f5f0] dark:bg-[#09090b] flex flex-col font-manrope", isEmbedded && "min-h-0 bg-transparent")}>
             {!isEmbedded && (
-                <header className="h-16 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+                <header className="h-16 border-b border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
                     <div className="h-full px-4 lg:px-6 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <Button
@@ -1222,10 +1346,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                             <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
                             <Logo />
                             <div className="hidden md:flex flex-col">
-                                <h1 className="text-lg font-bold text-zinc-900 dark:text-white">
+                                <h1 className="text-lg font-eb-garamond font-bold text-[#3a302a] dark:text-white leading-none">
                                     {sprint?.sprintName || 'Sprint Board'}
                                 </h1>
-                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Track Board</p>
+                                <p className="text-[10px] uppercase tracking-wider font-bold text-[#3a302a]/60 dark:text-zinc-400">Track Board</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -1289,13 +1413,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 {/* Sidebar */}
                 {!isEmbedded && (
                     <aside className={cn(
-                        "border-r border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-all duration-300 flex flex-col",
+                        "border-r border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-300 flex flex-col",
                         isSidebarExpanded ? "w-64" : "w-16"
                     )}>
                     {/* Sidebar Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
+                    <div className="flex items-center justify-between p-4 border-b border-[#3a302a]/10 dark:border-zinc-800/50">
                         {isSidebarExpanded && (
-                            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Customization</h2>
+                            <h2 className="text-sm font-eb-garamond font-bold text-[#3a302a] dark:text-white uppercase tracking-wider">Customization</h2>
                         )}
                         <Button
                             variant="ghost"
@@ -1534,7 +1658,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                             ) : (
                                                 <button
                                                     onClick={() => handleColumnTitleClick(column.id, column.title)}
-                                                    className="text-lg font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
+                                                    className="text-lg font-eb-garamond font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
                                                 >
                                                     {column.title}
                                                     <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
@@ -1564,6 +1688,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                         <div className="flex items-center justify-between">
                                             <Badge variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                                 {filteredStories.length} {filteredStories.length === 1 ? 'story' : 'stories'}
+                                                <span className="mx-1 opacity-50">·</span>
+                                                {filteredStories.reduce((sum, s) => sum + (s.storyPoints || 0), 0)} SP
                                             </Badge>
                                             <Button
                                                 size="sm"
@@ -1699,7 +1825,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
 
                                                             {/* Due Date */}
                                                             {story.due_date && (
-                                                                <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                                                <div className={cn("flex items-center gap-1 text-[10px]", getDueDateColor(story.due_date))}>
                                                                     <Calendar className="h-3 w-3" />
                                                                     <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
                                                                 </div>
@@ -1730,18 +1856,20 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                                 {/* Left: Assignee */}
                                                                 <div className="flex items-center gap-1.5">
                                                                     {story.assignee ? (
-                                                                        <>
-                                                                            <Avatar className="h-5 w-5">
-                                                                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                        <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/50 pr-2 pl-0.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700/50">
+                                                                            <Avatar className="h-5 w-5 ring-1 ring-white dark:ring-zinc-900">
+                                                                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
                                                                                     {story.assignee.charAt(0).toUpperCase()}
                                                                                 </AvatarFallback>
                                                                             </Avatar>
-                                                                            <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                                            <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">
                                                                                 {story.assignee}
                                                                             </span>
-                                                                        </>
+                                                                        </div>
                                                                     ) : (
-                                                                        <div className="h-5"></div>
+                                                                        <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-[10px] text-zinc-300">
+                                                                            <Plus className="h-3 w-3" />
+                                                                        </div>
                                                                     )}
                                                                 </div>
 
@@ -1788,7 +1916,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add New Story</DialogTitle>
+                        <DialogTitle className="font-eb-garamond text-xl">Add New Story</DialogTitle>
                         <DialogDescription>
                             Create a new story/ticket for your sprint board.
                         </DialogDescription>
@@ -1906,142 +2034,597 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {/* Edit Story Dialog */}
-            <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Story</DialogTitle>
-                        <DialogDescription>
-                            Update the story details below.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Title *</label>
-                            <Input
-                                placeholder="Enter story title"
-                                value={newStory.title || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, title: e.target.value }))}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Description</label>
-                            <Textarea
-                                placeholder="Enter story description"
-                                value={newStory.description || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, description: e.target.value }))}
-                                rows={3}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Story Points</label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    value={newStory.storyPoints || ''}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, storyPoints: parseInt(e.target.value) || 0 }))}
-                                />
+            {/* Story Detail Sheet (Drawer) - Sahara High-Fidelity Match */}
+            <Sheet open={isEditStoryDialogOpen} onOpenChange={async (open) => {
+                if (!open) {
+                    // Trigger immediate final save if there's a pending auto-save
+                    if (autoSaveTimerRef.current) {
+                        clearTimeout(autoSaveTimerRef.current);
+                        autoSaveTimerRef.current = null;
+                        await handleSaveEditStory();
+                    }
+                    
+                    setIsEditStoryDialogOpen(false);
+                    setEditingStory(null);
+                    setNewStory({
+                        title: '',
+                        description: '',
+                        priority: 'medium',
+                        storyPoints: 0,
+                        status: 'todo',
+                        subtasks: [],
+                        comments: [],
+                        activity_log: []
+                    });
+                } else {
+                    setIsEditStoryDialogOpen(true);
+                }
+            }}>
+                <SheetContent 
+                    hideClose={true}
+                    className="sm:max-w-xl w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-xl border-l border-none shadow-2xl flex flex-col"
+                >
+                    <div className="sr-only">
+                        <SheetHeader>
+                            <SheetTitle>Story Details</SheetTitle>
+                            <SheetDescription>View and edit the details of this user story.</SheetDescription>
+                        </SheetHeader>
+                    </div>
+                    {/* Top Action Bar */}
+                    <div className="flex items-center justify-between p-6 pb-2">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-[#c2652a]/10 p-1.5 rounded-md">
+                                <Bookmark className="h-3 w-3 text-[#c2652a]" />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Completed Story Points</label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    max={newStory.storyPoints || 0}
-                                    placeholder="0"
-                                    value={newStory.completedStoryPoints || ''}
-                                    onChange={(e) => {
-                                        const value = parseInt(e.target.value) || 0;
-                                        const maxValue = newStory.storyPoints || 0;
-                                        setNewStory(prev => ({ ...prev, completedStoryPoints: Math.min(value, maxValue) }));
-                                    }}
-                                />
-                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40">
+                                SAHARA-{newStory.id?.slice(-3) || '124'}
+                            </span>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Priority</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                                    value={newStory.priority || 'medium'}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, priority: e.target.value as Story['priority'] }))}
-                                >
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                                    value={newStory.status || 'todo'}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, status: e.target.value as Story['status'] }))}
-                                >
-                                    <option value="todo">To Do</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="in_review">In Review</option>
-                                    <option value="done">Done</option>
-                                    <option value="blocked">Blocked</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Assignee</label>
-                            <Input
-                                placeholder="Enter assignee name"
-                                value={newStory.assignee || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Tags (comma-separated)</label>
-                            <Input
-                                placeholder="bug, feature, urgent..."
-                                value={newStory.tags?.join(', ') || ''}
-                                onChange={(e) => setNewStory(prev => ({
-                                    ...prev,
-                                    tags: e.target.value.split(',').map((t: string) => t.trim()).filter((t: string) => t)
-                                }))}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Due Date</label>
-                            <Input
-                                type="date"
-                                value={newStory.due_date || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, due_date: e.target.value }))}
-                            />
+                        <div className="flex items-center gap-2">
+                            {isSaving && (
+                                <div className="flex items-center gap-2 px-3 py-1 bg-[#c2652a]/5 rounded-full border border-[#c2652a]/10 animate-pulse">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-[#c2652a]" />
+                                    <span className="text-[10px] font-bold text-[#c2652a] uppercase tracking-wider">Saving...</span>
+                                </div>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#3a302a]/40 hover:text-[#3a302a] hover:bg-transparent">
+                                <Upload className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#3a302a]/40 hover:text-[#3a302a] hover:bg-transparent">
+                                <MoreVertical className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => setIsEditStoryDialogOpen(false)}
+                                className="h-10 w-10 bg-[#3a302a]/5 hover:bg-[#c2652a]/10 text-[#3a302a] rounded-full ml-2 flex items-center justify-center transition-all group"
+                            >
+                                <X className="h-5 w-5 text-[#3a302a]/40 group-hover:text-[#c2652a] transition-colors" />
+                            </Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => {
-                            setIsEditStoryDialogOpen(false);
-                            setEditingStory(null);
-                            setNewStory({
-                                title: '',
-                                description: '',
-                                priority: 'medium',
-                                storyPoints: 0,
-                                status: 'todo'
-                            });
-                        }}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSaveEditStory}>
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
+                    <div className="flex-1 px-10 py-2 space-y-6">
+                        {/* Title - Moved Up */}
+                        <div className="pt-2">
+                            <textarea
+                                value={newStory.title || ''}
+                                onChange={(e) => setNewStory(prev => ({ ...prev, title: e.target.value }))}
+                                className="w-full text-[32px] font-eb-garamond font-bold text-[#3a302a] leading-[1.15] tracking-tight bg-transparent border-none p-0 focus:ring-0 resize-none h-auto outline-none"
+                                rows={2}
+                                placeholder="High-Fidelity Story Detail Drawer"
+                            />
+                        </div>
+                        <div className="space-y-4 pt-2">
+                            {/* Status Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <Target className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Status</span>
+                                </div>
+                                <div className="relative group/select cursor-pointer w-fit">
+                                    <div className="flex items-center gap-2 px-1 hover:bg-[#3a302a]/[0.03] rounded-md transition-all">
+                                        <div className={cn("h-2 w-2 rounded-full shrink-0", 
+                                            newStory.status === 'done' ? 'bg-green-500' :
+                                            newStory.status === 'in_progress' ? 'bg-[#c2652a]' :
+                                            newStory.status === 'blocked' ? 'bg-red-500' : 'bg-[#c2652a]/30'
+                                        )} />
+                                        <span className="text-[14px] font-bold text-[#3a302a] flex items-center gap-1.5">
+                                            {newStory.status === 'todo' ? 'To Do' :
+                                             newStory.status === 'in_progress' ? 'In Progress' :
+                                             newStory.status === 'in_review' ? 'In Review' :
+                                             newStory.status === 'done' ? 'Done' : 'Blocked'}
+                                            <ChevronDown className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover/select:text-[#c2652a] transition-colors" />
+                                        </span>
+                                    </div>
+                                    <select
+                                        value={newStory.status || 'in_progress'}
+                                        onChange={(e) => {
+                                            const newStatus = e.target.value as any;
+                                            const activity = {
+                                                id: Math.random().toString(36).substr(2, 9),
+                                                type: `changed status to ${newStatus.replace('_', ' ')}`,
+                                                user_name: user?.full_name || user?.email || 'User',
+                                                content: '',
+                                                created_at: new Date().toISOString()
+                                            };
+                                            setNewStory(prev => ({ 
+                                                ...prev, 
+                                                status: newStatus,
+                                                activity_log: [activity, ...(prev.activity_log || [])]
+                                            }));
+                                        }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    >
+                                        <option value="todo">To Do</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="in_review">In Review</option>
+                                        <option value="done">Done</option>
+                                        <option value="blocked">Blocked</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Due Date Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <Calendar className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Due date</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="date"
+                                        value={newStory.due_date || '2023-10-24'}
+                                        onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                                        onChange={(e) => {
+                                            const newDate = e.target.value;
+                                            const activity = {
+                                                id: Math.random().toString(36).substr(2, 9),
+                                                type: `updated due date to ${newDate}`,
+                                                user_name: user?.full_name || user?.email || 'User',
+                                                content: '',
+                                                created_at: new Date().toISOString()
+                                            };
+                                            setNewStory(prev => ({ 
+                                                ...prev, 
+                                                due_date: newDate,
+                                                activity_log: [activity, ...(prev.activity_log || [])]
+                                            }));
+                                        }}
+                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] hover:text-[#c2652a] transition-all cursor-pointer outline-none [color-scheme:light] [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Assignee Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <Users className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Assignee</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-6 w-6 shrink-0 ring-2 ring-[#c2652a]/5">
+                                        <AvatarFallback className="text-[9px] bg-[#c2652a]/10 text-[#c2652a] font-black">
+                                            {newStory.assignee?.charAt(0).toUpperCase() || 'A'}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <input
+                                        value={newStory.assignee || 'Alex Thompson'}
+                                        onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
+                                        onBlur={(e) => {
+                                            const val = e.target.value;
+                                            if (val !== editingStory?.assignee) {
+                                                const activity = {
+                                                    id: Math.random().toString(36).substr(2, 9),
+                                                    type: `assigned to ${val}`,
+                                                    user_name: user?.full_name || user?.email || 'User',
+                                                    content: '',
+                                                    created_at: new Date().toISOString()
+                                                };
+                                                setNewStory(prev => ({
+                                                    ...prev,
+                                                    activity_log: [activity, ...(prev.activity_log || [])]
+                                                }));
+                                            }
+                                        }}
+                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] w-full hover:bg-[#3a302a]/[0.05] rounded px-1 transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Priority Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Priority</span>
+                                </div>
+                                <div className="relative group/select cursor-pointer w-fit">
+                                    <div className="flex items-center gap-2 px-1 hover:bg-[#3a302a]/[0.03] rounded-md transition-all">
+                                        <div className={cn("h-2 w-2 rounded-full shrink-0", 
+                                            newStory.priority === 'critical' ? 'bg-red-500' :
+                                            newStory.priority === 'high' ? 'bg-orange-500' :
+                                            newStory.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'
+                                        )} />
+                                        <span className="text-[14px] font-bold text-[#3a302a] flex items-center gap-1.5">
+                                            {newStory.priority?.charAt(0).toUpperCase() + newStory.priority?.slice(1) || 'Medium'}
+                                            <ChevronDown className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover/select:text-[#c2652a] transition-colors" />
+                                        </span>
+                                    </div>
+                                    <select
+                                        value={newStory.priority || 'medium'}
+                                        onChange={(e) => {
+                                            const newPriority = e.target.value as any;
+                                            const activity = {
+                                                id: Math.random().toString(36).substr(2, 9),
+                                                type: `set priority to ${newPriority}`,
+                                                user_name: user?.full_name || user?.email || 'User',
+                                                content: '',
+                                                created_at: new Date().toISOString()
+                                            };
+                                            setNewStory(prev => ({ 
+                                                ...prev, 
+                                                priority: newPriority,
+                                                activity_log: [activity, ...(prev.activity_log || [])]
+                                            }));
+                                        }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                    >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Story Points Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <Sparkles className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Story Points</span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        value={newStory.storyPoints || 8}
+                                        onChange={(e) => {
+                                            const points = parseInt(e.target.value) || 0;
+                                            const activity = {
+                                                id: Math.random().toString(36).substr(2, 9),
+                                                type: `updated story points to ${points}`,
+                                                user_name: user?.full_name || user?.email || 'User',
+                                                content: '',
+                                                created_at: new Date().toISOString()
+                                            };
+                                            setNewStory(prev => ({ 
+                                                ...prev, 
+                                                storyPoints: points,
+                                                activity_log: [activity, ...(prev.activity_log || [])]
+                                            }));
+                                        }}
+                                        className="text-[14px] font-bold bg-transparent border-none p-0 focus:ring-0 text-[#3a302a] w-12 hover:bg-[#3a302a]/[0.05] rounded px-1 transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Tags Row */}
+                            <div className="grid grid-cols-[140px,1fr] items-center gap-4 group">
+                                <div className="flex items-center gap-3 text-[#3a302a]/40 group-hover:text-[#3a302a]/60 transition-colors">
+                                    <Tag className="h-4 w-4" />
+                                    <span className="text-[13px] font-medium tracking-tight">Tags</span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap min-h-[28px]">
+                                    {(newStory.tags || []).map((tag, i) => (
+                                        <span key={i} className="px-3 py-1 bg-[#c2652a]/5 text-[#c2652a] text-[11px] font-bold rounded-full border border-[#c2652a]/10 group/tag relative flex items-center gap-1.5 transition-all hover:bg-[#c2652a]/10">
+                                            {tag}
+                                            <button 
+                                                onClick={() => {
+                                                    setNewStory(prev => ({
+                                                        ...prev,
+                                                        tags: (prev.tags || []).filter((_, idx) => idx !== i)
+                                                    }));
+                                                }}
+                                                className="h-3 w-3 hover:text-red-500 transition-colors"
+                                            >
+                                                <X className="h-2.5 w-2.5" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                    
+                                    {showTagInput ? (
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                autoFocus
+                                                value={tagInput}
+                                                onChange={(e) => setTagInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && tagInput.trim()) {
+                                                        setNewStory(prev => ({
+                                                            ...prev,
+                                                            tags: [...(prev.tags || []), tagInput.trim()]
+                                                        }));
+                                                        setTagInput('');
+                                                        setShowTagInput(false);
+                                                    }
+                                                    if (e.key === 'Escape') {
+                                                        setShowTagInput(false);
+                                                        setTagInput('');
+                                                    }
+                                                }}
+                                                onBlur={() => {
+                                                    if (!tagInput.trim()) setShowTagInput(false);
+                                                }}
+                                                placeholder="Type & press Enter..."
+                                                className="text-[11px] font-bold bg-[#c2652a]/5 border border-[#c2652a]/20 rounded-full px-3 py-1 outline-none text-[#c2652a] placeholder:text-[#c2652a]/30 w-32 transition-all focus:border-[#c2652a] focus:ring-1 focus:ring-[#c2652a]/20"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={() => setShowTagInput(true)}
+                                            className="h-7 w-7 rounded-full border border-dashed border-[#3a302a]/20 flex items-center justify-center text-[#3a302a]/40 hover:border-[#c2652a] hover:text-[#c2652a] hover:bg-[#c2652a]/5 transition-all"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+
+                        {/* Description Section */}
+                        <div className="space-y-6 pt-4">
+                            <h3 className="text-[20px] font-eb-garamond font-bold text-[#3a302a]">Description</h3>
+                            <div className="text-[15px] leading-[1.6] text-[#3a302a]/70 font-medium">
+                                <Textarea
+                                    value={newStory.description || ''}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, description: e.target.value }))}
+                                    className="w-full bg-transparent border-none p-0 focus:ring-0 resize-none h-auto min-h-[200px] text-[15px] leading-[1.6] text-[#3a302a]/70 font-medium overflow-hidden"
+                                    placeholder="Add a description..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                        {/* Tabs Navigation */}
+                        <div className="pt-8 space-y-6 px-10 pb-12">
+                            <div className="flex gap-8 border-b border-[#3a302a]/5">
+                                <button 
+                                    onClick={() => setActiveTab('subtasks')}
+                                    className={cn(
+                                        "pb-4 text-sm font-bold transition-all relative",
+                                        activeTab === 'subtasks' ? "text-[#3a302a]" : "text-[#3a302a]/30"
+                                    )}
+                                >
+                                    Subtasks
+                                    {activeTab === 'subtasks' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('comments')}
+                                    className={cn(
+                                        "pb-4 text-sm font-bold transition-all relative",
+                                        activeTab === 'comments' ? "text-[#3a302a]" : "text-[#3a302a]/30"
+                                    )}
+                                >
+                                    Comments
+                                    {activeTab === 'comments' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('activities')}
+                                    className={cn(
+                                        "pb-4 text-sm font-bold transition-all relative",
+                                        activeTab === 'activities' ? "text-[#3a302a]" : "text-[#3a302a]/30"
+                                    )}
+                                >
+                                    Activities
+                                    {activeTab === 'activities' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3a302a]" />}
+                                </button>
+                            </div>
+
+                            <div className="min-h-[400px]">
+                                <AnimatePresence mode="wait">
+                                    {activeTab === 'subtasks' && (
+                                        <motion.div 
+                                            key="subtasks"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="space-y-6"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Our Design Process</h4>
+                                                <div className="flex items-center gap-2 text-[13px] font-bold text-[#3a302a]/40">
+                                                    <div className="h-5 w-5 rounded-full border-2 border-[#c2652a] border-t-transparent animate-spin" style={{ animationDuration: '3s' }} />
+                                                    <span>2/4</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {(newStory.subtasks || []).length === 0 ? (
+                                                    <div className="text-center py-8 text-[#3a302a]/20 font-bold text-sm">No subtasks yet. Create one below.</div>
+                                                ) : (
+                                                    newStory.subtasks?.map(subtask => (
+                                                        <div key={subtask.id} className={cn(
+                                                            "bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 transition-all group",
+                                                            subtask.is_completed && "opacity-60"
+                                                        )}>
+                                                            <div className="flex items-center gap-3">
+                                                                <button 
+                                                                    onClick={() => handleToggleSubtask(subtask.id)}
+                                                                    className={cn(
+                                                                        "h-5 w-5 rounded-md flex items-center justify-center transition-all",
+                                                                        subtask.is_completed ? "bg-[#c2652a]" : "border-2 border-[#3a302a]/10"
+                                                                    )}
+                                                                >
+                                                                    {subtask.is_completed && <CheckCircle2 className="h-3 w-3 text-white" />}
+                                                                </button>
+                                                                <span className={cn(
+                                                                    "text-sm font-bold text-[#3a302a]",
+                                                                    subtask.is_completed && "line-through text-[#3a302a]/40"
+                                                                )}>
+                                                                    {subtask.title}
+                                                                </span>
+                                                            </div>
+                                                            {subtask.note && (
+                                                                <div className="ml-8 mt-2 bg-[#3a302a]/[0.02] p-3 rounded-xl border border-[#3a302a]/5 text-[12px] text-[#3a302a]/60 leading-relaxed">
+                                                                    {subtask.note}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))
+                                                )}
+
+                                                <div className="bg-white/20 border-2 border-dashed border-[#3a302a]/10 rounded-2xl p-4 flex items-center gap-3 group hover:border-[#c2652a]/20 transition-all">
+                                                    <Plus className="h-4 w-4 text-[#3a302a]/20" />
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Add a subtask..."
+                                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-[#3a302a] placeholder:text-[#3a302a]/20 w-full"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                handleAddSubtask((e.target as HTMLInputElement).value);
+                                                                (e.target as HTMLInputElement).value = '';
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === 'comments' && (
+                                        <motion.div 
+                                            key="comments"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="space-y-8"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Discussion</h4>
+                                                <div className="flex items-center gap-2 text-[11px] font-bold text-[#3a302a]/40 uppercase tracking-wider">
+                                                    <MessageSquare className="h-3 w-3" />
+                                                    <span>{(newStory.comments || []).length} Comments</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-8">
+                                                {(newStory.comments || []).length === 0 ? (
+                                                    <div className="text-center py-12 text-[#3a302a]/20 font-bold text-sm bg-white/20 rounded-3xl border border-dashed border-[#3a302a]/5">
+                                                        No comments yet. Start the conversation.
+                                                    </div>
+                                                ) : (
+                                                    newStory.comments?.map(comment => (
+                                                        <div key={comment.id} className="flex gap-4 group">
+                                                            <Avatar className="h-10 w-10 shrink-0">
+                                                                <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a] font-bold text-xs">
+                                                                    {comment.user_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="space-y-1.5 flex-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-sm font-bold text-[#3a302a]">{comment.user_name}</span>
+                                                                        <span className="text-[10px] text-[#3a302a]/30 font-medium">
+                                                                            {comment.created_at ? new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <MoreVertical className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                                <div className="bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 shadow-sm text-sm text-[#3a302a]/70 leading-relaxed">
+                                                                    {comment.content || comment.text}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+
+                                                <div className="bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl p-2 flex items-center gap-2">
+                                                    <input 
+                                                        id="new-comment-input"
+                                                        type="text" 
+                                                        placeholder="Write a comment..."
+                                                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-[#3a302a] placeholder:text-[#3a302a]/20 w-full px-4"
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                handleAddComment((e.target as HTMLInputElement).value);
+                                                                (e.target as HTMLInputElement).value = '';
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Button 
+                                                        size="sm" 
+                                                        className="bg-[#c2652a] hover:bg-[#a65624] text-white rounded-xl font-bold px-6"
+                                                        onClick={() => {
+                                                            const input = document.getElementById('new-comment-input') as HTMLInputElement;
+                                                            handleAddComment(input.value);
+                                                            input.value = '';
+                                                        }}
+                                                    >
+                                                        Send
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    {activeTab === 'activities' && (
+                                        <motion.div 
+                                            key="activities"
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="space-y-8"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[15px] font-bold text-[#3a302a]">Activities</h4>
+                                                <button className="flex items-center gap-2 text-[11px] font-bold text-[#6366f1] hover:underline">
+                                                    <CheckCircle2 className="h-3 w-3" />
+                                                    Mark as read
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-8">
+                                                {(newStory.activity_log || []).length === 0 ? (
+                                                    <div className="text-center py-12 text-[#3a302a]/20 font-bold text-sm bg-white/20 rounded-3xl border border-dashed border-[#3a302a]/5">
+                                                        No activity logged yet.
+                                                    </div>
+                                                ) : (
+                                                    newStory.activity_log?.map(activity => (
+                                                        <div key={activity.id} className="flex gap-4">
+                                                            <Avatar className="h-10 w-10 shrink-0">
+                                                                <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a] font-bold text-xs">
+                                                                    {activity.user_name?.split(' ').map(n => n[0]).join('') || 'U'}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="space-y-3 flex-1">
+                                                                <div className="space-y-1">
+                                                                    <div className="text-[13px] text-[#3a302a]/50">
+                                                                        <span className="font-bold text-[#3a302a]">{activity.user_name}</span> {activity.type}
+                                                                    </div>
+                                                                    <div className="text-[11px] text-[#3a302a]/30 font-medium">
+                                                                        {new Date(activity.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                                                                    </div>
+                                                                </div>
+                                                                {activity.content && (
+                                                                    <div className="bg-white/40 border border-[#3a302a]/5 rounded-2xl p-4 shadow-sm text-sm text-[#3a302a]/70 leading-relaxed">
+                                                                        {activity.content}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
