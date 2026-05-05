@@ -1500,7 +1500,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                         { value: 'none', label: 'None', icon: X },
                                         { value: 'priority', label: 'By Priority', icon: Tag },
                                         { value: 'points', label: 'By Points', icon: Calendar },
-                                        { value: 'assignee', label: 'By Assignee', icon: Users }
+                                        { value: 'assignee', label: 'By Assignee', icon: Users },
+                                        { value: 'newest', label: 'By Newest', icon: History }
                                     ].map((sort) => (
                                         <Button
                                             key={sort.value}
@@ -1522,7 +1523,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => {
-                                        const sortOptions: Array<'none' | 'priority' | 'points' | 'assignee'> = ['none', 'priority', 'points', 'assignee'];
+                                        const sortOptions: Array<'none' | 'priority' | 'points' | 'assignee' | 'newest'> = ['none', 'priority', 'points', 'assignee', 'newest'];
                                         const currentIndex = sortOptions.indexOf(sortBy);
                                         const nextIndex = (currentIndex + 1) % sortOptions.length;
                                         setSortBy(sortOptions[nextIndex]);
