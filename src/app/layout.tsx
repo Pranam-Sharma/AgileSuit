@@ -10,6 +10,8 @@ export const metadata: Metadata = {
 };
 
 import { CommandPalette } from '@/components/layout/command-palette';
+import { BackgroundThemeProvider } from '@/modules/platform/background-theme-provider';
+import { PlatformBackground } from '@/modules/platform/platform-background';
 
 export default function RootLayout({
   children,
@@ -26,13 +28,18 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased animate-fade-in" suppressHydrationWarning>
+      <body className="font-body antialiased animate-fade-in relative min-h-screen" suppressHydrationWarning>
         <GoogleAnalytics />
-        <FirebaseProvider>
-          {children}
-        </FirebaseProvider>
-        <CommandPalette />
-        <Toaster />
+        <BackgroundThemeProvider>
+          <PlatformBackground />
+          <FirebaseProvider>
+            <div className="relative z-10">
+              {children}
+            </div>
+          </FirebaseProvider>
+          <CommandPalette />
+          <Toaster />
+        </BackgroundThemeProvider>
       </body>
     </html>
   );
