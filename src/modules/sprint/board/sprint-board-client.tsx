@@ -65,7 +65,12 @@ import {
     Columns,
     FileText,
     ExternalLink,
-    UserPlus
+    Share2,
+    Edit,
+    Smile,
+    ChevronUp,
+    Heart,
+    Reply
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -97,6 +102,7 @@ import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, createStory, updateStory, moveStory, deleteStory } from '@/backend/actions/stories.actions';
 import { getColumnsBySprintId, initializeDefaultColumns, createColumn, updateColumn, deleteColumn } from '@/backend/actions/columns.actions';
 import { getCapacitySwapRecommendationAction } from '@/backend/actions/ai.actions';
+import { getOrganizationMembersAction } from '@/backend/actions/teams.actions';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -231,6 +237,7 @@ const defaultColumns: Column[] = [
     { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
     { id: 'done', title: 'Done', gradient: 'green', stories: [] }
 ];
+const TAB_ID = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString();
 
 export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded = false }: { sprint?: Sprint & { id: string }, sprintId: string, isEmbedded?: boolean }) {
     const router = useRouter();
@@ -247,6 +254,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [editingColumnTitle, setEditingColumnTitle] = React.useState('');
     const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = React.useState(false);
     const [selectedColumnId, setSelectedColumnId] = React.useState<string>('');
+    const [orgMembers, setOrgMembers] = React.useState<any[]>([]);
     const [newStory, setNewStory] = React.useState<Partial<Story>>({
         title: '',
         description: '',
@@ -260,8 +268,18 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         identified_risks: [],
         acceptance_criteria: []
     });
+    const latestStoryRef = React.useRef(newStory);
+    React.useEffect(() => {
+        latestStoryRef.current = newStory;
+    }, [newStory]);
     const [isSaving, setIsSaving] = React.useState(false);
     const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const isSyncingRef = React.useRef(false);
+    const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
+    const [editingCommentText, setEditingCommentText] = React.useState('');
+    const [replyingToId, setReplyingToId] = React.useState<string | null>(null);
+    const [replyText, setReplyText] = React.useState('');
+    const [expandedCommentIds, setExpandedCommentIds] = React.useState<Set<string>>(new Set());
 
     const [visibleActivitiesCount, setVisibleActivitiesCount] = React.useState(5);
     const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = React.useState(false);
@@ -347,8 +365,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 const currentCell = getCell();
                 if (currentCell) {
                     const row = currentCell.parentElement as HTMLTableRowElement;
-                    const table = row.parentElement as HTMLTableSectionElement;
-                    const newRow = table.insertRow(row.rowIndex);
+                    const tableSection = row.parentElement as HTMLTableSectionElement;
+                    const newRow = tableSection.insertRow(row.sectionRowIndex + 1);
                     for (let i = 0; i < row.cells.length; i++) {
                         const newCell = newRow.insertCell();
                         newCell.innerHTML = 'New Cell';
@@ -376,7 +394,11 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 const cellToDeleteRow = getCell();
                 if (cellToDeleteRow) {
                     const row = cellToDeleteRow.parentElement as HTMLTableRowElement;
+                    const table = row.closest('table');
                     row.remove();
+                    if (table && table.rows.length === 0) {
+                        table.remove();
+                    }
                 }
                 break;
             case 'delete-col':
@@ -387,6 +409,17 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                     Array.from(table.rows).forEach(row => {
                         if (row.cells[colIndex]) row.cells[colIndex].remove();
                     });
+                    // If no more cells in the first row, remove the table
+                    if (table.rows[0]?.cells.length === 0) {
+                        table.remove();
+                    }
+                }
+                break;
+            case 'delete-table':
+                const cellToDelTable = getCell();
+                if (cellToDelTable) {
+                    const table = cellToDelTable.closest('table');
+                    table?.remove();
                 }
                 break;
         }
@@ -394,6 +427,49 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         // Update state
         setNewStory(prev => ({ ...prev, description: editor.innerHTML }));
     };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                const file = items[i].getAsFile();
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const base64 = event.target?.result;
+                        const img = document.createElement('img');
+                        img.src = base64 as string;
+                        img.setAttribute('style', 'max-width: 100% !important; height: auto !important; border-radius: 8px !important; display: block !important;');
+                        img.className = 'my-2 cursor-pointer';
+                        // Add tracking ID immediately so it's editable right away
+                        img.setAttribute('data-img-id', `img-${Math.random().toString(36).substr(2, 9)}`);
+                        
+                        const selection = window.getSelection();
+                        if (selection && selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            range.deleteContents();
+                            range.insertNode(img);
+                            range.setStartAfter(img);
+                            range.setEndAfter(img);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        } else {
+                            descriptionRef.current?.appendChild(img);
+                        }
+                        
+                        handleUpdateDescription(descriptionRef.current?.innerHTML || '');
+                    };
+                    reader.readAsDataURL(file);
+                }
+                break;
+            }
+        }
+    };
+
+
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
     const [dragOverStoryId, setDragOverStoryId] = React.useState<string | null>(null);
@@ -407,6 +483,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     // Auto-save logic for the Story Detail Drawer
     React.useEffect(() => {
         if (!isEditStoryDialogOpen || !editingStory) return;
+        if (isSyncingRef.current) return;
 
         // Debounce save for 1.5 seconds to avoid excessive database writes
         if (autoSaveTimerRef.current) {
@@ -439,6 +516,18 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         };
         checkUser();
     }, [supabase]);
+
+    React.useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const members = await getOrganizationMembersAction();
+                setOrgMembers(members || []);
+            } catch (error) {
+                console.error("Failed to fetch org members:", error);
+            }
+        };
+        fetchMembers();
+    }, []);
 
     // Fetch columns from database
     React.useEffect(() => {
@@ -587,10 +676,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     }, [sprintId, sprint, initialSprint, supabase]);
 
     // Fetch stories from database
-    const fetchStories = React.useCallback(async () => {
+    const fetchStories = React.useCallback(async (silent = false) => {
         if (!sprintId || isLoadingColumns) return;
 
-        setIsLoadingStories(true);
+        if (!silent) setIsLoadingStories(true);
         try {
             const { data: stories, error } = await getStoriesBySprintId(sprintId);
 
@@ -679,7 +768,36 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             fetchStories();
         };
         window.addEventListener('refresh-board', handleRefresh);
-        return () => window.removeEventListener('refresh-board', handleRefresh);
+        
+        const channel = new BroadcastChannel('sahara-board-sync');
+        
+        // Debounce the fetchStories to prevent multiple rapid refreshes
+        let fetchTimer: any = null;
+        
+        channel.onmessage = (event) => {
+            if (event.data.type === 'STORY_UPDATED' && event.data.sourceTabId !== TAB_ID) {
+                // Clear any pending fetch
+                if (fetchTimer) clearTimeout(fetchTimer);
+                
+                // If editing the story in the drawer, sync it instantly
+                if (event.data.payload) {
+                    isSyncingRef.current = true;
+                    setNewStory((prev) => prev.id === event.data.storyId ? { ...prev, ...event.data.payload } : prev);
+                    setEditingStory((prev) => prev?.id === event.data.storyId ? { ...prev, ...event.data.payload } : prev);
+                    setTimeout(() => { isSyncingRef.current = false; }, 100);
+                }
+
+                // Wait a bit before fetching to let multiple rapid updates batch together
+                fetchTimer = setTimeout(() => {
+                    fetchStories(true); // Fetch silently in background
+                }, 1000);
+            }
+        };
+
+        return () => {
+            window.removeEventListener('refresh-board', handleRefresh);
+            channel.close();
+        };
     }, [fetchStories]);
 
     const handleColumnTitleClick = (columnId: string, currentTitle: string) => {
@@ -768,11 +886,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     };
     
     const addActivity = (text: string, type: 'status' | 'update' = 'update') => {
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
         const newActivity = {
             id: crypto.randomUUID(),
             text,
             type,
-            user_name: user?.displayName || user?.email?.split('@')[0] || 'User',
+            user_name: userName,
             created_at: new Date().toISOString()
         };
         
@@ -800,19 +919,114 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         const text = commentInputRef.current?.innerText || '';
         if (!editingStory || !text.trim()) return;
         
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
         const newComment = {
             id: crypto.randomUUID(),
             text,
-            user_name: user?.displayName || user?.email?.split('@')[0] || 'User',
+            user_name: userName,
             created_at: new Date().toISOString()
         };
         
-        const updatedComments = [newComment, ...(newStory.comments || [])];
-        setNewStory(prev => ({ ...prev, comments: updatedComments }));
+        const updatedStory = { ...newStory, comments: [newComment, ...(newStory.comments || [])] };
+        setNewStory(updatedStory);
         
         if (commentInputRef.current) commentInputRef.current.innerText = '';
         
-        await handleSaveEditStory();
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).filter((c: any) => c.id !== commentId)
+        };
+        setNewStory(updatedStory);
+        await handleSaveEditStory(updatedStory);
+        toast({ title: "Comment deleted" });
+    };
+
+    const handleStartEditComment = (comment: any) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentText(comment.text);
+    };
+
+    const handleSaveCommentEdit = async (commentId: string) => {
+        if (!editingCommentText.trim()) return;
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, text: editingCommentText, edited_at: new Date().toISOString() } : c
+            )
+        };
+        setNewStory(updatedStory);
+        setEditingCommentId(null);
+        await handleSaveEditStory(updatedStory);
+        toast({ title: "Comment updated" });
+    };
+
+    const handleShareComment = (commentId: string) => {
+        const url = `${window.location.origin}${window.location.pathname}#comment-${commentId}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Link copied", description: "Direct link to comment copied to clipboard" });
+    };
+
+    const handleAddReply = async (commentId: string) => {
+        if (!replyText.trim()) return;
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        const newReply = {
+            id: crypto.randomUUID(),
+            text: replyText,
+            user_name: userName,
+            created_at: new Date().toISOString(),
+            parent_id: commentId
+        };
+
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, replies: [...(c.replies || []), newReply] } : c
+            )
+        };
+        setNewStory(updatedStory);
+        setReplyingToId(null);
+        setReplyText('');
+        setExpandedCommentIds(prev => new Set(Array.from(prev).concat(commentId)));
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const handleToggleReaction = async (commentId: string, emoji: string) => {
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        
+        const updateReactions = (reactions: any[] = []) => {
+            const existing = reactions.find(r => r.emoji === emoji);
+            if (existing) {
+                const alreadyReacted = existing.users.includes(userName);
+                if (alreadyReacted) {
+                    const newUsers = existing.users.filter((u: string) => u !== userName);
+                    if (newUsers.length === 0) return reactions.filter(r => r.emoji !== emoji);
+                    return reactions.map(r => r.emoji === emoji ? { ...r, count: newUsers.length, users: newUsers } : r);
+                } else {
+                    return reactions.map(r => r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, userName] } : r);
+                }
+            }
+            return [...reactions, { emoji, count: 1, users: [userName] }];
+        };
+
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, reactions: updateReactions(c.reactions) } : c
+            )
+        };
+        setNewStory(updatedStory);
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const toggleReplies = (commentId: string) => {
+        const newExpanded = new Set(expandedCommentIds);
+        if (newExpanded.has(commentId)) newExpanded.delete(commentId);
+        else newExpanded.add(commentId);
+        setExpandedCommentIds(newExpanded);
     };
 
     const handleUpdateDescription = (html: string) => {
@@ -989,27 +1203,28 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         setIsEditStoryDialogOpen(true);
     };
 
-    const handleSaveEditStory = async () => {
-        if (!editingStory || !newStory.title?.trim()) {
+    const handleSaveEditStory = async (storyToSave?: any) => {
+        const story = storyToSave || latestStoryRef.current;
+        if (!editingStory || !story.title?.trim()) {
             return; // Don't save if no title or not editing
         }
 
         setIsSaving(true);
         const { error } = await updateStory(editingStory.id, {
-            title: newStory.title,
-            description: newStory.description || undefined,
-            story_points: newStory.storyPoints,
-            completed_story_points: newStory.completedStoryPoints || 0,
-            assignee: newStory.assignee,
-            priority: newStory.priority as any,
-            status: newStory.status as any,
-            tags: newStory.tags,
-            due_date: newStory.due_date,
-            subtasks: newStory.subtasks,
-            comments: newStory.comments,
-            activity_log: newStory.activity_log,
-            identified_risks: (newStory as any).identified_risks,
-            acceptance_criteria: (newStory as any).acceptance_criteria
+            title: story.title,
+            description: story.description || undefined,
+            story_points: story.storyPoints,
+            completed_story_points: story.completedStoryPoints || 0,
+            assignee: story.assignee,
+            priority: story.priority as any,
+            status: story.status as any,
+            tags: story.tags,
+            due_date: story.due_date,
+            subtasks: story.subtasks,
+            comments: story.comments,
+            activity_log: story.activity_log,
+            identified_risks: (story as any).identified_risks,
+            acceptance_criteria: (story as any).acceptance_criteria
         });
         setIsSaving(false);
 
@@ -1022,6 +1237,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             setIsSaving(false);
             return;
         }
+
+        const channel = new BroadcastChannel('sahara-board-sync');
+        channel.postMessage({ type: 'STORY_UPDATED', storyId: editingStory.id, payload: story, sourceTabId: TAB_ID });
+        channel.close();
 
         // Map status to column ID
         const statusToColumnMap: Record<string, string> = {
@@ -2234,54 +2453,40 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 }
             }}>                <SheetContent 
                     hideClose={true}
-                    className="sm:max-w-[1100px] w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-3xl border-l border-none shadow-2xl flex flex-col"
+                    className="sm:max-w-[600px] w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-3xl border-l border-none shadow-2xl flex flex-col"
                 >
-                    <div className="sr-only">
-                        <SheetHeader>
-                            <SheetTitle>Decision Intelligence Center</SheetTitle>
-                            <SheetDescription>Strategic intelligence engine and execution guide.</SheetDescription>
-                        </SheetHeader>
-                    </div>
-
+                    <SheetTitle className="sr-only">Story Details</SheetTitle>
                     {/* Top Control Bar */}
-                    <div className="flex items-center justify-between p-8 pb-4">
+                    <div className="flex items-center justify-between p-6 pb-4 border-b border-[#3a302a]/5 sticky top-0 bg-[#faf5ee] z-10">
                         <div className="flex items-center gap-4">
-                            <div className="bg-[#3a302a]/10 p-2 rounded-lg">
-                                <Brain className="h-4 w-4 text-[#3a302a]" />
-                            </div>
                             <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3a302a]/40">
                                 SAHARA-{newStory.id?.slice(-4).toUpperCase() || 'NEW'}
                             </span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 bg-[#3a302a]/5 p-1 rounded-xl">
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
-                                    <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
-                                    <Link2 className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
-                                    <Copy className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-[#3a302a]/40 hover:text-[#c2652a] hover:bg-white/50 transition-all">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => window.open(`/sprint/${sprintId}/board/story/${newStory.id}`, '_blank')}
+                                className="h-9 rounded-lg border-[#c2652a] text-[#c2652a] hover:bg-[#c2652a] hover:text-white transition-all font-bold text-xs"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                Open Full Details
+                            </Button>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
                                 onClick={() => setIsEditStoryDialogOpen(false)}
-                                className="h-11 w-11 bg-[#3a302a]/5 hover:bg-[#c2652a] text-[#3a302a]/40 hover:text-white rounded-full transition-all group"
+                                className="h-9 w-9 bg-[#3a302a]/5 hover:bg-[#c2652a] text-[#3a302a]/40 hover:text-white rounded-full transition-all group"
                             >
-                                <X className="h-5 w-5" />
+                                <X className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
 
-                    <div className="flex-1 px-10 py-2 space-y-10 pb-12">
-                        {/* 1. Header & Metric Chips */}
-                        <div className="space-y-6">
+                    <div className="flex-1 px-8 py-6 space-y-8 pb-12">
+                        {/* Title */}
+                        <div className="space-y-1">
                             <h1 
                                 contentEditable
                                 suppressContentEditableWarning
@@ -2289,783 +2494,439 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     const newTitle = e.currentTarget.innerText;
                                     if (newTitle.trim()) {
                                         setNewStory(prev => ({ ...prev, title: newTitle }));
+                                        handleSaveEditStory();
                                     }
                                 }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        e.currentTarget.blur();
-                                    }
-                                }}
-                                className="text-[42px] font-eb-garamond font-bold text-[#3a302a] leading-tight tracking-tight focus:outline-none focus:bg-[#3a302a]/5 px-2 -ml-2 rounded-xl transition-all cursor-text"
+                                className="text-[28px] font-eb-garamond font-bold text-[#3a302a] leading-tight tracking-tight focus:outline-none focus:bg-[#3a302a]/5 px-2 -ml-2 rounded-xl transition-all cursor-text"
                             >
                                 {newStory.title || "Untitled Story"}
                             </h1>
-                            
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 px-4 py-2 bg-red-50/50 rounded-full border border-red-100/50">
-                                    <Clock className="h-3.5 w-3.5 text-red-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-red-700">ETA Risk: 48h Threshold</span>
-                                </div>
-                                <div className="flex items-center gap-2 px-4 py-2 bg-orange-50/50 rounded-full border border-orange-100/50">
-                                    <Users className="h-3.5 w-3.5 text-orange-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-orange-700">3 Engineers Blocked</span>
-                                </div>
-                                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50/50 rounded-full border border-blue-100/50">
-                                    <Zap className="h-3.5 w-3.5 text-blue-500" />
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">High Velocity Opportunity</span>
-                                </div>
+                        </div>
+
+                        {/* Basic Attributes Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Status */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Status</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <div className={cn("h-2 w-2 rounded-full", getStatusDotColor(newStory.status || 'todo'))} />
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">{getStatusLabel(newStory.status || 'todo')}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        {['todo', 'in_progress', 'in_review', 'done', 'blocked'].map((status) => (
+                                            <DropdownMenuItem 
+                                                key={status}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, status: status as any }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <div className={cn("h-2 w-2 rounded-full", getStatusDotColor(status))} />
+                                                <span className="text-xs font-bold">{getStatusLabel(status)}</span>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
 
-                            {/* 2. Strategic Recommendation (Dark) */}
-                            <div className="relative overflow-hidden bg-[#2a2420] rounded-[32px] p-8 text-white shadow-2xl">
-                                <div className="relative z-10 flex items-center justify-between gap-12">
-                                    <div className="space-y-3 flex-1">
-                                        <div className="flex items-center gap-2 text-[#c2652a]">
-                                            <Info className="h-4 w-4" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Strategic Recommendation</span>
+                            {/* Priority */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Priority</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1 capitalize">{newStory.priority || 'Medium'}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <p className="text-[16px] leading-relaxed">
-                                                <span className="font-bold">Immediate <span className="text-[#c2652a]">Technical Spike required</span> for Auth Gateway.</span>
-                                                <span className="text-white/40 ml-2">Historical data shows 85% probability of resolution if tackled before Sprint Midpoint.</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <Button className="bg-red-500 hover:bg-red-600 text-white border-none text-[10px] font-black px-6 py-2 rounded-full h-auto">URGENT ACTION</Button>
-                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Reason: Downstream Critical Path</span>
-                                    </div>
-                                </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        {['low', 'medium', 'high', 'urgent'].map((p) => (
+                                            <DropdownMenuItem 
+                                                key={p}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, priority: p as any }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="text-xs font-bold capitalize"
+                                            >
+                                                {p}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
 
-                            {/* Status and Progress Bar */}
-                            <div className="flex items-center justify-between pt-2">
-                                <div className="flex items-center gap-8 flex-1 max-w-2xl">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <div className="flex items-center gap-3 px-5 py-2.5 bg-white border border-[#3a302a]/10 rounded-2xl shadow-sm cursor-pointer hover:border-[#c2652a]/30 hover:shadow-md transition-all active:scale-95 group">
-                                                <div className={cn("h-3 w-3 rounded-full", getStatusDotColor(newStory.status || 'todo'))} />
-                                                <span className="text-[14px] font-bold text-[#3a302a]">{getStatusLabel(newStory.status || 'todo')}</span>
-                                                <ChevronDown className="h-4 w-4 text-[#3a302a]/20 group-hover:text-[#c2652a] transition-all" />
-                                            </div>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="w-[200px] p-2 bg-white border-[#3a302a]/5 rounded-2xl shadow-xl">
-                                            {['todo', 'in_progress', 'in_review', 'done', 'blocked'].map((status) => (
-                                                <DropdownMenuItem 
-                                                    key={status}
-                                                    onClick={() => {
-                                                        const oldStatus = newStory.status || 'todo';
-                                                        setNewStory(prev => ({ ...prev, status: status as any }));
-                                                        addActivity(`Changed status from ${getStatusLabel(oldStatus)} to ${getStatusLabel(status)}`, 'status');
-                                                        handleSaveEditStory();
-                                                    }}
-                                                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#c2652a]/5 focus:bg-[#c2652a]/5 outline-none transition-colors"
-                                                >
-                                                    <div className={cn("h-2.5 w-2.5 rounded-full", getStatusDotColor(status))} />
-                                                    <span className="text-[13px] font-bold text-[#3a302a]">{getStatusLabel(status)}</span>
-                                                    {newStory.status === status && <Check className="h-3.5 w-3.5 text-[#c2652a] ml-auto" />}
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    
-                                    <div className="flex-1 flex items-center gap-4">
-                                        <div className="h-2 flex-1 bg-[#3a302a]/5 rounded-full overflow-hidden">
-                                            <div 
-                                                className="h-full bg-[#c2652a] transition-all duration-1000 ease-out" 
-                                                style={{ width: `${newStory.storyPoints && newStory.storyPoints > 0 ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%` }} 
-                                            />
+                            {/* Assignee */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Assignee</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <Avatar className="h-4 w-4">
+                                                <AvatarFallback className="bg-[#c2652a] text-white text-[8px] font-bold">
+                                                    {newStory.assignee ? newStory.assignee.substring(0, 2).toUpperCase() : '??'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">{newStory.assignee || 'Unassigned'}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
                                         </div>
-                                        <span className="text-[11px] font-black text-[#3a302a]/30 uppercase tracking-widest whitespace-nowrap">
-                                            {newStory.storyPoints && newStory.storyPoints > 0 ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}% Execution
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-12">
-                                    <div className="flex flex-col items-end gap-1">
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">Story Progress</span>
-                                            <Info className="h-3 w-3 text-[#3a302a]/20" />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        <DropdownMenuItem 
+                                            onClick={() => {
+                                                setNewStory(prev => ({ ...prev, assignee: undefined }));
+                                                handleSaveEditStory();
+                                            }}
+                                            className="text-xs font-bold"
+                                        >
+                                            Unassigned
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        {orgMembers.map((member) => (
+                                            <DropdownMenuItem 
+                                                key={member.id}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, assignee: member.display_name }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="text-xs font-bold"
+                                            >
+                                                {member.display_name}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+
+                            {/* Due Date */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Due Date</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <CalendarIcon className="h-3 w-3 text-[#3a302a]/40" />
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">
+                                                {newStory.due_date ? format(new Date(newStory.due_date), "MMM d, yyyy") : 'Set Date'}
+                                            </span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
                                         </div>
-                                        <div className="flex items-center gap-2 bg-white/50 border border-[#3a302a]/5 rounded-xl px-3 py-1">
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={newStory.due_date ? new Date(newStory.due_date) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setNewStory(prev => ({ ...prev, due_date: date.toISOString() }));
+                                                    handleSaveEditStory();
+                                                }
+                                            }}
+                                            initialFocus
+                                        />
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+
+                        {/* Story Points & Progress */}
+                        <div className="bg-white border border-[#3a302a]/10 rounded-xl p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4 flex-1">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Completed Points</label>
+                                        <div className="flex items-center gap-2">
                                             <input 
                                                 type="number"
-                                                value={(newStory.completedStoryPoints === 0 || !newStory.completedStoryPoints) ? "" : newStory.completedStoryPoints}
-                                                placeholder="0"
-                                                onFocus={(e) => e.target.select()}
+                                                value={newStory.completedStoryPoints || ''}
                                                 onChange={(e) => {
                                                     const val = parseInt(e.target.value) || 0;
                                                     setNewStory(prev => ({ ...prev, completedStoryPoints: val }));
                                                     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-                                                    autoSaveTimerRef.current = setTimeout(() => {
-                                                        addActivity(`Log: Completed ${val} SP out of ${newStory.storyPoints} SP`);
-                                                        handleSaveEditStory();
-                                                    }, 1500);
+                                                    autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
                                                 }}
-                                                className="w-14 bg-transparent text-right text-[18px] font-bold text-green-600 placeholder:text-green-600/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                className="w-12 border border-[#3a302a]/10 rounded text-center text-sm font-bold p-1"
+                                                placeholder="0"
                                             />
-                                            <span className="text-[18px] font-bold text-[#3a302a]/20">/</span>
-                                            <span className="text-[18px] font-bold text-[#3a302a]/40">{newStory.storyPoints || 0}</span>
-                                            <span className="text-[10px] font-black text-[#3a302a]/20 ml-1 uppercase">SP</span>
+                                            <span className="text-sm font-bold text-[#3a302a]/40">/</span>
+                                            <input 
+                                                type="number"
+                                                value={newStory.storyPoints || ''}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    setNewStory(prev => ({ ...prev, storyPoints: val }));
+                                                    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                                                    autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+                                                }}
+                                                className="w-12 border border-[#3a302a]/10 rounded text-center text-sm font-bold p-1"
+                                                placeholder="0"
+                                            />
                                         </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">Total Value</span>
-                                        <span className="text-[20px] font-bold text-[#3a302a]">{newStory.storyPoints || 0} SP</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Three Card Grid */}
-                        <div className="grid grid-cols-3 gap-6">
-                            {/* Intelligence Summary */}
-                            <div className="bg-[#2a2420] rounded-[32px] p-8 text-white space-y-8 shadow-xl relative overflow-hidden">
-                                <div className="flex items-center justify-between relative z-10">
-                                    <div className="flex items-center gap-3">
-                                        <Sparkles className="h-4 w-4 text-[#c2652a]" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Intelligence Summary</span>
-                                    </div>
-                                    <Badge className="bg-green-500/20 text-green-400 border-none text-[8px] font-black px-2 py-1">92% MATCH</Badge>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-4 relative z-10">
-                                    <div className="space-y-1">
-                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Recurrence</span>
-                                        <p className="text-[24px] font-bold">3x Sprints</p>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Success Prob.</span>
-                                        <p className="text-[24px] font-bold text-green-400">85.4%</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 relative z-10">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-[#c2652a] uppercase tracking-widest">Primary Recommendation</span>
-                                        <Badge className="bg-red-500 text-white border-none text-[8px] font-black px-2 py-0.5">HIGH TRUST</Badge>
-                                    </div>
-                                    <p className="text-[14px] leading-relaxed text-white/80">
-                                        Historical bottlenecks identified in Code Review. <span className="text-[#c2652a] font-bold underline cursor-pointer">Escalate for immediate review</span> to prevent the 3-day rollover risk.
-                                    </p>
-                                </div>
-                                <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#c2652a]/5 rounded-full blur-[40px] -mr-16 -mb-16" />
-                            </div>
-
-                            {/* Impact Analysis */}
-                            <div className="bg-white rounded-[32px] p-8 space-y-8 shadow-sm border border-[#3a302a]/5">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <AlertTriangle className="h-4 w-4 text-red-500" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40">Impact Analysis</span>
-                                    </div>
-                                    <Badge className="bg-red-50 text-red-500 border-none text-[8px] font-black px-2 py-1">CRITICAL</Badge>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <span className="text-[9px] font-black text-[#3a302a]/30 uppercase tracking-widest">Immediate Impact</span>
-                                    <div className="p-4 bg-red-50/30 border border-red-100 rounded-2xl flex items-center justify-between">
-                                        <span className="text-[13px] font-bold text-red-900">3 Engineers Blocked</span>
-                                        <span className="text-[9px] font-black text-red-600 uppercase">Active</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4 pt-2">
-                                    <span className="text-[9px] font-black text-[#3a302a]/30 uppercase tracking-widest">Downstream Consequence</span>
-                                    <ul className="space-y-3">
-                                        <li className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                                            2.5 Day Milestone Delay
-                                        </li>
-                                        <li className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
-                                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
-                                            Auth Gateway Vulnerability
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* Systemic Context */}
-                            <div className="bg-white rounded-[32px] p-8 space-y-6 shadow-sm border border-[#3a302a]/5">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40 block">Systemic Context</span>
-                                
-                                <div className="space-y-3">
-                                    {/* Assignee */}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl cursor-pointer hover:bg-[#3a302a]/[0.05] transition-all active:scale-[0.98]">
-                                                <div className="flex items-center gap-3">
-                                                    <Users className="h-3.5 w-3.5 text-[#3a302a]/30" />
-                                                    <span className="text-[12px] font-bold text-[#3a302a]">Assignee</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[11px] font-bold text-[#3a302a]/60">{newStory.assignee || 'Unassigned'}</span>
-                                                    <Avatar className="h-6 w-6">
-                                                        <AvatarFallback className="bg-[#c2652a] text-white text-[9px] font-bold">
-                                                            {newStory.assignee ? newStory.assignee.substring(0, 2).toUpperCase() : '??'}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                </div>
-                                            </div>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-[200px] p-2 bg-white border-[#3a302a]/5 rounded-2xl shadow-xl">
-                                            {['Pranam', 'Alice', 'Bob', 'Charlie'].map((name) => (
-                                                <DropdownMenuItem 
-                                                    key={name}
-                                                    onClick={() => {
-                                                        setNewStory(prev => ({ ...prev, assignee: name }));
-                                                        addActivity(`Assigned to ${name}`);
-                                                        handleSaveEditStory();
-                                                    }}
-                                                    className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer hover:bg-[#c2652a]/5 focus:bg-[#c2652a]/5 outline-none transition-colors"
-                                                >
-                                                    <Avatar className="h-5 w-5">
-                                                        <AvatarFallback className="bg-[#3a302a]/10 text-[#3a302a] text-[8px] font-bold">{name.substring(0,2).toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-[12px] font-bold text-[#3a302a]">{name}</span>
-                                                    {newStory.assignee === name && <Check className="h-3 w-3 text-[#c2652a] ml-auto" />}
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-
-                                    {/* Story Points */}
-                                    <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl group hover:border-[#c2652a]/30 transition-all">
-                                        <div className="flex items-center gap-3">
-                                            <Zap className="h-3.5 w-3.5 text-[#3a302a]/30 group-hover:text-[#c2652a] transition-all" />
-                                            <span className="text-[12px] font-bold text-[#3a302a]">Story Points</span>
-                                        </div>                                        <input 
-                                            type="number"
-                                            value={(newStory.storyPoints === 0 || !newStory.storyPoints) ? "" : newStory.storyPoints}
-                                            placeholder="0"
-                                            onFocus={(e) => e.target.select()}
-                                            onChange={(e) => {
-                                                const val = parseInt(e.target.value) || 0;
-                                                setNewStory(prev => ({ ...prev, storyPoints: val }));
-                                                if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-                                                autoSaveTimerRef.current = setTimeout(() => {
-                                                    addActivity(`Updated story points to ${val} SP`);
-                                                    handleSaveEditStory();
-                                                }, 1500);
-                                            }}
-                                            className="w-16 bg-transparent text-right text-[11px] font-black text-[#c2652a] placeholder:text-[#c2652a]/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                        />
-
-                                    </div>
-
-                                    {/* Deadline Risk */}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl group cursor-pointer hover:bg-[#3a302a]/[0.05] transition-all active:scale-[0.98]">
-                                                <div className="flex items-center gap-3">
-                                                    <CalendarIcon className="h-3.5 w-3.5 text-[#3a302a]/30" />
-                                                    <span className="text-[12px] font-bold text-[#3a302a]">Deadline Risk</span>
-                                                </div>
-                                                <span className={cn(
-                                                    "text-[11px] font-bold",
-                                                    newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) ? "text-red-500" : "text-[#3a302a]/40"
-                                                )}>
-                                                    {newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) 
-                                                        ? format(new Date(newStory.due_date), "MMM d, yyyy") 
-                                                        : 'Set Deadline'}
-                                                </span>
-                                            </div>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent className="w-auto p-4 bg-white border-[#3a302a]/5 rounded-2xl shadow-2xl z-[100]" align="end">
-                                            <div className="space-y-4">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={newStory.due_date && !isNaN(new Date(newStory.due_date).getTime()) ? new Date(newStory.due_date) : undefined}
-                                                    onSelect={(date) => {
-                                                        if (!date) return;
-                                                        const dateStr = date.toISOString();
-                                                        const formattedDate = format(date, "MMM d, yyyy");
-                                                        setNewStory(prev => ({ ...prev, due_date: dateStr }));
-                                                        addActivity(`Set deadline risk to ${formattedDate}`);
-                                                    }}
-                                                    initialFocus
-                                                    className="rounded-2xl border-none"
-                                                />
-                                                <DropdownMenuItem className="p-0 focus:bg-transparent hover:bg-transparent">
-                                                    <Button 
-                                                        className="w-full bg-[#c2652a] hover:bg-[#a15423] text-white rounded-xl py-6 gap-2 shadow-lg shadow-[#c2652a]/20 transition-all active:scale-[0.98]"
-                                                        onClick={() => {
-                                                            handleSaveEditStory();
-                                                        }}
-                                                    >
-                                                        <Check className="h-4 w-4" />
-                                                        <span className="font-bold text-[13px]">Confirm Selection</span>
-                                                    </Button>
-                                                </DropdownMenuItem>
-                                            </div>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-
-                                    {/* Goal Mapping */}
-                                    <div className="flex items-center justify-between p-3.5 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-2xl">
-                                        <div className="flex items-center gap-3">
-                                            <Target className="h-3.5 w-3.5 text-[#3a302a]/30" />
-                                            <span className="text-[12px] font-bold text-[#3a302a]">Goal Mapping</span>
-                                        </div>
-                                        <Badge className="bg-[#3a302a] text-white border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase cursor-pointer hover:bg-[#c2652a] transition-colors">
-                                            {newStory.tags?.[0] || 'Sprint 7 Core'}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Systemic Dependency Flow */}
-                        <div className="space-y-8">
-                            <div className="flex items-center justify-between">
-                                <h4 className="text-[20px] font-eb-garamond font-bold text-[#3a302a]">Systemic Dependency Flow</h4>
-                                <div className="flex items-center gap-2">
-                                    <div className="h-2 w-2 rounded-full bg-blue-400" />
-                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Pressure flowing downstream</span>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between gap-0">
-                                {/* Upstream */}
-                                <div className="flex-1 bg-white border border-[#3a302a]/10 rounded-[24px] p-6 relative">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Blocked By</span>
-                                        <Badge className="bg-blue-50 text-blue-600 border-none text-[8px] font-black">STABLE</Badge>
-                                    </div>
-                                    <p className="text-[15px] font-bold text-[#3a302a]">Database Migration</p>
-                                    <p className="text-[10px] font-black text-[#3a302a]/20 uppercase mt-1">SAHARA-9281</p>
-                                </div>
-
-                                <div className="w-12 flex justify-center">
-                                    <ArrowRight className="h-5 w-5 text-[#3a302a]/10" />
-                                </div>
-
-                                {/* Current (Bottleneck) */}
-                                <div className="flex-[1.2] bg-[#c2652a] rounded-[28px] p-8 text-white shadow-2xl relative scale-105 z-10 border-4 border-[#faf5ee]">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Active Bottleneck</span>
-                                        <Sparkles className="h-4 w-4 text-white/60" />
-                                    </div>
-                                    <p className="text-[20px] font-bold">This Strategic Objective</p>
-                                    <div className="flex items-center gap-3 mt-4">
-                                        <Badge className="bg-white/20 text-white border-none text-[8px] font-black uppercase">High Load</Badge>
-                                        <span className="text-[10px] font-black text-white/60 uppercase">Impact Score: 9.2</span>
-                                    </div>
-                                </div>
-
-                                <div className="w-12 flex justify-center">
-                                    <ArrowRight className="h-5 w-5 text-[#3a302a]/10" />
-                                </div>
-
-                                {/* Downstream */}
-                                <div className="flex-1 bg-white border border-[#3a302a]/10 rounded-[24px] p-6 relative">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <span className="text-[9px] font-black text-red-600 uppercase tracking-widest">Blocking</span>
-                                        <Badge className="bg-red-50 text-red-600 border-none text-[8px] font-black">CRITICAL</Badge>
-                                    </div>
-                                    <p className="text-[15px] font-bold text-[#3a302a]">Frontend Integration</p>
-                                    <p className="text-[10px] font-black text-[#3a302a]/20 uppercase mt-1">SAHARA-9285</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Main Execution Workspace */}
-                        <div className="grid grid-cols-[1fr,320px] gap-12">
-                            <div className="space-y-12">
-                                <div className="space-y-8">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-[24px] font-eb-garamond font-bold text-[#3a302a]">Execution Strategy</h4>
                                     </div>
                                     
-                                    <div className="grid grid-cols-1 gap-8">
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <Target className="h-4 w-4 text-[#c2652a]" />
-                                                    <span className="text-[11px] font-black uppercase tracking-widest text-[#3a302a]/40">Description</span>
-                                                </div>
-                                                
-                                                {/* Toolbar moved inside the box container below */}
-                                            </div>
-                                            
-                                            <div className={cn(
-                                                "bg-white border transition-all duration-300 rounded-[32px] shadow-sm min-h-[220px] overflow-hidden flex flex-col",
-                                                isDescriptionFocused ? "border-[#c2652a] shadow-lg ring-4 ring-[#c2652a]/5" : "border-[#3a302a]/10"
-                                            )}>
-                                                {/* Integrated Toolbar - Only visible on focus */}
-                                                <AnimatePresence>
-                                                    {isDescriptionFocused && (
-                                                        <motion.div 
-                                                            initial={{ height: 0, opacity: 0 }}
-                                                            animate={{ height: 'auto', opacity: 1 }}
-                                                            exit={{ height: 0, opacity: 0 }}
-                                                            className="overflow-hidden border-b border-[#3a302a]/5"
-                                                        >
-                                                            <div className="flex items-center gap-1 px-4 py-2 bg-[#faf5ee]/30">
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <Bold className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <Italic className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('list')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <List className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('ordered')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <ListOrdered className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('todo')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <ListTodo className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('table')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Insert Table">
-                                                                    <Table className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-row')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Add Row">
-                                                                    <Rows className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-col')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5" title="Add Column">
-                                                                    <Columns className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                                <div className="w-[1px] h-4 bg-[#3a302a]/10 mx-1" />
-                                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('link')} className="h-8 w-8 rounded-lg hover:bg-[#3a302a]/5">
-                                                                    <Link2 className="h-4 w-4 text-[#3a302a]/60" />
-                                                                </Button>
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                                
-                                                <div
-                                                    ref={descriptionRef as any}
-                                                    contentEditable={true}
-                                                    onBlur={(e) => {
-                                                        handleUpdateDescription(e.currentTarget.innerHTML);
-                                                        setIsDescriptionFocused(false);
-                                                    }}
-                                                    onFocus={() => setIsDescriptionFocused(true)}
-                                                    className="w-full bg-transparent border-none p-8 focus-visible:outline-none min-h-[220px] h-full text-[15px] leading-relaxed text-[#3a302a]/70 font-medium cursor-text prose prose-sm max-w-none prose-p:my-0 prose-ul:my-2"
-                                                    dangerouslySetInnerHTML={{ __html: newStory.description || "" }}
-                                                />
-                                            </div>
+                                    <div className="flex-1 px-4 space-y-2">
+                                        <div className="flex justify-between items-center text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">
+                                            <span>Progress</span>
+                                            <span>{(newStory.storyPoints && newStory.storyPoints > 0) ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%</span>
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* Tabs */}
-                                <div className="space-y-10">
-                                    <div className="flex gap-10 border-b border-[#3a302a]/5 overflow-x-auto no-scrollbar">
-                                        {[
-                                            { id: 'comments', label: 'Comments', count: newStory.comments?.length || 0 },
-                                            { id: 'checklist', label: 'Checklist', count: newStory.subtasks?.length || 0 },
-                                            { id: 'subtasks', label: 'Subtasks', count: 0 },
-                                            { id: 'activities', label: 'Activities', count: newStory.activity_log?.length || 0 },
-                                        ].map(tab => (
-                                            <button 
-                                                key={tab.id}
-                                                onClick={() => setActiveTab(tab.id as any)}
-                                                className={cn(
-                                                    "pb-5 text-[15px] font-bold transition-all relative flex items-center gap-3 whitespace-nowrap",
-                                                    activeTab === tab.id ? "text-[#3a302a]" : "text-[#3a302a]/30"
-                                                )}
-                                            >
-                                                {tab.label}
-                                                {tab.count && <span className="text-[10px] font-black bg-[#3a302a]/5 px-1.5 py-0.5 rounded-md">{tab.count}</span>}
-                                                {activeTab === tab.id && <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#c2652a]" />}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="min-h-[300px]">
-                                        <AnimatePresence mode="wait">
-                                            {activeTab === 'comments' && (
-                                                <motion.div key="comments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
-                                                    {/* Comment Input */}
-                                                    <div className="flex items-center gap-4 py-2">
-                                                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
-                                                            <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a]/40 text-xs font-bold">ME</AvatarFallback>
-                                                        </Avatar>
-                                                        <div className={cn(
-                                                            "flex-1 flex items-center bg-white border rounded-full px-6 py-1.5 transition-all duration-300",
-                                                            isCommentFocused ? "border-[#c2652a] shadow-md" : "border-[#3a302a]/10"
-                                                        )}>
-                                                            <div 
-                                                                ref={commentInputRef}
-                                                                contentEditable
-                                                                onFocus={() => setIsCommentFocused(true)}
-                                                                onBlur={() => setIsCommentFocused(false)}
-                                                                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#3a302a] leading-relaxed py-1 empty:before:content-[attr(data-placeholder)] empty:before:text-[#3a302a]/30 min-h-[24px] max-h-[120px] overflow-y-auto no-scrollbar"
-                                                                data-placeholder="Add a comment..."
-                                                                onKeyDown={(e) => {
-                                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                                        e.preventDefault();
-                                                                        handleAddComment();
-                                                                    }
-                                                                }}
-                                                            />
-                                                            <button 
-                                                                onClick={handleAddComment}
-                                                                className="ml-2 text-[#3a302a]/20 hover:text-[#c2652a] transition-all p-1"
-                                                            >
-                                                                <Send className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Comment Feed */}
-                                                    <div className="space-y-8 px-2">
-                                                        {(newStory.comments || []).map((comment: any, i: number) => (
-                                                            <div key={i} className="flex gap-4 group">
-                                                                <Avatar className="h-10 w-10 border-2 border-white shadow-md">
-                                                                    <AvatarFallback className={cn(
-                                                                        "text-white text-xs font-bold",
-                                                                        i === 0 ? "bg-[#c2652a]" : "bg-[#3a302a]"
-                                                                    )}>{comment.user_name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-                                                                </Avatar>
-                                                                <div className="flex-1 space-y-2">
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className="text-[14px] font-bold text-[#3a302a]">{comment.user_name}</span>
-                                                                        <span className="text-[11px] font-medium text-[#3a302a]/20">{new Date(comment.created_at).toLocaleDateString()}</span>
-                                                                        {comment.pinned && <Badge className="bg-[#c2652a]/10 text-[#c2652a] border-none text-[8px] font-black px-1.5 py-0.5 uppercase tracking-widest">Pinned</Badge>}
-                                                                    </div>
-                                                                    <p className="text-[14px] leading-relaxed text-[#3a302a]/70 font-medium">
-                                                                        {comment.text}
-                                                                    </p>
-                                                                    <div className="flex items-center gap-6 pt-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                                        <button className="text-[11px] font-bold text-[#3a302a]/30 hover:text-[#c2652a]">Reply</button>
-                                                                        <button className="flex items-center gap-1.5 text-[11px] font-bold text-[#3a302a]/30 hover:text-red-500">
-                                                                            <ThumbsUp className="h-3 w-3" />
-                                                                            {comment.likes > 0 && comment.likes}
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-
-                                            {activeTab === 'checklist' && (
-                                                <motion.div key="checklist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                                                    <div className="bg-white/50 border border-[#3a302a]/5 rounded-[32px] p-8 space-y-6">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-3">
-                                                                <Sparkles className="h-4 w-4 text-purple-500" />
-                                                                <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">Intelligent Checklist Generator</span>
-                                                            </div>
-                                                            <button className="text-[9px] font-black text-purple-600 uppercase tracking-widest hover:underline">Regenerate</button>
-                                                        </div>
-                                                        
-                                                        <div className="space-y-3">
-                                                            {(newStory.subtasks || []).map((item: any, i: number) => (
-                                                                <div 
-                                                                    key={i} 
-                                                                    onClick={() => handleToggleSubtask(item.id)}
-                                                                    className="flex items-center justify-between p-5 bg-white border border-[#3a302a]/5 rounded-2xl group hover:border-[#c2652a]/20 transition-all cursor-pointer"
-                                                                >
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className={cn(
-                                                                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                                                            item.is_completed ? "bg-[#c2652a] border-[#c2652a]" : "border-[#3a302a]/10"
-                                                                        )}>
-                                                                            {item.is_completed && <Check className="h-3 w-3 text-white" strokeWidth={4} />}
-                                                                        </div>
-                                                                        <span className={cn(
-                                                                            "text-[14px] font-bold transition-all",
-                                                                            item.is_completed ? "text-[#3a302a]/40 line-through" : "text-[#3a302a]"
-                                                                        )}>{item.title}</span>
-                                                                    </div>
-                                                                    <div className="h-8 w-8 rounded-full border-2 border-[#3a302a]/5 flex items-center justify-center group-hover:border-[#c2652a]/20 group-hover:bg-[#c2652a]/5 transition-all">
-                                                                        <Plus className="h-4 w-4 text-[#3a302a]/20 group-hover:text-[#c2652a]" />
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-
-                                            {activeTab === 'subtasks' && (
-                                                <motion.div key="subtasks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                                                    <div className="flex items-center justify-between px-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <Link2 className="h-4 w-4 text-[#3a302a]/40" />
-                                                            <span className="text-[11px] font-black uppercase tracking-widest text-[#3a302a]/40">Linked Evidence & References</span>
-                                                        </div>
-                                                        <Button variant="ghost" size="sm" className="h-8 text-[10px] font-black uppercase tracking-widest text-[#c2652a] hover:bg-[#c2652a]/5">
-                                                            Attach Task
-                                                        </Button>
-                                                    </div>
-                                                    
-                                                    <div className="grid grid-cols-1 gap-4">
-                                                        {[
-                                                            { id: 'SAHARA-9281', title: 'Auth Gateway Security Audit', status: 'Done', color: 'green' },
-                                                            { id: 'SAHARA-125', title: 'Firebase Admin SDK Implementation', status: 'In Progress', color: 'orange' }
-                                                        ].map((task, i) => (
-                                                            <div key={i} className="p-6 bg-white border border-[#3a302a]/5 rounded-[24px] flex items-center justify-between group hover:border-[#c2652a]/20 transition-all cursor-pointer">
-                                                                <div className="flex items-center gap-5">
-                                                                    <div className={cn(
-                                                                        "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
-                                                                        task.color === 'green' ? "bg-green-50" : "bg-orange-50"
-                                                                    )}>
-                                                                        <FileText className={cn(
-                                                                            "h-5 w-5",
-                                                                            task.color === 'green' ? "text-green-600" : "text-orange-600"
-                                                                        )} />
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-widest">{task.id}</span>
-                                                                            <Badge className={cn(
-                                                                                "border-none text-[8px] font-black px-1.5 py-0.5 uppercase",
-                                                                                task.color === 'green' ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                                                                            )}>{task.status}</Badge>
-                                                                        </div>
-                                                                        <p className="text-[14px] font-bold text-[#3a302a]">{task.title}</p>
-                                                                    </div>
-                                                                </div>
-                                                                <ExternalLink className="h-4 w-4 text-[#3a302a]/10 group-hover:text-[#c2652a] transition-all" />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-
-                                            {activeTab === 'activities' && (
-                                                <motion.div key="activities" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8 px-4 pb-12">
-                                                    {(newStory.activity_log || []).slice(0, visibleActivitiesCount).map((activity: any, i: number) => (
-                                                        <div key={i} className="flex gap-6 relative">
-                                                            {i !== (Math.min(visibleActivitiesCount, newStory.activity_log?.length || 0)) - 1 && <div className="absolute left-[15px] top-8 bottom-[-32px] w-[2px] bg-[#3a302a]/5" />}
-                                                            <div className="h-8 w-8 rounded-full bg-white border border-[#3a302a]/5 flex items-center justify-center shrink-0 shadow-sm z-10">
-                                                                {activity.type === 'status' ? <div className="h-2 w-2 rounded-full bg-[#c2652a]" /> : <Activity className="h-3 w-3 text-blue-500" />}
-                                                            </div>
-                                                            <div className="pt-1.5 space-y-1">
-                                                                <p className="text-[14px] font-bold text-[#3a302a]">{activity.text || activity.message}</p>
-                                                                <div className="flex items-center gap-2 text-[11px] font-medium text-[#3a302a]/30">
-                                                                    <span>{activity.user_name || 'System'}</span>
-                                                                    <span className="h-1 w-1 rounded-full bg-[#3a302a]/10" />
-                                                                    <span>{activity.created_at ? new Date(activity.created_at).toLocaleDateString() : 'Just now'}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-
-                                                    {(newStory.activity_log?.length || 0) > visibleActivitiesCount && (
-                                                        <div className="flex justify-center pt-4">
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                onClick={() => setVisibleActivitiesCount(prev => prev + 5)}
-                                                                className="group flex flex-col items-center gap-2 hover:bg-transparent"
-                                                            >
-                                                                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#c2652a]">
-                                                                    <span>Show 5 More</span>
-                                                                    <span className="text-[#3a302a]/20">({(newStory.activity_log?.length || 0) - visibleActivitiesCount} left)</span>
-                                                                </div>
-                                                                <ChevronDown className="h-4 w-4 text-[#c2652a] animate-bounce group-hover:scale-110 transition-all" />
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
+                                        <div className="h-2 w-full bg-[#3a302a]/5 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-[#c2652a] transition-all" 
+                                                style={{ width: `${(newStory.storyPoints && newStory.storyPoints > 0) ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%` }} 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Sidebar Action Center */}
-                            <div className="space-y-12">
-                                <div className="space-y-6">
-                                    <h4 className="text-[10px] font-black text-[#3a302a]/30 uppercase tracking-[0.2em]">Ranked Strategic Actions</h4>
-                                    <div className="space-y-5">
-                                        {/* Priority 1 */}
-                                        <div className="p-8 bg-[#9333ea] rounded-[32px] text-white shadow-2xl space-y-6 relative overflow-hidden group">
-                                            <div className="flex items-center justify-between relative z-10">
-                                                <Badge className="bg-white/20 text-white border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Priority 1</Badge>
-                                                <TrendingUp className="h-4 w-4 text-white/40" />
-                                            </div>
-                                            <div className="space-y-2 relative z-10">
-                                                <p className="text-[18px] font-bold">CONVERT TO SPIKE</p>
-                                                <p className="text-[12px] text-white/60 italic leading-relaxed">
-                                                    "Issue is highly recurrent. Recommend permanent fix."
-                                                </p>
-                                            </div>
-                                            <div className="space-y-4 pt-4 border-t border-white/10 relative z-10">
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className="h-3 w-3 text-white/40" />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Expected Outcome</span>
-                                                </div>
-                                                <p className="text-[11px] text-white/80">Reduces future sprint rollover probability by 45%.</p>
-                                                <Button className="w-full bg-white text-[#9333ea] hover:bg-white/90 font-black text-[12px] h-11 rounded-2xl border-none">
-                                                    Execute Strategy
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Description</label>
+                            <div className="bg-white border border-[#3a302a]/10 rounded-xl overflow-hidden group">
+                                <AnimatePresence>
+                                    {isDescriptionFocused && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="border-b border-[#3a302a]/5 bg-[#3a302a]/[0.02] overflow-hidden"
+                                        >
+                                            <div className="flex items-center gap-0.5 p-1">
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Bold className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Italic className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('list')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <List className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('ordered')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <ListOrdered className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('todo')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <ListTodo className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('table')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Insert Table">
+                                                    <Table className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-row')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Add Row">
+                                                    <Rows className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-col')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Add Column">
+                                                    <Columns className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-row')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Row">
+                                                    <Rows className="h-3.5 w-3.5 text-red-400 group-hover/del:text-red-600" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-col')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Column">
+                                                    <Columns className="h-3.5 w-3.5 text-red-400 group-hover/del:text-red-600" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-table')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Entire Table">
+                                                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('link')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Link2 className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('copy')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5 ml-auto">
+                                                    <Copy className="h-3.5 w-3.5 text-[#3a302a]/60" />
                                                 </Button>
                                             </div>
-                                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[40px] -mr-16 -mt-16" />
-                                        </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            <div className="relative">
+                                <div
+                                    ref={descriptionRef as any}
+                                    contentEditable
+                                    onPaste={handlePaste}
+                                    onFocus={() => setIsDescriptionFocused(true)}
+                                    onBlur={(e) => {
+                                        const val = e.currentTarget.innerHTML;
+                                        setNewStory(prev => ({ ...prev, description: val }));
+                                        setIsDescriptionFocused(false);
+                                        handleSaveEditStory();
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: newStory.description || '' }}
+                                    className="p-4 min-h-[150px] text-sm focus:outline-none sahara-editor"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                                        {/* Priority 2 */}
-                                        <div className="p-8 bg-[#f8f9fa] border border-[#3a302a]/5 rounded-[32px] space-y-6 group hover:border-[#c2652a]/20 transition-all">
-                                            <div className="flex items-center justify-between">
-                                                <Badge className="bg-[#3a302a]/5 text-[#3a302a]/30 border-none text-[8px] font-black px-2 py-0.5 rounded-full uppercase">Priority 2</Badge>
-                                                <Users className="h-4 w-4 text-[#3a302a]/10" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[15px] font-bold text-[#3a302a]">ARCHITECT REVIEW</p>
-                                                <p className="text-[11px] text-[#3a302a]/40 italic uppercase tracking-tighter">
-                                                    <span className="font-black">Expected Outcome:</span> unblocks 3 engineers.
-                                                </p>
-                                            </div>
-                                            <Button variant="ghost" className="w-full bg-[#3a302a]/5 text-[#3a302a]/40 font-black text-[11px] h-11 rounded-2xl border-none hover:bg-[#3a302a]/10">
-                                                Request Escalation
-                                            </Button>
-                                        </div>
-
-                                        <div className="space-y-12 pt-8 border-t border-[#3a302a]/5">
-                                            <div className="space-y-6">
-                                                <div className="flex items-center gap-3">
-                                                    <AlertCircle className="h-4 w-4 text-orange-500" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/30">Identified Risks</span>
+                        {/* Comments */}
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Comments</label>
+                            <div className="flex gap-2">
+                                <div 
+                                    ref={commentInputRef}
+                                    contentEditable
+                                    className="flex-1 bg-white border border-[#3a302a]/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#c2652a]"
+                                    data-placeholder="Add a comment..."
+                                />
+                                <Button 
+                                    onClick={handleAddComment}
+                                    className="bg-[#c2652a] hover:bg-[#a15423] text-white"
+                                >
+                                    <Send className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            
+                            <div className="space-y-3 mt-4">
+                                {(newStory.comments || []).map((c: any, i: number) => (
+                                    <div key={i} className="flex gap-3">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarFallback className="bg-[#3a302a] text-white text-[8px] font-bold">
+                                                {c.user_name?.charAt(0).toUpperCase() || 'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="bg-white border border-[#3a302a]/5 rounded-xl rounded-tl-none p-3 flex-1 text-sm">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-xs">{c.user_name}</span>
+                                                    <span className="text-[10px] text-[#3a302a]/40">{new Date(c.created_at).toLocaleDateString()}</span>
                                                 </div>
-                                                <ul className="space-y-4">
-                                                    {((newStory as any).identified_risks || []).length > 0 ? (
-                                                        (newStory as any).identified_risks.map((risk: any, i: number) => (
-                                                            <li key={i} className="flex items-center gap-3 text-[13px] font-bold text-[#3a302a]">
-                                                                <div className={cn(
-                                                                    "h-2 w-2 rounded-full",
-                                                                    risk.severity === 'high' ? "bg-red-500" : "bg-orange-500"
-                                                                )} />
-                                                                {risk.text}
-                                                            </li>
-                                                        ))
-                                                    ) : (
-                                                        <li className="text-[11px] font-medium text-[#3a302a]/20 italic">No risks identified</li>
-                                                    )}
-                                                </ul>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="text-[#3a302a]/20 hover:text-[#3a302a] transition-all">
+                                                            <MoreVertical className="h-3 w-3" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-32 bg-white rounded-xl border-[#3a302a]/5 shadow-xl p-1">
+                                                        <DropdownMenuItem onClick={() => handleStartEditComment(c)} className="flex items-center gap-2 text-[12px] font-bold text-[#3a302a]/70 rounded-lg cursor-pointer">
+                                                            <Edit className="h-3 w-3" /> Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleShareComment(c.id)} className="flex items-center gap-2 text-[12px] font-bold text-[#3a302a]/70 rounded-lg cursor-pointer">
+                                                            <Share2 className="h-3 w-3" /> Share
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleDeleteComment(c.id)} className="flex items-center gap-2 text-[12px] font-bold text-red-500 rounded-lg cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                                                            <Trash2 className="h-3 w-3" /> Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
-
-                                            <div className="space-y-6">
-                                                <div className="flex items-center gap-3">
-                                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#3a302a]/30">Acceptance Criteria</span>
+                                            {editingCommentId === c.id ? (
+                                                <div className="space-y-2 mt-1">
+                                                    <textarea 
+                                                        value={editingCommentText}
+                                                        onChange={(e) => setEditingCommentText(e.target.value)}
+                                                        className="w-full bg-white border border-[#c2652a]/30 rounded-lg p-2 text-sm focus:outline-none min-h-[60px]"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" onClick={() => handleSaveCommentEdit(c.id)} className="h-7 text-[10px] bg-[#c2652a]">Save</Button>
+                                                        <Button size="sm" variant="ghost" onClick={() => setEditingCommentId(null)} className="h-7 text-[10px]">Cancel</Button>
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-4">
-                                                    {((newStory as any).acceptance_criteria || []).length > 0 ? (
-                                                        (newStory as any).acceptance_criteria.map((item: any, i: number) => (
-                                                            <div key={i} className="flex items-center gap-3 bg-green-50/50 p-4 rounded-2xl border border-green-100/50">
-                                                                <Check className="h-4 w-4 text-green-600" />
-                                                                <span className="text-[13px] font-bold text-green-900">{item.text || item}</span>
+                                            ) : (
+                                                <>
+                                                    <p className="text-[#3a302a]/70">
+                                                        {c.text}
+                                                        {c.edited_at && <span className="text-[8px] text-[#3a302a]/30 ml-1 italic">(edited)</span>}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 mt-2">
+                                                        <button 
+                                                            onClick={() => setReplyingToId(c.id)}
+                                                            className="text-[10px] font-bold text-[#3a302a]/30 hover:text-[#c2652a] flex items-center gap-1"
+                                                        >
+                                                            <Reply className="h-3 w-3" /> Reply
+                                                        </button>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <button className="flex items-center gap-1 text-[10px] font-bold text-[#3a302a]/30 hover:text-[#c2652a]">
+                                                                    <Smile className="h-3 w-3" />
+                                                                    {c.reactions?.length > 0 && (
+                                                                        <div className="flex gap-1 ml-1">
+                                                                            {c.reactions.map((r: any, idx: number) => (
+                                                                                <span key={idx} className="bg-[#3a302a]/5 px-1 rounded">{r.emoji} {r.count}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent side="top" align="start" className="w-fit p-1 bg-white rounded-full shadow-xl border-[#3a302a]/5 flex gap-1">
+                                                                {['👍', '❤️', '🔥', '🚀', '😄', '💯'].map(emoji => (
+                                                                    <button 
+                                                                        key={emoji}
+                                                                        onClick={() => handleToggleReaction(c.id, emoji)}
+                                                                        className="h-7 w-7 hover:bg-[#3a302a]/5 rounded-full flex items-center justify-center text-base transition-all"
+                                                                    >
+                                                                        {emoji}
+                                                                    </button>
+                                                                ))}
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </div>
+
+                                                    {/* Reply Box */}
+                                                    {replyingToId === c.id && (
+                                                        <div className="mt-2 pl-3 border-l-2 border-[#c2652a]/20 space-y-2">
+                                                            <textarea 
+                                                                autoFocus
+                                                                placeholder="Write a reply..."
+                                                                value={replyText}
+                                                                onChange={(e) => setReplyText(e.target.value)}
+                                                                className="w-full bg-white border border-[#3a302a]/10 rounded-lg p-2 text-[12px] focus:outline-none min-h-[50px]"
+                                                            />
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleAddReply(c.id)} className="px-2 py-1 bg-[#c2652a] text-white text-[10px] rounded">Reply</button>
+                                                                <button onClick={() => setReplyingToId(null)} className="px-2 py-1 text-[#3a302a]/40 text-[10px]">Cancel</button>
                                                             </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="text-[11px] font-medium text-[#3a302a]/20 italic px-2">No criteria defined</div>
+                                                        </div>
                                                     )}
-                                                </div>
-                                            </div>
+
+                                                    {/* Nested Replies */}
+                                                    {c.replies?.length > 0 && (
+                                                        <div className="mt-2 space-y-2">
+                                                            <button 
+                                                                onClick={() => toggleReplies(c.id)}
+                                                                className="text-[9px] font-black text-[#c2652a] uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                                            >
+                                                                {expandedCommentIds.has(c.id) ? <ChevronUp className="h-2 w-2" /> : <ChevronDown className="h-2 w-2" />}
+                                                                {c.replies.length} {c.replies.length === 1 ? 'Reply' : 'Replies'}
+                                                            </button>
+                                                            
+                                                            <AnimatePresence>
+                                                                {expandedCommentIds.has(c.id) && (
+                                                                    <motion.div 
+                                                                        initial={{ opacity: 0, height: 0 }}
+                                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                                        exit={{ opacity: 0, height: 0 }}
+                                                                        className="pl-4 border-l border-[#3a302a]/5 space-y-2 overflow-hidden"
+                                                                    >
+                                                                        {c.replies.map((reply: any, idx: number) => (
+                                                                            <div key={reply.id || idx} className="flex gap-2 py-1">
+                                                                                <Avatar className="h-4 w-4">
+                                                                                    <AvatarFallback className="bg-[#3a302a] text-white text-[6px] font-bold">
+                                                                                        {reply.user_name?.charAt(0).toUpperCase()}
+                                                                                    </AvatarFallback>
+                                                                                </Avatar>
+                                                                                <div className="flex-1">
+                                                                                    <div className="flex items-center gap-1.5">
+                                                                                        <span className="text-[10px] font-bold text-[#3a302a]">{reply.user_name}</span>
+                                                                                        <span className="text-[8px] text-[#3a302a]/30">{new Date(reply.created_at).toLocaleDateString()}</span>
+                                                                                    </div>
+                                                                                    <p className="text-[11px] text-[#3a302a]/70">{reply.text}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
                     </div>
