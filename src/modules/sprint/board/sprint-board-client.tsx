@@ -290,7 +290,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [activeTab, setActiveTab] = React.useState<'subtasks' | 'checklist' | 'comments' | 'activities'>('checklist');
     const [editingStory, setEditingStory] = React.useState<Story | null>(null);
 
-    const handleFormat = (type: 'bold' | 'italic' | 'list' | 'ordered' | 'todo' | 'link' | 'copy' | 'table' | 'add-row' | 'add-col' | 'delete-row' | 'delete-col') => {
+    const handleFormat = (type: 'bold' | 'italic' | 'list' | 'ordered' | 'todo' | 'link' | 'copy' | 'table' | 'add-row' | 'add-col' | 'delete-row' | 'delete-col' | 'delete-table') => {
         if (type === 'copy') {
             const content = descriptionRef.current?.innerText || '';
             navigator.clipboard.writeText(content);
