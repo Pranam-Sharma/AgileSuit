@@ -316,4 +316,38 @@
   input[type=number] {
     -moz-appearance: textfield;
   }
+
+  /* Sahara Rich Text Editor Content Styles */
+  .sahara-editor ul {
+    list-style-type: disc !important;
+    padding-left: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .sahara-editor ol {
+    list-style-type: decimal !important;
+    padding-left: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .sahara-editor li {
+    margin-bottom: 0.25rem !important;
+    display: list-item !important;
+  }
+  .sahara-editor table {
+    display: block !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    border-collapse: collapse !important;
+    margin: 1.5rem 0 !important;
+  }
+  .sahara-editor td, .sahara-editor th {
+    border: 1px solid #3a302a1a !important;
+    padding: 0.75rem !important;
+    min-width: 150px !important;
+    text-align: left !important;
+    vertical-align: top !important;
+  }
+  .sahara-editor a {
+    color: #c2652a !important;
+    text-decoration: underline !important;
+  }
 }
