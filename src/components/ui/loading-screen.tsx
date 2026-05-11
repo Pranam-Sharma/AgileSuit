@@ -6,7 +6,7 @@ interface LoadingScreenProps {
 
 export function LoadingScreen({ message = "Loading..." }: LoadingScreenProps) {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex h-screen w-full items-center justify-center bg-[#f8f5f0] dark:bg-zinc-950">
             <div className="flex flex-col items-center gap-6">
                 <div className="relative flex items-center justify-center">
                     {/* Spinning Outer Ring */}

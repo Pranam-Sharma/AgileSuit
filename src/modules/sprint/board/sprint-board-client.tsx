@@ -24,12 +24,53 @@ import {
     RefreshCw,
     Users,
     Tag,
-    Calendar,
+    Calendar as CalendarIcon,
     ChevronRight,
     PanelRightClose,
     PanelRightOpen,
     AlertCircle,
-    Sparkles
+    Sparkles,
+    Brain,
+    Activity,
+    Clock,
+    Hourglass,
+    MessageSquare,
+    History,
+    CheckCircle2,
+    Bookmark,
+    ChevronDown,
+    Target,
+    ShieldAlert,
+    AlertTriangle,
+    Zap,
+    Info,
+    TrendingUp,
+    Lightbulb,
+    Link,
+    Link2,
+    Copy,
+    ArrowRightLeft,
+    ThumbsUp,
+    Send,
+    ArrowRight,
+    Check,
+    MoreHorizontal,
+    Bold,
+    Italic,
+    List,
+    ListOrdered,
+    ListTodo,
+    Table,
+    Rows,
+    Columns,
+    FileText,
+    ExternalLink,
+    Share2,
+    Edit,
+    Smile,
+    ChevronUp,
+    Heart,
+    Reply
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingScreen } from '@/components/ui/loading-screen';
@@ -50,6 +91,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
 import type { Sprint } from '@/modules/dashboard/create-sprint-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/utils/cn';
@@ -57,6 +102,7 @@ import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, createStory, updateStory, moveStory, deleteStory } from '@/backend/actions/stories.actions';
 import { getColumnsBySprintId, initializeDefaultColumns, createColumn, updateColumn, deleteColumn } from '@/backend/actions/columns.actions';
 import { getCapacitySwapRecommendationAction } from '@/backend/actions/ai.actions';
+import { getOrganizationMembersAction } from '@/backend/actions/teams.actions';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -111,6 +157,11 @@ type Story = {
     status?: 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked';
     tags?: string[];
     due_date?: string;
+    subtasks?: { id: string, title: string, is_completed: boolean, note?: string }[];
+    comments?: { id: string, text: string, user_name: string, created_at: string }[];
+    activity_log?: { id: string, type: string, user_name: string, text: string, created_at: string }[];
+    identified_risks?: { text: string, severity: 'low' | 'medium' | 'high' }[];
+    acceptance_criteria?: any[];
 };
 
 type Column = {
@@ -186,6 +237,7 @@ const defaultColumns: Column[] = [
     { id: 'review', title: 'In Review', gradient: 'purple', stories: [] },
     { id: 'done', title: 'Done', gradient: 'green', stories: [] }
 ];
+const TAB_ID = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString();
 
 export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded = false }: { sprint?: Sprint & { id: string }, sprintId: string, isEmbedded?: boolean }) {
     const router = useRouter();
@@ -202,16 +254,222 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [editingColumnTitle, setEditingColumnTitle] = React.useState('');
     const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = React.useState(false);
     const [selectedColumnId, setSelectedColumnId] = React.useState<string>('');
+    const [orgMembers, setOrgMembers] = React.useState<any[]>([]);
     const [newStory, setNewStory] = React.useState<Partial<Story>>({
         title: '',
         description: '',
         priority: 'medium',
         storyPoints: 0,
         completedStoryPoints: 0,
-        status: 'todo'
+        status: 'todo',
+        subtasks: [],
+        comments: [],
+        activity_log: [],
+        identified_risks: [],
+        acceptance_criteria: []
     });
+    const latestStoryRef = React.useRef(newStory);
+    React.useEffect(() => {
+        latestStoryRef.current = newStory;
+    }, [newStory]);
+    const [isSaving, setIsSaving] = React.useState(false);
+    const autoSaveTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+    const isSyncingRef = React.useRef(false);
+    const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null);
+    const [editingCommentText, setEditingCommentText] = React.useState('');
+    const [replyingToId, setReplyingToId] = React.useState<string | null>(null);
+    const [replyText, setReplyText] = React.useState('');
+    const [expandedCommentIds, setExpandedCommentIds] = React.useState<Set<string>>(new Set());
+
+    const [visibleActivitiesCount, setVisibleActivitiesCount] = React.useState(5);
     const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = React.useState(false);
+    const [isDescriptionFocused, setIsDescriptionFocused] = React.useState(false);
+    const [isCommentFocused, setIsCommentFocused] = React.useState(false);
+    const descriptionRef = React.useRef<HTMLDivElement>(null);
+    const commentInputRef = React.useRef<HTMLDivElement>(null);
+    const [activeTab, setActiveTab] = React.useState<'subtasks' | 'checklist' | 'comments' | 'activities'>('checklist');
     const [editingStory, setEditingStory] = React.useState<Story | null>(null);
+
+    const handleFormat = (type: 'bold' | 'italic' | 'list' | 'ordered' | 'todo' | 'link' | 'copy' | 'table' | 'add-row' | 'add-col' | 'delete-row' | 'delete-col' | 'delete-table') => {
+        if (type === 'copy') {
+            const content = descriptionRef.current?.innerText || '';
+            navigator.clipboard.writeText(content);
+            toast({ title: "Copied to clipboard", description: "The description has been copied." });
+            return;
+        }
+
+        const editor = descriptionRef.current;
+        if (!editor) return;
+
+        editor.focus();
+
+        const getCell = () => {
+            const selection = window.getSelection();
+            if (!selection?.rangeCount) return null;
+            let node = selection.getRangeAt(0).startContainer;
+            while (node && node !== editor) {
+                if (node.nodeName === 'TD' || node.nodeName === 'TH') return node as HTMLTableCellElement;
+                node = node.parentNode as any;
+            }
+            return null;
+        };
+
+        switch (type) {
+            case 'bold':
+                document.execCommand('bold', false);
+                break;
+            case 'italic':
+                document.execCommand('italic', false);
+                break;
+            case 'list':
+                document.execCommand('insertUnorderedList', false);
+                break;
+            case 'ordered':
+                document.execCommand('insertOrderedList', false);
+                break;
+            case 'todo':
+                const todoHtml = '<ul style="list-style: none; padding-left: 0;"><li><input type="checkbox" style="margin-right: 8px;"> </li></ul>';
+                document.execCommand('insertHTML', false, todoHtml);
+                break;
+            case 'link':
+                const url = prompt('Enter the URL:');
+                if (url) document.execCommand('createLink', false, url);
+                break;
+            case 'table':
+                const tableHtml = `
+                    <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #3a302a1a; border-radius: 12px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #faf5ee;">
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 1</th>
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 2</th>
+                                <th style="border: 1px solid #3a302a1a; padding: 12px; text-align: left; font-size: 13px;">Header 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                                <td style="border: 1px solid #3a302a1a; padding: 12px; font-size: 13px;">Cell</td>
+                            </tr>
+                        </tbody>
+                    </table><p></p>
+                `;
+                document.execCommand('insertHTML', false, tableHtml);
+                break;
+            case 'add-row':
+                const currentCell = getCell();
+                if (currentCell) {
+                    const row = currentCell.parentElement as HTMLTableRowElement;
+                    const tableSection = row.parentElement as HTMLTableSectionElement;
+                    const newRow = tableSection.insertRow(row.sectionRowIndex + 1);
+                    for (let i = 0; i < row.cells.length; i++) {
+                        const newCell = newRow.insertCell();
+                        newCell.innerHTML = 'New Cell';
+                        newCell.style.border = '1px solid #3a302a1a';
+                        newCell.style.padding = '12px';
+                        newCell.style.fontSize = '13px';
+                    }
+                }
+                break;
+            case 'add-col':
+                const cellForCol = getCell();
+                if (cellForCol) {
+                    const table = (cellForCol.closest('table') as HTMLTableElement);
+                    const colIndex = cellForCol.cellIndex;
+                    Array.from(table.rows).forEach(row => {
+                        const newCell = row.insertCell(colIndex + 1);
+                        newCell.innerHTML = 'New';
+                        newCell.style.border = '1px solid #3a302a1a';
+                        newCell.style.padding = '12px';
+                        newCell.style.fontSize = '13px';
+                    });
+                }
+                break;
+            case 'delete-row':
+                const cellToDeleteRow = getCell();
+                if (cellToDeleteRow) {
+                    const row = cellToDeleteRow.parentElement as HTMLTableRowElement;
+                    const table = row.closest('table');
+                    row.remove();
+                    if (table && table.rows.length === 0) {
+                        table.remove();
+                    }
+                }
+                break;
+            case 'delete-col':
+                const cellToDeleteCol = getCell();
+                if (cellToDeleteCol) {
+                    const table = (cellToDeleteCol.closest('table') as HTMLTableElement);
+                    const colIndex = cellToDeleteCol.cellIndex;
+                    Array.from(table.rows).forEach(row => {
+                        if (row.cells[colIndex]) row.cells[colIndex].remove();
+                    });
+                    // If no more cells in the first row, remove the table
+                    if (table.rows[0]?.cells.length === 0) {
+                        table.remove();
+                    }
+                }
+                break;
+            case 'delete-table':
+                const cellToDelTable = getCell();
+                if (cellToDelTable) {
+                    const table = cellToDelTable.closest('table');
+                    table?.remove();
+                }
+                break;
+        }
+        
+        // Update state
+        setNewStory(prev => ({ ...prev, description: editor.innerHTML }));
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                e.preventDefault();
+                const file = items[i].getAsFile();
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const base64 = event.target?.result;
+                        const img = document.createElement('img');
+                        img.src = base64 as string;
+                        img.setAttribute('style', 'max-width: 100% !important; height: auto !important; border-radius: 8px !important; display: block !important;');
+                        img.className = 'my-2 cursor-pointer';
+                        // Add tracking ID immediately so it's editable right away
+                        img.setAttribute('data-img-id', `img-${Math.random().toString(36).substr(2, 9)}`);
+                        
+                        const selection = window.getSelection();
+                        if (selection && selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0);
+                            range.deleteContents();
+                            range.insertNode(img);
+                            range.setStartAfter(img);
+                            range.setEndAfter(img);
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        } else {
+                            descriptionRef.current?.appendChild(img);
+                        }
+                        
+                        handleUpdateDescription(descriptionRef.current?.innerHTML || '');
+                    };
+                    reader.readAsDataURL(file);
+                }
+                break;
+            }
+        }
+    };
+
+
     const [draggedStory, setDraggedStory] = React.useState<{ storyId: string; sourceColumnId: string } | null>(null);
     const [dragOverColumnId, setDragOverColumnId] = React.useState<string | null>(null);
     const [dragOverStoryId, setDragOverStoryId] = React.useState<string | null>(null);
@@ -219,7 +477,32 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true);
     const [showCompletedStories, setShowCompletedStories] = React.useState(true);
     const [filterPriority, setFilterPriority] = React.useState<'all' | 'high' | 'medium' | 'low'>('all');
-    const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee'>('none');
+    const [tagInput, setTagInput] = React.useState('');
+    const [showTagInput, setShowTagInput] = React.useState(false);
+
+    // Auto-save logic for the Story Detail Drawer
+    React.useEffect(() => {
+        if (!isEditStoryDialogOpen || !editingStory) return;
+        if (isSyncingRef.current) return;
+
+        // Debounce save for 1.5 seconds to avoid excessive database writes
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current);
+        }
+
+        autoSaveTimerRef.current = setTimeout(async () => {
+            await handleSaveEditStory();
+        }, 1500);
+
+        return () => {
+            if (autoSaveTimerRef.current) {
+                clearTimeout(autoSaveTimerRef.current);
+            }
+        };
+    }, [newStory.title, newStory.description, newStory.status, newStory.assignee, newStory.storyPoints, newStory.due_date, newStory.subtasks, newStory.comments, newStory.tags, isEditStoryDialogOpen]);
+
+
+    const [sortBy, setSortBy] = React.useState<'none' | 'priority' | 'points' | 'assignee' | 'newest'>('none');
     
     // --- Quiet AI State ---
     const [sprintPlanning, setSprintPlanning] = React.useState<any>(null);
@@ -233,6 +516,18 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         };
         checkUser();
     }, [supabase]);
+
+    React.useEffect(() => {
+        const fetchMembers = async () => {
+            try {
+                const members = await getOrganizationMembersAction();
+                setOrgMembers(members || []);
+            } catch (error) {
+                console.error("Failed to fetch org members:", error);
+            }
+        };
+        fetchMembers();
+    }, []);
 
     // Fetch columns from database
     React.useEffect(() => {
@@ -381,10 +676,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     }, [sprintId, sprint, initialSprint, supabase]);
 
     // Fetch stories from database
-    const fetchStories = React.useCallback(async () => {
+    const fetchStories = React.useCallback(async (silent = false) => {
         if (!sprintId || isLoadingColumns) return;
 
-        setIsLoadingStories(true);
+        if (!silent) setIsLoadingStories(true);
         try {
             const { data: stories, error } = await getStoriesBySprintId(sprintId);
 
@@ -414,7 +709,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                         priority: dbStory.priority as 'low' | 'medium' | 'high' | 'critical',
                         status: dbStory.status as Story['status'],
                         tags: dbStory.tags || undefined,
-                        due_date: dbStory.due_date || undefined
+                        due_date: dbStory.due_date || undefined,
+                        subtasks: dbStory.subtasks || [],
+                        comments: dbStory.comments || [],
+                        activity_log: dbStory.activity_log || []
                     };
 
                     const columnStories = storyMap.get(dbStory.column_id) || [];
@@ -470,7 +768,36 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             fetchStories();
         };
         window.addEventListener('refresh-board', handleRefresh);
-        return () => window.removeEventListener('refresh-board', handleRefresh);
+        
+        const channel = new BroadcastChannel('sahara-board-sync');
+        
+        // Debounce the fetchStories to prevent multiple rapid refreshes
+        let fetchTimer: any = null;
+        
+        channel.onmessage = (event) => {
+            if (event.data.type === 'STORY_UPDATED' && event.data.sourceTabId !== TAB_ID) {
+                // Clear any pending fetch
+                if (fetchTimer) clearTimeout(fetchTimer);
+                
+                // If editing the story in the drawer, sync it instantly
+                if (event.data.payload) {
+                    isSyncingRef.current = true;
+                    setNewStory((prev) => prev.id === event.data.storyId ? { ...prev, ...event.data.payload } : prev);
+                    setEditingStory((prev) => prev?.id === event.data.storyId ? { ...prev, ...event.data.payload } : prev);
+                    setTimeout(() => { isSyncingRef.current = false; }, 100);
+                }
+
+                // Wait a bit before fetching to let multiple rapid updates batch together
+                fetchTimer = setTimeout(() => {
+                    fetchStories(true); // Fetch silently in background
+                }, 1000);
+            }
+        };
+
+        return () => {
+            window.removeEventListener('refresh-board', handleRefresh);
+            channel.close();
+        };
     }, [fetchStories]);
 
     const handleColumnTitleClick = (columnId: string, currentTitle: string) => {
@@ -557,6 +884,157 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             description: 'New column has been added to the board.'
         });
     };
+    
+    const addActivity = (text: string, type: 'status' | 'update' = 'update') => {
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        const newActivity = {
+            id: crypto.randomUUID(),
+            text,
+            type,
+            user_name: userName,
+            created_at: new Date().toISOString()
+        };
+        
+        setNewStory(prev => ({
+            ...prev,
+            activity_log: [newActivity, ...(prev.activity_log || [])]
+        }));
+    };
+
+    const handleToggleSubtask = async (subtaskId: string) => {
+        if (!editingStory) return;
+        
+        const updatedSubtasks = (newStory.subtasks || []).map(st => 
+            st.id === subtaskId ? { ...st, is_completed: !st.is_completed } : st
+        );
+        
+        setNewStory(prev => ({ ...prev, subtasks: updatedSubtasks }));
+        
+        // Auto-save logic
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+    };
+
+    const handleAddComment = async () => {
+        const text = commentInputRef.current?.innerText || '';
+        if (!editingStory || !text.trim()) return;
+        
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        const newComment = {
+            id: crypto.randomUUID(),
+            text,
+            user_name: userName,
+            created_at: new Date().toISOString()
+        };
+        
+        const updatedStory = { ...newStory, comments: [newComment, ...(newStory.comments || [])] };
+        setNewStory(updatedStory);
+        
+        if (commentInputRef.current) commentInputRef.current.innerText = '';
+        
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).filter((c: any) => c.id !== commentId)
+        };
+        setNewStory(updatedStory);
+        await handleSaveEditStory(updatedStory);
+        toast({ title: "Comment deleted" });
+    };
+
+    const handleStartEditComment = (comment: any) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentText(comment.text);
+    };
+
+    const handleSaveCommentEdit = async (commentId: string) => {
+        if (!editingCommentText.trim()) return;
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, text: editingCommentText, edited_at: new Date().toISOString() } : c
+            )
+        };
+        setNewStory(updatedStory);
+        setEditingCommentId(null);
+        await handleSaveEditStory(updatedStory);
+        toast({ title: "Comment updated" });
+    };
+
+    const handleShareComment = (commentId: string) => {
+        const url = `${window.location.origin}${window.location.pathname}#comment-${commentId}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Link copied", description: "Direct link to comment copied to clipboard" });
+    };
+
+    const handleAddReply = async (commentId: string) => {
+        if (!replyText.trim()) return;
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        const newReply = {
+            id: crypto.randomUUID(),
+            text: replyText,
+            user_name: userName,
+            created_at: new Date().toISOString(),
+            parent_id: commentId
+        };
+
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, replies: [...(c.replies || []), newReply] } : c
+            )
+        };
+        setNewStory(updatedStory);
+        setReplyingToId(null);
+        setReplyText('');
+        setExpandedCommentIds(prev => new Set(Array.from(prev).concat(commentId)));
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const handleToggleReaction = async (commentId: string, emoji: string) => {
+        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+        
+        const updateReactions = (reactions: any[] = []) => {
+            const existing = reactions.find(r => r.emoji === emoji);
+            if (existing) {
+                const alreadyReacted = existing.users.includes(userName);
+                if (alreadyReacted) {
+                    const newUsers = existing.users.filter((u: string) => u !== userName);
+                    if (newUsers.length === 0) return reactions.filter(r => r.emoji !== emoji);
+                    return reactions.map(r => r.emoji === emoji ? { ...r, count: newUsers.length, users: newUsers } : r);
+                } else {
+                    return reactions.map(r => r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, userName] } : r);
+                }
+            }
+            return [...reactions, { emoji, count: 1, users: [userName] }];
+        };
+
+        const updatedStory = {
+            ...newStory,
+            comments: (newStory.comments || []).map((c: any) => 
+                c.id === commentId ? { ...c, reactions: updateReactions(c.reactions) } : c
+            )
+        };
+        setNewStory(updatedStory);
+        await handleSaveEditStory(updatedStory);
+    };
+
+    const toggleReplies = (commentId: string) => {
+        const newExpanded = new Set(expandedCommentIds);
+        if (newExpanded.has(commentId)) newExpanded.delete(commentId);
+        else newExpanded.add(commentId);
+        setExpandedCommentIds(newExpanded);
+    };
+
+    const handleUpdateDescription = (html: string) => {
+        setNewStory(prev => ({ ...prev, description: html }));
+        
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 2000);
+    };
 
     const handleDeleteColumn = async (columnId: string) => {
         // Check if column has stories
@@ -599,7 +1077,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: 'medium',
             storyPoints: 0,
             completedStoryPoints: 0,
-            status: 'todo'
+            status: 'todo',
+            subtasks: [],
+            comments: [],
+            activity_log: []
         });
         setSelectedColumnId(columnId);
         setIsAddStoryDialogOpen(true);
@@ -670,7 +1151,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: createdStory.priority as Story['priority'],
             status: createdStory.status as Story['status'],
             tags: createdStory.tags || undefined,
-            due_date: createdStory.due_date || undefined
+            due_date: createdStory.due_date || undefined,
+            subtasks: [],
+            comments: [],
+            activity_log: []
         };
 
         setColumns(prev => prev.map(col =>
@@ -685,7 +1169,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             description: '',
             priority: 'medium',
             storyPoints: 0,
-            status: 'todo'
+            status: 'todo',
+            subtasks: [],
+            comments: [],
+            activity_log: []
         });
 
         toast({
@@ -697,6 +1184,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const handleEditStory = (story: Story) => {
         setEditingStory(story);
         setNewStory({
+            id: story.id,
             title: story.title,
             description: story.description,
             storyPoints: story.storyPoints,
@@ -705,41 +1193,54 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: story.priority,
             status: story.status,
             tags: story.tags,
-            due_date: story.due_date
+            due_date: story.due_date,
+            subtasks: story.subtasks || [],
+            comments: story.comments || [],
+            activity_log: story.activity_log || [],
+            identified_risks: (story as any).identified_risks || [],
+            acceptance_criteria: (story as any).acceptance_criteria || []
         });
         setIsEditStoryDialogOpen(true);
     };
 
-    const handleSaveEditStory = async () => {
-        if (!editingStory || !newStory.title?.trim()) {
-            toast({
-                title: 'Error',
-                description: 'Story title is required',
-                variant: 'destructive'
-            });
-            return;
+    const handleSaveEditStory = async (storyToSave?: any) => {
+        const story = storyToSave || latestStoryRef.current;
+        if (!editingStory || !story.title?.trim()) {
+            return; // Don't save if no title or not editing
         }
 
+        setIsSaving(true);
         const { error } = await updateStory(editingStory.id, {
-            title: newStory.title,
-            description: newStory.description || undefined,
-            story_points: newStory.storyPoints,
-            completed_story_points: newStory.completedStoryPoints || 0,
-            assignee: newStory.assignee,
-            priority: newStory.priority as 'low' | 'medium' | 'high' | 'critical',
-            status: newStory.status as Story['status'],
-            tags: newStory.tags,
-            due_date: newStory.due_date
+            title: story.title,
+            description: story.description || undefined,
+            story_points: story.storyPoints,
+            completed_story_points: story.completedStoryPoints || 0,
+            assignee: story.assignee,
+            priority: story.priority as any,
+            status: story.status as any,
+            tags: story.tags,
+            due_date: story.due_date,
+            subtasks: story.subtasks,
+            comments: story.comments,
+            activity_log: story.activity_log,
+            identified_risks: (story as any).identified_risks,
+            acceptance_criteria: (story as any).acceptance_criteria
         });
+        setIsSaving(false);
 
         if (error) {
             toast({
-                title: 'Error',
-                description: error,
+                title: 'Sync Error',
+                description: 'Failed to auto-save changes',
                 variant: 'destructive'
             });
+            setIsSaving(false);
             return;
         }
+
+        const channel = new BroadcastChannel('sahara-board-sync');
+        channel.postMessage({ type: 'STORY_UPDATED', storyId: editingStory.id, payload: story, sourceTabId: TAB_ID });
+        channel.close();
 
         // Map status to column ID
         const statusToColumnMap: Record<string, string> = {
@@ -764,16 +1265,23 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         // Update local state with new values and potentially new column
         const updatedStory = {
             ...editingStory,
-            title: newStory.title || editingStory.title,
-            description: newStory.description || editingStory.description,
-            storyPoints: newStory.storyPoints ?? editingStory.storyPoints,
-            completedStoryPoints: newStory.completedStoryPoints ?? editingStory.completedStoryPoints,
-            assignee: newStory.assignee ?? editingStory.assignee,
-            priority: newStory.priority || editingStory.priority,
-            status: newStory.status || editingStory.status,
-            tags: newStory.tags ?? editingStory.tags,
-            due_date: newStory.due_date ?? editingStory.due_date
-        };
+            title: newStory.title,
+            description: newStory.description,
+            storyPoints: newStory.storyPoints,
+            completedStoryPoints: newStory.completedStoryPoints,
+            assignee: newStory.assignee,
+            priority: newStory.priority,
+            status: newStory.status,
+            tags: newStory.tags,
+            due_date: newStory.due_date,
+            subtasks: newStory.subtasks,
+            comments: newStory.comments,
+            activity_log: newStory.activity_log,
+            identified_risks: (newStory as any).identified_risks,
+            acceptance_criteria: (newStory as any).acceptance_criteria
+        } as Story;
+
+        setEditingStory(updatedStory);
 
         // Check if target column exists
         const targetColumnExists = columns.some(col => col.id === newColumnId);
@@ -805,20 +1313,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             })));
         }
 
-        setIsEditStoryDialogOpen(false);
-        setEditingStory(null);
-        setNewStory({
-            title: '',
-            description: '',
-            priority: 'medium',
-            storyPoints: 0,
-            status: 'todo'
-        });
 
-        toast({
-            title: 'Story updated',
-            description: 'The story has been successfully updated.'
-        });
     };
 
     const handleDeleteStory = async (columnId: string, storyId: string) => {
@@ -853,7 +1348,6 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
             case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
-            case 'critical': return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300';
             case 'high': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300';
             case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300';
             case 'low': return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300';
@@ -861,11 +1355,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
-    const getStatusColor = (status?: string) => {
+    const getStatusColor = (status: string) => {
         switch (status) {
             case 'todo': return 'bg-zinc-100 text-zinc-700 border-zinc-300 dark:bg-zinc-700 dark:text-zinc-300';
             case 'in_progress': return 'bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
             case 'in_review': return 'bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/30 dark:text-purple-300';
             case 'done': return 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-300';
             case 'blocked': return 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300';
@@ -873,11 +1366,21 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
-    const getStatusLabel = (status?: string) => {
+    const getStatusDotColor = (status: string) => {
+        switch (status) {
+            case 'todo': return 'bg-zinc-400';
+            case 'in_progress': return 'bg-[#c2652a]';
+            case 'in_review': return 'bg-purple-500';
+            case 'done': return 'bg-green-500';
+            case 'blocked': return 'bg-red-500';
+            default: return 'bg-zinc-400';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
         switch (status) {
             case 'todo': return 'To Do';
             case 'in_progress': return 'In Progress';
-            case 'in_review': return 'In Review';
             case 'in_review': return 'In Review';
             case 'done': return 'Done';
             case 'blocked': return 'Blocked';
@@ -1114,6 +1617,18 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         }
     };
 
+    const getDueDateColor = (dueDate?: string) => {
+        if (!dueDate) return 'text-zinc-600 dark:text-zinc-400';
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+
+        if (due.getTime() < today.getTime()) return 'text-red-500 font-bold'; // Overdue
+        if (due.getTime() === today.getTime()) return 'text-amber-500 font-bold'; // Today
+        return 'text-zinc-600 dark:text-zinc-400';
+    };
+
     const filterAndSortStories = (stories: Story[]) => {
         // First, deduplicate stories by ID to prevent duplicate keys
         const uniqueStories = Array.from(
@@ -1205,9 +1720,17 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     }
 
     return (
-        <div className={cn("min-h-screen bg-slate-50 dark:bg-[#09090b] flex flex-col", isEmbedded && "min-h-0 bg-transparent")}>
+        <div className={cn("min-h-screen bg-[#f8f5f0] dark:bg-[#09090b] flex flex-col font-manrope", isEmbedded && "min-h-0 bg-transparent")}>
+            <style>{`
+                .comment-input-placeholder:empty:before {
+                    content: attr(data-placeholder);
+                    color: #3a302a40;
+                    font-weight: 500;
+                    cursor: text;
+                }
+            `}</style>
             {!isEmbedded && (
-                <header className="h-16 border-b border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl sticky top-0 z-40">
+                <header className="h-16 border-b border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
                     <div className="h-full px-4 lg:px-6 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <Button
@@ -1222,10 +1745,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                             <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
                             <Logo />
                             <div className="hidden md:flex flex-col">
-                                <h1 className="text-lg font-bold text-zinc-900 dark:text-white">
+                                <h1 className="text-lg font-eb-garamond font-bold text-[#3a302a] dark:text-white leading-none">
                                     {sprint?.sprintName || 'Sprint Board'}
                                 </h1>
-                                <p className="text-xs text-zinc-600 dark:text-zinc-400">Track Board</p>
+                                <p className="text-[10px] uppercase tracking-wider font-bold text-[#3a302a]/60 dark:text-zinc-400">Track Board</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -1289,13 +1812,13 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 {/* Sidebar */}
                 {!isEmbedded && (
                     <aside className={cn(
-                        "border-r border-zinc-200/50 dark:border-zinc-800/50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl transition-all duration-300 flex flex-col",
+                        "border-r border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-300 flex flex-col",
                         isSidebarExpanded ? "w-64" : "w-16"
                     )}>
                     {/* Sidebar Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-zinc-200/50 dark:border-zinc-800/50">
+                    <div className="flex items-center justify-between p-4 border-b border-[#3a302a]/10 dark:border-zinc-800/50">
                         {isSidebarExpanded && (
-                            <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Customization</h2>
+                            <h2 className="text-sm font-eb-garamond font-bold text-[#3a302a] dark:text-white uppercase tracking-wider">Customization</h2>
                         )}
                         <Button
                             variant="ghost"
@@ -1375,8 +1898,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     {[
                                         { value: 'none', label: 'None', icon: X },
                                         { value: 'priority', label: 'By Priority', icon: Tag },
-                                        { value: 'points', label: 'By Points', icon: Calendar },
-                                        { value: 'assignee', label: 'By Assignee', icon: Users }
+                                        { value: 'points', label: 'By Points', icon: CalendarIcon },
+                                        { value: 'assignee', label: 'By Assignee', icon: Users },
+                                        { value: 'newest', label: 'By Newest', icon: History }
                                     ].map((sort) => (
                                         <Button
                                             key={sort.value}
@@ -1398,7 +1922,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => {
-                                        const sortOptions: Array<'none' | 'priority' | 'points' | 'assignee'> = ['none', 'priority', 'points', 'assignee'];
+                                        const sortOptions: Array<'none' | 'priority' | 'points' | 'assignee' | 'newest'> = ['none', 'priority', 'points', 'assignee', 'newest'];
                                         const currentIndex = sortOptions.indexOf(sortBy);
                                         const nextIndex = (currentIndex + 1) % sortOptions.length;
                                         setSortBy(sortOptions[nextIndex]);
@@ -1534,7 +2058,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                             ) : (
                                                 <button
                                                     onClick={() => handleColumnTitleClick(column.id, column.title)}
-                                                    className="text-lg font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
+                                                    className="text-lg font-eb-garamond font-bold text-white hover:bg-white/10 px-2 py-1 rounded transition-colors flex items-center gap-2"
                                                 >
                                                     {column.title}
                                                     <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
@@ -1564,6 +2088,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                         <div className="flex items-center justify-between">
                                             <Badge variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                                 {filteredStories.length} {filteredStories.length === 1 ? 'story' : 'stories'}
+                                                <span className="mx-1 opacity-50">·</span>
+                                                {filteredStories.reduce((sum, s) => sum + (s.storyPoints || 0), 0)} SP
                                             </Badge>
                                             <Button
                                                 size="sm"
@@ -1685,8 +2211,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                             {/* Status and Tags Row */}
                                                             <div className="flex items-center flex-wrap gap-1">
                                                                 {/* Status Badge */}
-                                                                <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status))}>
-                                                                    {getStatusLabel(story.status)}
+                                                                <Badge variant="outline" className={cn("text-xs font-medium", getStatusColor(story.status || 'todo'))}>
+                                                                    {getStatusLabel(story.status || 'todo')}
                                                                 </Badge>
 
                                                                 {/* Tags */}
@@ -1699,8 +2225,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
 
                                                             {/* Due Date */}
                                                             {story.due_date && (
-                                                                <div className="flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                                                    <Calendar className="h-3 w-3" />
+                                                                <div className={cn("flex items-center gap-1 text-[10px]", getDueDateColor(story.due_date))}>
+                                                                    <CalendarIcon className="h-3 w-3" />
                                                                     <span>Due: {new Date(story.due_date).toLocaleDateString()}</span>
                                                                 </div>
                                                             )}
@@ -1730,18 +2256,20 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                                 {/* Left: Assignee */}
                                                                 <div className="flex items-center gap-1.5">
                                                                     {story.assignee ? (
-                                                                        <>
-                                                                            <Avatar className="h-5 w-5">
-                                                                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                                        <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/50 pr-2 pl-0.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700/50">
+                                                                            <Avatar className="h-5 w-5 ring-1 ring-white dark:ring-zinc-900">
+                                                                                <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
                                                                                     {story.assignee.charAt(0).toUpperCase()}
                                                                                 </AvatarFallback>
                                                                             </Avatar>
-                                                                            <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                                                                            <span className="text-[10px] font-medium text-zinc-600 dark:text-zinc-400">
                                                                                 {story.assignee}
                                                                             </span>
-                                                                        </>
+                                                                        </div>
                                                                     ) : (
-                                                                        <div className="h-5"></div>
+                                                                        <div className="h-6 w-6 rounded-full border-2 border-dashed border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-[10px] text-zinc-300">
+                                                                            <Plus className="h-3 w-3" />
+                                                                        </div>
                                                                     )}
                                                                 </div>
 
@@ -1788,7 +2316,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             <Dialog open={isAddStoryDialogOpen} onOpenChange={setIsAddStoryDialogOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Add New Story</DialogTitle>
+                        <DialogTitle className="font-eb-garamond text-xl">Add New Story</DialogTitle>
                         <DialogDescription>
                             Create a new story/ticket for your sprint board.
                         </DialogDescription>
@@ -1906,142 +2434,512 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            {/* Edit Story Dialog */}
-            <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Story</DialogTitle>
-                        <DialogDescription>
-                            Update the story details below.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Title *</label>
-                            <Input
-                                placeholder="Enter story title"
-                                value={newStory.title || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, title: e.target.value }))}
-                            />
+            {/* Story Detail Sheet (Drawer) - Sahara High-Fidelity Match */}
+            <Sheet open={isEditStoryDialogOpen} onOpenChange={async (open) => {
+                if (!open) {
+                    // Trigger immediate final save if there's a pending auto-save
+                    if (autoSaveTimerRef.current) {
+                        clearTimeout(autoSaveTimerRef.current);
+                        autoSaveTimerRef.current = null;
+                        await handleSaveEditStory();
+                    }
+                    
+                    setIsEditStoryDialogOpen(false);
+                    setEditingStory(null);
+                    setNewStory({
+                        title: '',
+                        description: '',
+                        priority: 'medium',
+                        storyPoints: 0,
+                        status: 'todo',
+                        subtasks: [],
+                        comments: [],
+                        activity_log: []
+                    });
+                } else {
+                    setIsEditStoryDialogOpen(true);
+                }
+            }}>                <SheetContent 
+                    hideClose={true}
+                    className="sm:max-w-[600px] w-full p-0 overflow-y-auto font-manrope bg-[#faf5ee]/95 backdrop-blur-3xl border-l border-none shadow-2xl flex flex-col"
+                >
+                    <SheetTitle className="sr-only">Story Details</SheetTitle>
+                    {/* Top Control Bar */}
+                    <div className="flex items-center justify-between p-6 pb-4 border-b border-[#3a302a]/5 sticky top-0 bg-[#faf5ee] z-10">
+                        <div className="flex items-center gap-4">
+                            <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3a302a]/40">
+                                SAHARA-{newStory.id?.slice(-4).toUpperCase() || 'NEW'}
+                            </span>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Description</label>
-                            <Textarea
-                                placeholder="Enter story description"
-                                value={newStory.description || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, description: e.target.value }))}
-                                rows={3}
-                            />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Story Points</label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    placeholder="0"
-                                    value={newStory.storyPoints || ''}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, storyPoints: parseInt(e.target.value) || 0 }))}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Completed Story Points</label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    max={newStory.storyPoints || 0}
-                                    placeholder="0"
-                                    value={newStory.completedStoryPoints || ''}
-                                    onChange={(e) => {
-                                        const value = parseInt(e.target.value) || 0;
-                                        const maxValue = newStory.storyPoints || 0;
-                                        setNewStory(prev => ({ ...prev, completedStoryPoints: Math.min(value, maxValue) }));
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Priority</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                                    value={newStory.priority || 'medium'}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, priority: e.target.value as Story['priority'] }))}
-                                >
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Status</label>
-                                <select
-                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                                    value={newStory.status || 'todo'}
-                                    onChange={(e) => setNewStory(prev => ({ ...prev, status: e.target.value as Story['status'] }))}
-                                >
-                                    <option value="todo">To Do</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="in_review">In Review</option>
-                                    <option value="done">Done</option>
-                                    <option value="blocked">Blocked</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Assignee</label>
-                            <Input
-                                placeholder="Enter assignee name"
-                                value={newStory.assignee || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, assignee: e.target.value }))}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Tags (comma-separated)</label>
-                            <Input
-                                placeholder="bug, feature, urgent..."
-                                value={newStory.tags?.join(', ') || ''}
-                                onChange={(e) => setNewStory(prev => ({
-                                    ...prev,
-                                    tags: e.target.value.split(',').map((t: string) => t.trim()).filter((t: string) => t)
-                                }))}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Due Date</label>
-                            <Input
-                                type="date"
-                                value={newStory.due_date || ''}
-                                onChange={(e) => setNewStory(prev => ({ ...prev, due_date: e.target.value }))}
-                            />
+                        <div className="flex items-center gap-3">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => window.open(`/sprint/${sprintId}/board/story/${newStory.id}`, '_blank')}
+                                className="h-9 rounded-lg border-[#c2652a] text-[#c2652a] hover:bg-[#c2652a] hover:text-white transition-all font-bold text-xs"
+                            >
+                                <ExternalLink className="h-3.5 w-3.5 mr-2" />
+                                Open Full Details
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => setIsEditStoryDialogOpen(false)}
+                                className="h-9 w-9 bg-[#3a302a]/5 hover:bg-[#c2652a] text-[#3a302a]/40 hover:text-white rounded-full transition-all group"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => {
-                            setIsEditStoryDialogOpen(false);
-                            setEditingStory(null);
-                            setNewStory({
-                                title: '',
-                                description: '',
-                                priority: 'medium',
-                                storyPoints: 0,
-                                status: 'todo'
-                            });
-                        }}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSaveEditStory}>
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+
+                    <div className="flex-1 px-8 py-6 space-y-8 pb-12">
+                        {/* Title */}
+                        <div className="space-y-1">
+                            <h1 
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => {
+                                    const newTitle = e.currentTarget.innerText;
+                                    if (newTitle.trim()) {
+                                        setNewStory(prev => ({ ...prev, title: newTitle }));
+                                        handleSaveEditStory();
+                                    }
+                                }}
+                                className="text-[28px] font-eb-garamond font-bold text-[#3a302a] leading-tight tracking-tight focus:outline-none focus:bg-[#3a302a]/5 px-2 -ml-2 rounded-xl transition-all cursor-text"
+                            >
+                                {newStory.title || "Untitled Story"}
+                            </h1>
+                        </div>
+
+                        {/* Basic Attributes Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Status */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Status</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <div className={cn("h-2 w-2 rounded-full", getStatusDotColor(newStory.status || 'todo'))} />
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">{getStatusLabel(newStory.status || 'todo')}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        {['todo', 'in_progress', 'in_review', 'done', 'blocked'].map((status) => (
+                                            <DropdownMenuItem 
+                                                key={status}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, status: status as any }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <div className={cn("h-2 w-2 rounded-full", getStatusDotColor(status))} />
+                                                <span className="text-xs font-bold">{getStatusLabel(status)}</span>
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+
+                            {/* Priority */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Priority</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1 capitalize">{newStory.priority || 'Medium'}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        {['low', 'medium', 'high', 'urgent'].map((p) => (
+                                            <DropdownMenuItem 
+                                                key={p}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, priority: p as any }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="text-xs font-bold capitalize"
+                                            >
+                                                {p}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+
+                            {/* Assignee */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Assignee</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <Avatar className="h-4 w-4">
+                                                <AvatarFallback className="bg-[#c2652a] text-white text-[8px] font-bold">
+                                                    {newStory.assignee ? newStory.assignee.substring(0, 2).toUpperCase() : '??'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">{newStory.assignee || 'Unassigned'}</span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-[200px]">
+                                        <DropdownMenuItem 
+                                            onClick={() => {
+                                                setNewStory(prev => ({ ...prev, assignee: undefined }));
+                                                handleSaveEditStory();
+                                            }}
+                                            className="text-xs font-bold"
+                                        >
+                                            Unassigned
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        {orgMembers.map((member) => (
+                                            <DropdownMenuItem 
+                                                key={member.id}
+                                                onClick={() => {
+                                                    setNewStory(prev => ({ ...prev, assignee: member.display_name }));
+                                                    handleSaveEditStory();
+                                                }}
+                                                className="text-xs font-bold"
+                                            >
+                                                {member.display_name}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+
+                            {/* Due Date */}
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Due Date</label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#3a302a]/10 rounded-lg cursor-pointer hover:border-[#c2652a]/30 transition-all">
+                                            <CalendarIcon className="h-3 w-3 text-[#3a302a]/40" />
+                                            <span className="text-xs font-bold text-[#3a302a] flex-1">
+                                                {newStory.due_date ? format(new Date(newStory.due_date), "MMM d, yyyy") : 'Set Date'}
+                                            </span>
+                                            <ChevronDown className="h-3 w-3 text-[#3a302a]/30" />
+                                        </div>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={newStory.due_date ? new Date(newStory.due_date) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    setNewStory(prev => ({ ...prev, due_date: date.toISOString() }));
+                                                    handleSaveEditStory();
+                                                }
+                                            }}
+                                            initialFocus
+                                        />
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+
+                        {/* Story Points & Progress */}
+                        <div className="bg-white border border-[#3a302a]/10 rounded-xl p-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4 flex-1">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Completed Points</label>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number"
+                                                value={newStory.completedStoryPoints || ''}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    setNewStory(prev => ({ ...prev, completedStoryPoints: val }));
+                                                    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                                                    autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+                                                }}
+                                                className="w-12 border border-[#3a302a]/10 rounded text-center text-sm font-bold p-1"
+                                                placeholder="0"
+                                            />
+                                            <span className="text-sm font-bold text-[#3a302a]/40">/</span>
+                                            <input 
+                                                type="number"
+                                                value={newStory.storyPoints || ''}
+                                                onChange={(e) => {
+                                                    const val = parseInt(e.target.value) || 0;
+                                                    setNewStory(prev => ({ ...prev, storyPoints: val }));
+                                                    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+                                                    autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+                                                }}
+                                                className="w-12 border border-[#3a302a]/10 rounded text-center text-sm font-bold p-1"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex-1 px-4 space-y-2">
+                                        <div className="flex justify-between items-center text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">
+                                            <span>Progress</span>
+                                            <span>{(newStory.storyPoints && newStory.storyPoints > 0) ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%</span>
+                                        </div>
+                                        <div className="h-2 w-full bg-[#3a302a]/5 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-[#c2652a] transition-all" 
+                                                style={{ width: `${(newStory.storyPoints && newStory.storyPoints > 0) ? Math.round(((newStory.completedStoryPoints || 0) / newStory.storyPoints) * 100) : 0}%` }} 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Description</label>
+                            <div className="bg-white border border-[#3a302a]/10 rounded-xl overflow-hidden group">
+                                <AnimatePresence>
+                                    {isDescriptionFocused && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="border-b border-[#3a302a]/5 bg-[#3a302a]/[0.02] overflow-hidden"
+                                        >
+                                            <div className="flex items-center gap-0.5 p-1">
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('bold')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Bold className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('italic')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Italic className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('list')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <List className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('ordered')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <ListOrdered className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('todo')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <ListTodo className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('table')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Insert Table">
+                                                    <Table className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-row')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Add Row">
+                                                    <Rows className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('add-col')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5" title="Add Column">
+                                                    <Columns className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-row')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Row">
+                                                    <Rows className="h-3.5 w-3.5 text-red-400 group-hover/del:text-red-600" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-col')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Column">
+                                                    <Columns className="h-3.5 w-3.5 text-red-400 group-hover/del:text-red-600" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('delete-table')} className="h-7 w-7 rounded hover:bg-red-50 group/del" title="Delete Entire Table">
+                                                    <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                                </Button>
+                                                <div className="w-[1px] h-3 bg-[#3a302a]/10 mx-1" />
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('link')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5">
+                                                    <Link2 className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onMouseDown={(e) => e.preventDefault()} onClick={() => handleFormat('copy')} className="h-7 w-7 rounded hover:bg-[#3a302a]/5 ml-auto">
+                                                    <Copy className="h-3.5 w-3.5 text-[#3a302a]/60" />
+                                                </Button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            <div className="relative">
+                                <div
+                                    ref={descriptionRef as any}
+                                    contentEditable
+                                    onPaste={handlePaste}
+                                    onFocus={() => setIsDescriptionFocused(true)}
+                                    onBlur={(e) => {
+                                        const val = e.currentTarget.innerHTML;
+                                        setNewStory(prev => ({ ...prev, description: val }));
+                                        setIsDescriptionFocused(false);
+                                        handleSaveEditStory();
+                                    }}
+                                    dangerouslySetInnerHTML={{ __html: newStory.description || '' }}
+                                    className="p-4 min-h-[150px] text-sm focus:outline-none sahara-editor"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                        {/* Comments */}
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-[#3a302a]/40 uppercase tracking-widest">Comments</label>
+                            <div className="flex gap-2">
+                                <div 
+                                    ref={commentInputRef}
+                                    contentEditable
+                                    className="flex-1 bg-white border border-[#3a302a]/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#c2652a] comment-input-placeholder"
+                                    data-placeholder="Share your thoughts or update the team..."
+                                />
+                                <Button 
+                                    onClick={handleAddComment}
+                                    className="bg-[#c2652a] hover:bg-[#a15423] text-white"
+                                >
+                                    <Send className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            
+                            <div className="space-y-3 mt-4">
+                                {(newStory.comments || []).map((c: any, i: number) => (
+                                    <div key={i} className="flex gap-3">
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarFallback className="bg-[#3a302a] text-white text-[8px] font-bold">
+                                                {c.user_name?.charAt(0).toUpperCase() || 'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="bg-white border border-[#3a302a]/5 rounded-xl rounded-tl-none p-3 flex-1 text-sm">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-xs">{c.user_name}</span>
+                                                    <span className="text-[10px] text-[#3a302a]/40">{new Date(c.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <button className="text-[#3a302a]/20 hover:text-[#3a302a] transition-all">
+                                                            <MoreVertical className="h-3 w-3" />
+                                                        </button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-32 bg-white rounded-xl border-[#3a302a]/5 shadow-xl p-1">
+                                                        <DropdownMenuItem onClick={() => handleStartEditComment(c)} className="flex items-center gap-2 text-[12px] font-bold text-[#3a302a]/70 rounded-lg cursor-pointer">
+                                                            <Edit className="h-3 w-3" /> Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleShareComment(c.id)} className="flex items-center gap-2 text-[12px] font-bold text-[#3a302a]/70 rounded-lg cursor-pointer">
+                                                            <Share2 className="h-3 w-3" /> Share
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleDeleteComment(c.id)} className="flex items-center gap-2 text-[12px] font-bold text-red-500 rounded-lg cursor-pointer hover:bg-red-50 focus:bg-red-50">
+                                                            <Trash2 className="h-3 w-3" /> Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                            {editingCommentId === c.id ? (
+                                                <div className="space-y-2 mt-1">
+                                                    <textarea 
+                                                        value={editingCommentText}
+                                                        onChange={(e) => setEditingCommentText(e.target.value)}
+                                                        className="w-full bg-white border border-[#c2652a]/30 rounded-lg p-2 text-sm focus:outline-none min-h-[60px]"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <Button size="sm" onClick={() => handleSaveCommentEdit(c.id)} className="h-7 text-[10px] bg-[#c2652a]">Save</Button>
+                                                        <Button size="sm" variant="ghost" onClick={() => setEditingCommentId(null)} className="h-7 text-[10px]">Cancel</Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <p className="text-[#3a302a]/70">
+                                                        {c.text}
+                                                        {c.edited_at && <span className="text-[8px] text-[#3a302a]/30 ml-1 italic">(edited)</span>}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 mt-2">
+                                                        <button 
+                                                            onClick={() => setReplyingToId(c.id)}
+                                                            className="text-[10px] font-bold text-[#3a302a]/30 hover:text-[#c2652a] flex items-center gap-1"
+                                                        >
+                                                            <Reply className="h-3 w-3" /> Reply
+                                                        </button>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <button className="flex items-center gap-1 text-[10px] font-bold text-[#3a302a]/30 hover:text-[#c2652a]">
+                                                                    <Smile className="h-3 w-3" />
+                                                                    {c.reactions?.length > 0 && (
+                                                                        <div className="flex gap-1 ml-1">
+                                                                            {c.reactions.map((r: any, idx: number) => (
+                                                                                <span key={idx} className="bg-[#3a302a]/5 px-1 rounded">{r.emoji} {r.count}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </button>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent side="top" align="start" className="w-fit p-1 bg-white rounded-full shadow-xl border-[#3a302a]/5 flex gap-1">
+                                                                {['👍', '❤️', '🔥', '🚀', '😄', '💯'].map(emoji => (
+                                                                    <button 
+                                                                        key={emoji}
+                                                                        onClick={() => handleToggleReaction(c.id, emoji)}
+                                                                        className="h-7 w-7 hover:bg-[#3a302a]/5 rounded-full flex items-center justify-center text-base transition-all"
+                                                                    >
+                                                                        {emoji}
+                                                                    </button>
+                                                                ))}
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                    </div>
+
+                                                    {/* Reply Box */}
+                                                    {replyingToId === c.id && (
+                                                        <div className="mt-2 pl-3 border-l-2 border-[#c2652a]/20 space-y-2">
+                                                            <textarea 
+                                                                autoFocus
+                                                                placeholder="Write a reply..."
+                                                                value={replyText}
+                                                                onChange={(e) => setReplyText(e.target.value)}
+                                                                className="w-full bg-white border border-[#3a302a]/10 rounded-lg p-2 text-[12px] focus:outline-none min-h-[50px]"
+                                                            />
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleAddReply(c.id)} className="px-2 py-1 bg-[#c2652a] text-white text-[10px] rounded">Reply</button>
+                                                                <button onClick={() => setReplyingToId(null)} className="px-2 py-1 text-[#3a302a]/40 text-[10px]">Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Nested Replies */}
+                                                    {c.replies?.length > 0 && (
+                                                        <div className="mt-2 space-y-2">
+                                                            <button 
+                                                                onClick={() => toggleReplies(c.id)}
+                                                                className="text-[9px] font-black text-[#c2652a] uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                                            >
+                                                                {expandedCommentIds.has(c.id) ? <ChevronUp className="h-2 w-2" /> : <ChevronDown className="h-2 w-2" />}
+                                                                {c.replies.length} {c.replies.length === 1 ? 'Reply' : 'Replies'}
+                                                            </button>
+                                                            
+                                                            <AnimatePresence>
+                                                                {expandedCommentIds.has(c.id) && (
+                                                                    <motion.div 
+                                                                        initial={{ opacity: 0, height: 0 }}
+                                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                                        exit={{ opacity: 0, height: 0 }}
+                                                                        className="pl-4 border-l border-[#3a302a]/5 space-y-2 overflow-hidden"
+                                                                    >
+                                                                        {c.replies.map((reply: any, idx: number) => (
+                                                                            <div key={reply.id || idx} className="flex gap-2 py-1">
+                                                                                <Avatar className="h-4 w-4">
+                                                                                    <AvatarFallback className="bg-[#3a302a] text-white text-[6px] font-bold">
+                                                                                        {reply.user_name?.charAt(0).toUpperCase()}
+                                                                                    </AvatarFallback>
+                                                                                </Avatar>
+                                                                                <div className="flex-1">
+                                                                                    <div className="flex items-center gap-1.5">
+                                                                                        <span className="text-[10px] font-bold text-[#3a302a]">{reply.user_name}</span>
+                                                                                        <span className="text-[8px] text-[#3a302a]/30">{new Date(reply.created_at).toLocaleDateString()}</span>
+                                                                                    </div>
+                                                                                    <p className="text-[11px] text-[#3a302a]/70">{reply.text}</p>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
