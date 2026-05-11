@@ -15,7 +15,7 @@ import {
     List, ListOrdered, ListTodo, Table, Rows, Columns, ThumbsUp, Send,
     Plus, FileText, ExternalLink, TrendingUp, AlertCircle, CheckCircle2,
     Trash2, Share2, Edit, Smile, MessageSquare, ChevronUp, Heart,
-    Reply, Crop
+    Reply, Crop, FileCheck
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -26,12 +26,76 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { motion, AnimatePresence } from 'framer-motion';
 const TAB_ID = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString();
 
+// Word-level diff utility
+const computeDiff = (oldHtml: string, newHtml: string) => {
+    const stripHtml = (html: string) => {
+        if (typeof document === 'undefined') return "";
+        const tmp = document.createElement('DIV');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || "";
+    };
+
+    const oldText = stripHtml(oldHtml);
+    const newText = stripHtml(newHtml);
+
+    if (oldText === newText) return null;
+
+    // Use a regex that keeps spaces and punctuation as separate elements
+    const oldWords = oldText.split(/(\s+|[.,!?;:()])/).filter(x => x !== undefined && x !== "");
+    const newWords = newText.split(/(\s+|[.,!?;:()])/).filter(x => x !== undefined && x !== "");
+
+    // LCS-based diffing for better alignment
+    const n = oldWords.length;
+    const m = newWords.length;
+    const dp = Array.from({ length: n + 1 }, () => new Int32Array(m + 1));
+
+    for (let i = 1; i <= n; i++) {
+        for (let j = 1; j <= m; j++) {
+            if (oldWords[i - 1] === newWords[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
+            else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+        }
+    }
+
+    const diff = [];
+    let i = n, j = m;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
+            diff.unshift({ type: 'equal', value: oldWords[i - 1] });
+            i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+            diff.unshift({ type: 'added', value: newWords[j - 1] });
+            j--;
+        } else {
+            diff.unshift({ type: 'removed', value: oldWords[i - 1] });
+            i--;
+        }
+    }
+
+    // Post-process: merge consecutive additions/removals for cleaner display
+    const mergedDiff = [];
+    for (const part of diff) {
+        const last = mergedDiff[mergedDiff.length - 1];
+        if (last && last.type === part.type) {
+            last.value += part.value;
+        } else {
+            mergedDiff.push({ ...part });
+        }
+    }
+
+    return mergedDiff;
+};
+
 export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any, sprintId: string, sprintInfo: any }) {
     const router = useRouter();
     const { toast } = useToast();
     const [orgMembers, setOrgMembers] = React.useState<any[]>([]);
     const [user, setUser] = React.useState<any>(null);
-    const [newStory, setNewStory] = React.useState<any>(story);
+    const [newStory, setNewStory] = React.useState<any>(() => ({
+        ...story,
+        storyPoints: story.story_points || story.storyPoints,
+        completedStoryPoints: story.completed_story_points ?? story.completedStoryPoints
+    }));
+    const [lastSavedDescription, setLastSavedDescription] = React.useState(story.description || '');
     const latestStoryRef = React.useRef(newStory);
     React.useEffect(() => {
         latestStoryRef.current = newStory;
@@ -51,6 +115,7 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
     const [selectedImage, setSelectedImage] = React.useState<HTMLImageElement | null>(null);
     const [imageToolbarPos, setImageToolbarPos] = React.useState<{ top: number, left: number } | null>(null);
     const [isResizing, setIsResizing] = React.useState(false);
+    const [newItemText, setNewItemText] = React.useState('');
 
     const handlePaste = (e: React.ClipboardEvent) => {
         const items = e.clipboardData?.items;
@@ -165,8 +230,36 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
     };
 
     const handleSaveEditStory = async (storyToSave?: any) => {
-        const story = storyToSave || latestStoryRef.current;
+        let story = storyToSave || latestStoryRef.current;
         if (!story.title?.trim()) return;
+
+        let updatedActivityLog = [...(story.activity_log || [])];
+        let hasLogChanges = false;
+
+        // Track description changes for activity log
+        if (story.description !== lastSavedDescription) {
+            const diff = computeDiff(lastSavedDescription, story.description || "");
+            if (diff && diff.some(d => d.type !== 'equal')) {
+                const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+                const newActivity = {
+                    id: crypto.randomUUID(), 
+                    text: "Updated description", 
+                    type: 'diff' as const, 
+                    user_name: userName, 
+                    created_at: new Date().toISOString(),
+                    diff: diff
+                };
+                updatedActivityLog = [newActivity, ...updatedActivityLog];
+                hasLogChanges = true;
+                setLastSavedDescription(story.description || "");
+            }
+        }
+
+        // If log changed, update the local story object before saving
+        if (hasLogChanges) {
+            story = { ...story, activity_log: updatedActivityLog };
+            setNewStory(story);
+        }
 
         const { error } = await updateStory(story.id, {
             title: story.title,
@@ -180,7 +273,7 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
             due_date: story.due_date,
             subtasks: story.subtasks,
             comments: story.comments,
-            activity_log: story.activity_log,
+            activity_log: updatedActivityLog,
             identified_risks: story.identified_risks,
             acceptance_criteria: story.acceptance_criteria
         });
@@ -194,12 +287,21 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
         }
     };
 
-    const addActivity = (text: string, type: 'status' | 'update' = 'update') => {
+    const addActivity = (text: string, type: 'status' | 'update' | 'diff' = 'update', diffData?: any, storyToUpdate?: any) => {
+        const baseStory = storyToUpdate || latestStoryRef.current;
         const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
         const newActivity = {
-            id: crypto.randomUUID(), text, type, user_name: userName, created_at: new Date().toISOString()
+            id: crypto.randomUUID(), 
+            text, 
+            type, 
+            user_name: userName, 
+            created_at: new Date().toISOString(),
+            diff: diffData
         };
-        setNewStory((prev: any) => ({ ...prev, activity_log: [newActivity, ...(prev.activity_log || [])] }));
+        const updatedStory = { ...baseStory, activity_log: [newActivity, ...(baseStory.activity_log || [])] };
+        setNewStory(updatedStory);
+        latestStoryRef.current = updatedStory;
+        return updatedStory;
     };
 
     const handleAddComment = async () => {
@@ -652,14 +754,39 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
 
     
     const handleToggleSubtask = (id: string) => {
-        setNewStory((prev: any) => ({
-            ...prev,
-            subtasks: prev.subtasks?.map((t: any) => 
-                t.id === id ? { ...t, is_completed: !t.is_completed } : t
-            ) || []
-        }));
-        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = setTimeout(() => handleSaveEditStory(), 1000);
+        const updatedSubtasks = (newStory.subtasks || []).map((t: any) => 
+            t.id === id ? { ...t, is_completed: !t.is_completed } : t
+        );
+        const updated = { ...newStory, subtasks: updatedSubtasks };
+        setNewStory(updated);
+        latestStoryRef.current = updated;
+        handleSaveEditStory(updated);
+    };
+
+    const handleAddSubtask = (title: string) => {
+        if (!title.trim()) return;
+        const newSubtask = {
+            id: crypto.randomUUID(),
+            title: title.trim(),
+            is_completed: false
+        };
+        const updatedSubtasks = [...(newStory.subtasks || []), newSubtask];
+        const updated = { ...newStory, subtasks: updatedSubtasks };
+        setNewStory(updated);
+        latestStoryRef.current = updated;
+        addActivity(`Added checklist item: ${title.trim()}`);
+        handleSaveEditStory(updated);
+        setNewItemText('');
+    };
+
+    const handleDeleteSubtask = (id: string) => {
+        const item = newStory.subtasks?.find((t: any) => t.id === id);
+        const updatedSubtasks = (newStory.subtasks || []).filter((t: any) => t.id !== id);
+        const updated = { ...newStory, subtasks: updatedSubtasks };
+        setNewStory(updated);
+        latestStoryRef.current = updated;
+        if (item) addActivity(`Removed checklist item: ${item.title}`);
+        handleSaveEditStory(updated);
     };
 
     const handleUpdateDescription = (html: string) => {
@@ -670,6 +797,14 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
 
     return (
         <div className="flex h-screen bg-[#faf5ee] flex-col overflow-hidden font-manrope">
+            <style>{`
+                .comment-input-placeholder:empty:before {
+                    content: attr(data-placeholder);
+                    color: #3a302a40;
+                    font-weight: 500;
+                    cursor: text;
+                }
+            `}</style>
             <div className="flex-1 overflow-auto">
                 <div className="max-w-7xl mx-auto w-full bg-[#faf5ee] min-h-full flex flex-col px-4 sm:px-6 lg:px-8">
                     {/* Inject original UI components */}
@@ -788,9 +923,19 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                     key={status}
                                                     onClick={() => {
                                                         const oldStatus = newStory.status || 'todo';
-                                                        setNewStory((prev: any) => ({ ...prev, status: status as any }));
-                                                        addActivity(`Changed status from ${getStatusLabel(oldStatus)} to ${getStatusLabel(status)}`, 'status');
-                                                        handleSaveEditStory();
+                                                        const updatedStory = { ...newStory, status: status as any };
+                                                        const userName = user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+                                                        const newActivity = {
+                                                            id: crypto.randomUUID(), 
+                                                            text: `Changed status from ${getStatusLabel(oldStatus)} to ${getStatusLabel(status)}`, 
+                                                            type: 'status' as const, 
+                                                            user_name: userName, 
+                                                            created_at: new Date().toISOString()
+                                                        };
+                                                        const storyWithLog = { ...updatedStory, activity_log: [newActivity, ...(updatedStory.activity_log || [])] };
+                                                        setNewStory(storyWithLog);
+                                                        latestStoryRef.current = storyWithLog;
+                                                        handleSaveEditStory(storyWithLog);
                                                     }}
                                                     className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer hover:bg-[#c2652a]/5 focus:bg-[#c2652a]/5 outline-none transition-colors"
                                                 >
@@ -832,8 +977,8 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                     setNewStory((prev: any) => ({ ...prev, completedStoryPoints: val }));
                                                     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
                                                     autoSaveTimerRef.current = setTimeout(() => {
-                                                        addActivity(`Log: Completed ${val} SP out of ${newStory.storyPoints} SP`);
-                                                        handleSaveEditStory();
+                                                        const updated = addActivity(`Log: Completed ${val} SP out of ${newStory.storyPoints} SP`);
+                                                        handleSaveEditStory(updated);
                                                     }, 1500);
                                                 }}
                                                 className="w-14 bg-transparent text-right text-[18px] font-bold text-green-600 placeholder:text-green-600/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -988,8 +1133,8 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                 setNewStory((prev: any) => ({ ...prev, storyPoints: val }));
                                                 if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
                                                 autoSaveTimerRef.current = setTimeout(() => {
-                                                    addActivity(`Updated story points to ${val} SP`);
-                                                    handleSaveEditStory();
+                                                    const updated = addActivity(`Updated story points to ${val} SP`);
+                                                    handleSaveEditStory(updated);
                                                 }, 1500);
                                             }}
                                             className="w-16 bg-transparent text-right text-[11px] font-black text-[#c2652a] placeholder:text-[#c2652a]/50 focus:outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -1289,7 +1434,12 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                 )}
                                             >
                                                 {tab.label}
-                                                {tab.count && <span className="text-[10px] font-black bg-[#3a302a]/5 px-1.5 py-0.5 rounded-md">{tab.count}</span>}
+                                                <span className={cn(
+                                                    "text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center transition-all",
+                                                    activeTab === tab.id ? "bg-[#3a302a]/10 text-[#3a302a]" : "bg-[#3a302a]/5 text-[#3a302a]/40"
+                                                )}>
+                                                    {tab.count}
+                                                </span>
                                                 {activeTab === tab.id && <motion.div layoutId="activeTabUnderline" className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#c2652a]" />}
                                             </button>
                                         ))}
@@ -1305,7 +1455,7 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                             <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a]/40 text-xs font-bold">ME</AvatarFallback>
                                                         </Avatar>
                                                         <div className={cn(
-                                                            "flex-1 flex items-center bg-white border rounded-full px-6 py-1.5 transition-all duration-300",
+                                                            "flex-1 flex items-center bg-white border rounded-full pl-6 pr-1.5 py-1.5 transition-all duration-300",
                                                             isCommentFocused ? "border-[#c2652a] shadow-md" : "border-[#3a302a]/10"
                                                         )}>
                                                             <div 
@@ -1313,8 +1463,8 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                                 contentEditable
                                                                 onFocus={() => setIsCommentFocused(true)}
                                                                 onBlur={() => setIsCommentFocused(false)}
-                                                                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#3a302a] leading-relaxed py-1 empty:before:content-[attr(data-placeholder)] empty:before:text-[#3a302a]/30 min-h-[24px] max-h-[120px] overflow-y-auto no-scrollbar"
-                                                                data-placeholder="Add a comment..."
+                                                                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] text-[#3a302a] leading-relaxed py-1 comment-input-placeholder min-h-[24px] max-h-[120px] overflow-y-auto no-scrollbar"
+                                                                data-placeholder="Share your thoughts or update the team..."
                                                                 onKeyDown={(e) => {
                                                                     if (e.key === 'Enter' && !e.shiftKey) {
                                                                         e.preventDefault();
@@ -1497,9 +1647,74 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                             )}
 
                                             {activeTab === 'checklist' && (
-                                                <motion.div key="checklist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                                                    <div className="bg-white/50 border border-[#3a302a]/5 rounded-[32px] p-8 space-y-6">
-                                                        <div className="flex items-center justify-between">
+                                                <motion.div key="checklist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
+                                                    {/* Checklist Input (Matching Comment Style) */}
+                                                    <div className="flex items-center gap-4 py-2">
+                                                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm shrink-0">
+                                                            <AvatarFallback className="bg-[#3a302a]/5 text-[#3a302a]/40 text-xs font-bold">
+                                                                {user?.user_metadata?.display_name?.substring(0, 2).toUpperCase() || 'ME'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className={cn(
+                                                            "flex-1 flex items-center bg-white border rounded-full pl-6 pr-1.5 py-1 transition-all duration-300",
+                                                            newItemText.trim() ? "border-[#c2652a] shadow-md" : "border-[#3a302a]/10"
+                                                        )}>
+                                                            <input 
+                                                                type="text"
+                                                                value={newItemText}
+                                                                onChange={(e) => setNewItemText(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleAddSubtask(newItemText);
+                                                                }}
+                                                                placeholder="Add a checklist item..."
+                                                                className="flex-1 bg-transparent border-none focus:outline-none text-[14px] font-bold text-[#3a302a] placeholder:text-[#3a302a]/20 py-1.5"
+                                                            />
+                                                            <button 
+                                                                onClick={() => handleAddSubtask(newItemText)}
+                                                                disabled={!newItemText.trim()}
+                                                                className={cn(
+                                                                    "h-9 w-9 rounded-full flex items-center justify-center transition-all",
+                                                                    newItemText.trim() 
+                                                                        ? "bg-[#c2652a] text-white shadow-lg hover:scale-110 active:scale-95" 
+                                                                        : "bg-[#3a302a]/5 text-[#3a302a]/20 cursor-not-allowed"
+                                                                )}
+                                                            >
+                                                                <Plus className="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="bg-white/50 border border-[#3a302a]/5 rounded-[32px] p-8 space-y-8">
+                                                        {/* Progress Tracking */}
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="h-10 w-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+                                                                    <ThumbsUp className="h-5 w-5 text-purple-600" />
+                                                                </div>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="h-2.5 flex-1 bg-purple-100 rounded-full overflow-hidden mr-4">
+                                                                            <motion.div 
+                                                                                initial={{ width: 0 }}
+                                                                                animate={{ 
+                                                                                    width: `${newStory.subtasks?.length > 0 
+                                                                                        ? (newStory.subtasks.filter((t: any) => t.is_completed).length / newStory.subtasks.length) * 100 
+                                                                                        : 0}%` 
+                                                                                }}
+                                                                                className="h-full bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.4)]"
+                                                                            />
+                                                                        </div>
+                                                                        <span className="text-[16px] font-black text-purple-700">
+                                                                            {newStory.subtasks?.length > 0 
+                                                                                ? Math.round((newStory.subtasks.filter((t: any) => t.is_completed).length / newStory.subtasks.length) * 100) 
+                                                                                : 0}%
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between pt-4 border-t border-[#3a302a]/5">
                                                             <div className="flex items-center gap-3">
                                                                 <Sparkles className="h-4 w-4 text-purple-500" />
                                                                 <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">Intelligent Checklist Generator</span>
@@ -1507,30 +1722,101 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                             <button className="text-[9px] font-black text-purple-600 uppercase tracking-widest hover:underline">Regenerate</button>
                                                         </div>
                                                         
-                                                        <div className="space-y-3">
-                                                            {(newStory.subtasks || []).map((item: any, i: number) => (
-                                                                <div 
-                                                                    key={i} 
-                                                                    onClick={() => handleToggleSubtask(item.id)}
-                                                                    className="flex items-center justify-between p-5 bg-white border border-[#3a302a]/5 rounded-2xl group hover:border-[#c2652a]/20 transition-all cursor-pointer"
-                                                                >
-                                                                    <div className="flex items-center gap-4">
-                                                                        <div className={cn(
-                                                                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                                                            item.is_completed ? "bg-[#c2652a] border-[#c2652a]" : "border-[#3a302a]/10"
-                                                                        )}>
-                                                                            {item.is_completed && <Check className="h-3 w-3 text-white" strokeWidth={4} />}
+                                                        <div className="space-y-1">
+                                                            <AnimatePresence mode="popLayout">
+                                                                {(newStory.subtasks || []).map((item: any, i: number) => (
+                                                                    <motion.div 
+                                                                        layout
+                                                                        key={item.id || i}
+                                                                        initial={{ opacity: 0, y: 10 }}
+                                                                        animate={{ opacity: 1, y: 0 }}
+                                                                        exit={{ opacity: 0, scale: 0.95 }}
+                                                                        className={cn(
+                                                                            "flex items-center justify-between p-4 rounded-[20px] transition-all duration-300 group relative",
+                                                                            item.is_completed 
+                                                                                ? "bg-transparent" 
+                                                                                : "hover:bg-white hover:shadow-[0_10px_40px_rgba(58,48,42,0.06)] hover:z-10"
+                                                                        )}
+                                                                    >
+                                                                        <div className="flex items-center gap-5 flex-1">
+                                                                            <div className={cn(
+                                                                                "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300",
+                                                                                item.is_completed ? "bg-[#3a302a]/5" : "bg-[#c2652a]/5 group-hover:bg-[#c2652a]/10"
+                                                                            )}>
+                                                                                <FileCheck className={cn(
+                                                                                    "h-4 w-4 transition-all",
+                                                                                    item.is_completed ? "text-[#3a302a]/20" : "text-[#c2652a]"
+                                                                                )} />
+                                                                            </div>
+                                                                            <div 
+                                                                                className="flex-1 cursor-pointer"
+                                                                                onClick={() => handleToggleSubtask(item.id)}
+                                                                            >
+                                                                                <h5 className={cn(
+                                                                                    "text-[14px] font-bold transition-all duration-300",
+                                                                                    item.is_completed ? "text-[#3a302a]/30 line-through" : "text-[#3a302a]"
+                                                                                )}>{item.title}</h5>
+                                                                                <p className={cn(
+                                                                                    "text-[10px] font-medium transition-all duration-300",
+                                                                                    item.is_completed ? "text-[#3a302a]/20" : "text-[#3a302a]/40"
+                                                                                )}>
+                                                                                    {item.is_completed ? "Task Completed" : "Strategic Requirement"}
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
-                                                                        <span className={cn(
-                                                                            "text-[14px] font-bold transition-all",
-                                                                            item.is_completed ? "text-[#3a302a]/40 line-through" : "text-[#3a302a]"
-                                                                        )}>{item.title}</span>
-                                                                    </div>
-                                                                    <div className="h-8 w-8 rounded-full border-2 border-[#3a302a]/5 flex items-center justify-center group-hover:border-[#c2652a]/20 group-hover:bg-[#c2652a]/5 transition-all">
-                                                                        <Plus className="h-4 w-4 text-[#3a302a]/20 group-hover:text-[#c2652a]" />
-                                                                    </div>
-                                                                </div>
-                                                            ))}
+                                                                        
+                                                                        <div className="flex items-center gap-3">
+                                                                            <button 
+                                                                                onClick={() => handleToggleSubtask(item.id)}
+                                                                                className={cn(
+                                                                                    "h-9 w-9 rounded-full border-2 flex items-center justify-center transition-all duration-300",
+                                                                                    item.is_completed 
+                                                                                        ? "bg-green-500 border-green-500 shadow-[0_4px_12px_rgba(34,197,94,0.3)]" 
+                                                                                        : "border-[#3a302a]/5 group-hover:border-[#c2652a]/20"
+                                                                                )}
+                                                                            >
+                                                                                {item.is_completed ? (
+                                                                                    <Check className="h-4 w-4 text-white" strokeWidth={4} />
+                                                                                ) : (
+                                                                                    <div className="h-1.5 w-1.5 rounded-full bg-[#3a302a]/10 group-hover:bg-[#c2652a]/30 transition-all" />
+                                                                                )}
+                                                                            </button>
+
+                                                                            <Popover>
+                                                                                <PopoverTrigger asChild>
+                                                                                    <button 
+                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                        className="h-8 w-8 rounded-full flex items-center justify-center text-[#3a302a]/10 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                                                                                    >
+                                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                                    </button>
+                                                                                </PopoverTrigger>
+                                                                                <PopoverContent className="w-48 p-3 rounded-2xl border-[#3a302a]/5 shadow-xl" align="end">
+                                                                                    <div className="space-y-3">
+                                                                                        <p className="text-[11px] font-bold text-[#3a302a] text-center">Delete this item?</p>
+                                                                                        <div className="flex gap-2">
+                                                                                            <Button 
+                                                                                                variant="ghost" 
+                                                                                                size="sm" 
+                                                                                                className="flex-1 h-8 text-[10px] font-black uppercase tracking-widest text-[#3a302a]/40 hover:bg-[#3a302a]/5 rounded-xl"
+                                                                                            >
+                                                                                                Cancel
+                                                                                            </Button>
+                                                                                            <Button 
+                                                                                                size="sm" 
+                                                                                                onClick={() => handleDeleteSubtask(item.id)}
+                                                                                                className="flex-1 h-8 bg-red-500 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-200"
+                                                                                            >
+                                                                                                Delete
+                                                                                            </Button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </PopoverContent>
+                                                                            </Popover>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                ))}
+                                                            </AnimatePresence>
                                                         </div>
                                                     </div>
                                                 </motion.div>
@@ -1588,14 +1874,44 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                                                         <div key={i} className="flex gap-6 relative">
                                                             {i !== (Math.min(visibleActivitiesCount, newStory.activity_log?.length || 0)) - 1 && <div className="absolute left-[15px] top-8 bottom-[-32px] w-[2px] bg-[#3a302a]/5" />}
                                                             <div className="h-8 w-8 rounded-full bg-white border border-[#3a302a]/5 flex items-center justify-center shrink-0 shadow-sm z-10">
-                                                                {activity.type === 'status' ? <div className="h-2 w-2 rounded-full bg-[#c2652a]" /> : <Activity className="h-3 w-3 text-blue-500" />}
+                                                                {activity.type === 'status' ? (
+                                                                    <div className="h-2 w-2 rounded-full bg-[#c2652a]" />
+                                                                ) : activity.type === 'diff' ? (
+                                                                    <Edit2 className="h-3 w-3 text-[#c2652a]" />
+                                                                ) : (
+                                                                    <Activity className="h-3 w-3 text-blue-500" />
+                                                                )}
                                                             </div>
                                                             <div className="pt-1.5 space-y-1">
                                                                 <p className="text-[14px] font-bold text-[#3a302a]">{activity.text || activity.message}</p>
+                                                                
+                                                                {activity.type === 'diff' && activity.diff && (
+                                                                    <div className="mt-2 p-3 bg-[#3a302a]/[0.02] border border-[#3a302a]/5 rounded-xl text-[12px] leading-relaxed font-medium whitespace-pre-wrap">
+                                                                        {activity.diff.map((part: any, idx: number) => (
+                                                                            <span 
+                                                                                key={idx} 
+                                                                                className={cn(
+                                                                                    part.type === 'added' ? "text-green-600 bg-green-50 px-0.5 rounded" : 
+                                                                                    part.type === 'removed' ? "text-red-600 bg-red-50 line-through px-0.5 rounded" : 
+                                                                                    "text-[#3a302a]/60"
+                                                                                )}
+                                                                            >
+                                                                                {part.value}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+
                                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-[#3a302a]/30">
                                                                     <span>{activity.user_name || 'System'}</span>
                                                                     <span className="h-1 w-1 rounded-full bg-[#3a302a]/10" />
-                                                                    <span>{activity.created_at ? new Date(activity.created_at).toLocaleDateString() : 'Just now'}</span>
+                                                                    <span>
+                                                                        {activity.created_at ? (
+                                                                            <>
+                                                                                {new Date(activity.created_at).toLocaleDateString()} at {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                            </>
+                                                                        ) : 'Just now'}
+                                                                    </span>
                                                                 </div>
                                                             </div>
                                                         </div>

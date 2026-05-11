@@ -1721,6 +1721,14 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
 
     return (
         <div className={cn("min-h-screen bg-[#f8f5f0] dark:bg-[#09090b] flex flex-col font-manrope", isEmbedded && "min-h-0 bg-transparent")}>
+            <style>{`
+                .comment-input-placeholder:empty:before {
+                    content: attr(data-placeholder);
+                    color: #3a302a40;
+                    font-weight: 500;
+                    cursor: text;
+                }
+            `}</style>
             {!isEmbedded && (
                 <header className="h-16 border-b border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40">
                     <div className="h-full px-4 lg:px-6 flex items-center justify-between">
@@ -2769,8 +2777,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                 <div 
                                     ref={commentInputRef}
                                     contentEditable
-                                    className="flex-1 bg-white border border-[#3a302a]/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#c2652a]"
-                                    data-placeholder="Add a comment..."
+                                    className="flex-1 bg-white border border-[#3a302a]/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#c2652a] comment-input-placeholder"
+                                    data-placeholder="Share your thoughts or update the team..."
                                 />
                                 <Button 
                                     onClick={handleAddComment}
