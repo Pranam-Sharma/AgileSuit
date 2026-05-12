@@ -76,8 +76,8 @@ interface ExecutionSidebarProps {
     filterPriority: string[];
     setFilterPriority: (v: string[]) => void;
 
-    sortBy: string;
-    setSortBy: (v: string) => void;
+    sortBy: 'none' | 'priority' | 'points' | 'assignee' | 'newest';
+    setSortBy: (v: 'none' | 'priority' | 'points' | 'assignee' | 'newest') => void;
 
     filterPlatforms: string[];
     setFilterPlatforms: (v: string[]) => void;
@@ -555,7 +555,7 @@ export function ExecutionSidebar({
                         <select
                             className="w-full h-8 px-2 text-xs bg-white border border-[#3a302a]/10 rounded-md focus:outline-none focus:ring-1 focus:ring-[#c2652a] text-[#3a302a]"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
+                            onChange={(e) => setSortBy(e.target.value as 'none' | 'priority' | 'points' | 'assignee' | 'newest')}
                         >
                             <option value="none">Manual Order</option>
                             <option value="priority">Priority (Highest first)</option>
