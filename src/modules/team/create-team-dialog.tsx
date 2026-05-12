@@ -43,7 +43,7 @@ export function CreateTeamDialog({ trigger, onSuccess, departmentId, departmentN
     const onSubmit = async (data: any) => {
         setIsSubmitting(true);
         try {
-            await createTeamAction(departmentId, data.name, data.leadId || undefined);
+            await createTeamAction(departmentId, data.name, data.leadId || undefined, data.prefix);
             toast({
                 title: 'Team Created',
                 description: `${data.name} was added to ${departmentName}.`,
@@ -78,17 +78,24 @@ export function CreateTeamDialog({ trigger, onSuccess, departmentId, departmentN
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Team Name</Label>
-                        <Input id="name" placeholder="e.g. Frontend Core" {...register('name', { required: true })} />
-                        {errors.name && <span className="text-xs text-rose-500">Name is required</span>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Team Name</Label>
+                            <Input id="name" placeholder="e.g. Frontend Core" {...register('name', { required: true })} />
+                            {errors.name && <span className="text-xs text-rose-500">Name is required</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="prefix">Team Prefix (Code)</Label>
+                            <Input id="prefix" placeholder="e.g. CORE" {...register('prefix')} maxLength={10} />
+                            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Used in Story IDs</p>
+                        </div>
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="leadId">Assign Team Lead (Optional)</Label>
                         <select
                             id="leadId"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             {...register('leadId')}
                         >
                             <option value="">-- Unassigned --</option>

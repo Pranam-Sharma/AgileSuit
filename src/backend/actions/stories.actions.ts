@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/auth/supabase/server';
+import { createAdminClient } from '@/auth/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { Story, CreateStoryInput, UpdateStoryInput, MoveStoryInput } from '@/types/story';
 
@@ -58,11 +59,78 @@ export async function createStory(input: CreateStoryInput): Promise<{ data: Stor
         : 0;
     }
 
+    // Get organization ID from the sprint itself (prioritize org_slug for consistency)
+    const { data: sprint } = await supabase
+      .from('sprints')
+      .select('org_slug')
+      .eq('id', input.sprint_id)
+      .single();
+
+    // Get current user profile as secondary source
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', user.id)
+      .single();
+
+    const orgId = sprint?.org_slug || profile?.org_id;
+
+    if (!orgId) {
+      console.error('Missing orgId for story creation. Sprint ID:', input.sprint_id);
+      return { data: null, error: 'Organization context missing' };
+    }
+
+    // Derive execution code for Story ID
+    let teamPrefix = 'STORY';
+    let platformCode = '';
+
+    if (input.team_id) {
+      const { data: team } = await supabase
+        .from('teams')
+        .select('prefix')
+        .eq('id', input.team_id)
+        .single();
+      
+      // Use custom prefix if exists, otherwise fallback to name-based prefix
+      if (team?.prefix) {
+        teamPrefix = team.prefix;
+      }
+    }
+
+    if (input.platform_id) {
+      const { data: platform } = await supabase
+        .from('platforms')
+        .select('code')
+        .eq('id', input.platform_id)
+        .single();
+      if (platform?.code) platformCode = platform.code;
+    }
+
+    const executionCode = (teamPrefix + platformCode).toUpperCase() || 'STORY';
+
+    // Generate story code via DB function - Use Admin Client to bypass RLS on counters
+    const supabaseAdmin = createAdminClient();
+    const { data: storyCode, error: codeError } = await supabaseAdmin.rpc('generate_story_code', {
+      p_org_id: orgId,
+      p_execution_code: executionCode
+    });
+
+    if (codeError) {
+      console.error('Error generating story code via RPC:', codeError);
+      console.error('Context:', { orgId, executionCode });
+    }
+
+    if (!storyCode) {
+      console.warn('Story code generation returned null. OrgId:', orgId, 'ExecCode:', executionCode);
+    }
+
     const storyData = {
       ...input,
       position,
       priority: input.priority || 'medium',
       status: input.status || 'todo',
+      story_code: storyCode,
+      org_id: orgId,
       created_by: user.id,
       updated_by: user.id,
     };
