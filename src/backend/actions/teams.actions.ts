@@ -69,7 +69,7 @@ export async function getDepartmentsAction() {
 // TEAMS
 // ==========================================
 
-export async function createTeamAction(departmentId: string, name: string, leadId?: string) {
+export async function createTeamAction(departmentId: string, name: string, leadId?: string, prefix?: string) {
     const context = await getRbacContext();
 
     // Level 3 required, and must be in their department (if L3)
@@ -83,6 +83,7 @@ export async function createTeamAction(departmentId: string, name: string, leadI
             org_id: context.orgId,
             department_id: departmentId,
             name,
+            prefix: prefix || name.substring(0, 3).toUpperCase(), // Default prefix from name
             lead_id: leadId || null,
         })
         .select()

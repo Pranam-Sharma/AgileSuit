@@ -102,7 +102,9 @@ import type { Story as DBStory } from '@/types/story';
 import { getStoriesBySprintId, createStory, updateStory, moveStory, deleteStory } from '@/backend/actions/stories.actions';
 import { getColumnsBySprintId, initializeDefaultColumns, createColumn, updateColumn, deleteColumn } from '@/backend/actions/columns.actions';
 import { getCapacitySwapRecommendationAction } from '@/backend/actions/ai.actions';
-import { getOrganizationMembersAction } from '@/backend/actions/teams.actions';
+import { getOrganizationMembersAction, getTeamsAction } from '@/backend/actions/teams.actions';
+import { getPlatformsAction, Platform } from '@/backend/actions/platforms.actions';
+import { ExecutionSidebar } from './execution-sidebar';
 
 function UserNav({ user }: { user: any }) {
     const router = useRouter();
@@ -148,6 +150,9 @@ function UserNav({ user }: { user: any }) {
 
 type Story = {
     id: string;
+    story_code?: string;
+    team_id?: string;
+    platform_id?: string;
     title: string;
     description: string;
     storyPoints?: number;
@@ -255,6 +260,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [isAddStoryDialogOpen, setIsAddStoryDialogOpen] = React.useState(false);
     const [selectedColumnId, setSelectedColumnId] = React.useState<string>('');
     const [orgMembers, setOrgMembers] = React.useState<any[]>([]);
+    const [teams, setTeams] = React.useState<any[]>([]);
+    const [platforms, setPlatforms] = React.useState<Platform[]>([]);
+    
     const [newStory, setNewStory] = React.useState<Partial<Story>>({
         title: '',
         description: '',
@@ -262,6 +270,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         storyPoints: 0,
         completedStoryPoints: 0,
         status: 'todo',
+        team_id: '',
+        platform_id: '',
         subtasks: [],
         comments: [],
         activity_log: [],
@@ -476,7 +486,10 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     const [dropPosition, setDropPosition] = React.useState<'before' | 'after' | null>(null);
     const [isSidebarExpanded, setIsSidebarExpanded] = React.useState(true);
     const [showCompletedStories, setShowCompletedStories] = React.useState(true);
-    const [filterPriority, setFilterPriority] = React.useState<'all' | 'high' | 'medium' | 'low'>('all');
+    const [filterPriority, setFilterPriority] = React.useState<string[]>([]);
+    const [filterPlatforms, setFilterPlatforms] = React.useState<string[]>([]);
+    const [filterAssignee, setFilterAssignee] = React.useState<string>('');
+    const [activeQuickView, setActiveQuickView] = React.useState<string>('all');
     const [tagInput, setTagInput] = React.useState('');
     const [showTagInput, setShowTagInput] = React.useState(false);
 
@@ -518,15 +531,21 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
     }, [supabase]);
 
     React.useEffect(() => {
-        const fetchMembers = async () => {
+        const fetchData = async () => {
             try {
-                const members = await getOrganizationMembersAction();
+                const [members, teamsData, platformsData] = await Promise.all([
+                    getOrganizationMembersAction(),
+                    getTeamsAction(),
+                    getPlatformsAction()
+                ]);
                 setOrgMembers(members || []);
+                setTeams(teamsData || []);
+                setPlatforms(platformsData || []);
             } catch (error) {
-                console.error("Failed to fetch org members:", error);
+                console.error("Failed to fetch dashboard data:", error);
             }
         };
-        fetchMembers();
+        fetchData();
     }, []);
 
     // Fetch columns from database
@@ -701,6 +720,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 stories.forEach(dbStory => {
                     const story: Story = {
                         id: dbStory.id,
+                        story_code: dbStory.story_code,
+                        team_id: dbStory.team_id,
+                        platform_id: dbStory.platform_id,
                         title: dbStory.title,
                         description: dbStory.description || '',
                         storyPoints: dbStory.story_points || undefined,
@@ -1105,6 +1127,24 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             return;
         }
 
+        if (!newStory.team_id) {
+            toast({
+                title: 'Required Field',
+                description: 'Please select a team.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
+        if (!newStory.platform_id) {
+            toast({
+                title: 'Required Field',
+                description: 'Please select a platform.',
+                variant: 'destructive'
+            });
+            return;
+        }
+
         // Map status to database format
         const statusMap: Record<string, 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked'> = {
             'todo': 'todo',
@@ -1129,6 +1169,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             column_id: selectedColumnId,
             tags: newStory.tags || undefined,
             due_date: newStory.due_date || undefined,
+            team_id: newStory.team_id || undefined,
+            platform_id: newStory.platform_id || undefined
         });
 
         if (error || !createdStory) {
@@ -1143,13 +1185,16 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
         // Add to local state with real database ID
         const story: Story = {
             id: createdStory.id,
+            story_code: createdStory.story_code || undefined,
+            team_id: createdStory.team_id || undefined,
+            platform_id: createdStory.platform_id || undefined,
             title: createdStory.title,
             description: createdStory.description || '',
             storyPoints: createdStory.story_points || undefined,
             completedStoryPoints: createdStory.completed_story_points || 0,
             assignee: createdStory.assignee || undefined,
-            priority: createdStory.priority as Story['priority'],
-            status: createdStory.status as Story['status'],
+            priority: createdStory.priority as any,
+            status: createdStory.status as any,
             tags: createdStory.tags || undefined,
             due_date: createdStory.due_date || undefined,
             subtasks: [],
@@ -1170,6 +1215,8 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             priority: 'medium',
             storyPoints: 0,
             status: 'todo',
+            team_id: '',
+            platform_id: '',
             subtasks: [],
             comments: [],
             activity_log: []
@@ -1177,7 +1224,7 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
 
         toast({
             title: 'Story saved',
-            description: 'Your story has been saved to the database.'
+            description: `Story ${story.story_code || ''} has been saved.`
         });
     };
 
@@ -1642,9 +1689,69 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             filtered = filtered.filter(s => s.status !== 'done');
         }
 
-        // Filter by priority
-        if (filterPriority !== 'all') {
-            filtered = filtered.filter(s => s.priority === filterPriority);
+        // Filter by platforms
+        if (filterPlatforms.length > 0) {
+            filtered = filtered.filter(s => s.platform_id && filterPlatforms.includes(s.platform_id));
+        }
+
+        // Filter by priority (array)
+        if (filterPriority.length > 0) {
+            filtered = filtered.filter(s => filterPriority.includes(s.priority));
+        }
+
+        // Filter by assignee
+        if (filterAssignee) {
+            if (filterAssignee === 'unassigned') {
+                filtered = filtered.filter(s => !s.assignee);
+            } else {
+                filtered = filtered.filter(s => s.assignee === filterAssignee);
+            }
+        }
+
+        // Quick Views
+        if (activeQuickView !== 'all') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+            if (activeQuickView === 'my-work') {
+                filtered = filtered.filter(s => s.assignee === user?.displayName || s.assignee === user?.email);
+            } else if (activeQuickView === 'due-soon') {
+                filtered = filtered.filter(s => {
+                    if (!s.due_date) return false;
+                    const d = new Date(s.due_date);
+                    return d >= today && d <= nextWeek;
+                });
+            } else if (activeQuickView === 'unassigned') {
+                filtered = filtered.filter(s => !s.assignee);
+            } else if (activeQuickView === 'high-priority') {
+                filtered = filtered.filter(s => s.priority === 'high' || s.priority === 'critical');
+            } else if (activeQuickView === 'recently-updated') {
+                filtered = filtered.filter(s => {
+                    if (!s.activity_log || s.activity_log.length === 0) return false;
+                    const lastUpdated = new Date(s.activity_log[0].created_at);
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    return lastUpdated >= yesterday;
+                });
+            } else if (activeQuickView === 'tech-debt') {
+                filtered = filtered.filter(s => s.tags?.some(t => t.toLowerCase().includes('debt')));
+            } else if (activeQuickView === 'carry-forward') {
+                filtered = filtered.filter(s => s.tags?.some(t => t.toLowerCase().includes('carry')));
+            } else if (activeQuickView === 'unestimated') {
+                filtered = filtered.filter(s => !s.storyPoints);
+            } else if (activeQuickView === 'overdue') {
+                filtered = filtered.filter(s => {
+                    if (!s.due_date) return false;
+                    const d = new Date(s.due_date);
+                    d.setHours(0, 0, 0, 0);
+                    return d < today;
+                });
+            } else if (activeQuickView === 'blocked') {
+                filtered = filtered.filter(s => s.status === 'blocked');
+            } else if (activeQuickView === 'dependency-heavy') {
+                filtered = filtered.filter(s => s.tags?.some(t => t.toLowerCase().includes('depend')));
+            }
         }
 
         // Sort stories
@@ -1659,6 +1766,12 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 }
                 if (sortBy === 'assignee') {
                     return (a.assignee || '').localeCompare(b.assignee || '');
+                }
+                if (sortBy === 'newest') {
+                    // ID is usually sequential/uuid, assuming larger/newer if uuid v7, or just keep order.
+                    // If no created_at, fallback to title or something for newest.
+                    // We will just do a simple string comparison on ID for now.
+                    return (b.id || '').localeCompare(a.id || '');
                 }
                 return 0;
             });
@@ -1811,204 +1924,110 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
             <div className={cn("flex flex-1 overflow-hidden", isEmbedded && "flex-col")}>
                 {/* Sidebar */}
                 {!isEmbedded && (
-                    <aside className={cn(
-                        "border-r border-[#3a302a]/10 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-950/80 backdrop-blur-md transition-all duration-300 flex flex-col",
-                        isSidebarExpanded ? "w-64" : "w-16"
-                    )}>
-                    {/* Sidebar Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-[#3a302a]/10 dark:border-zinc-800/50">
-                        {isSidebarExpanded && (
-                            <h2 className="text-sm font-eb-garamond font-bold text-[#3a302a] dark:text-white uppercase tracking-wider">Customization</h2>
-                        )}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-                            className="h-8 w-8 ml-auto"
-                        >
-                            {isSidebarExpanded ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
-                        </Button>
-                    </div>
-
-                    {/* Sidebar Content */}
-                    <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                        {/* Filter Section */}
-                        <div className={cn("space-y-1", !isSidebarExpanded && "flex flex-col items-center")}>
-                            <div className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-lg",
-                                !isSidebarExpanded && "justify-center"
-                            )}>
-                                <Filter className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                                {isSidebarExpanded && <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase">Filter</span>}
-                            </div>
-
-                            {/* Show/Hide Completed */}
-                            <Button
-                                variant="ghost"
-                                size={isSidebarExpanded ? "sm" : "icon"}
-                                onClick={() => setShowCompletedStories(!showCompletedStories)}
-                                className={cn(
-                                    "w-full justify-start",
-                                    !isSidebarExpanded && "justify-center",
-                                    showCompletedStories && "bg-primary/10 text-primary hover:bg-primary/20"
-                                )}
-                                title={isSidebarExpanded ? "" : (showCompletedStories ? "Hide Completed" : "Show Completed")}
-                            >
-                                {showCompletedStories ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                {isSidebarExpanded && <span className="ml-2 text-sm">{showCompletedStories ? 'Hide' : 'Show'} Completed</span>}
-                            </Button>
-
-                            {/* Priority Filters */}
-                            {isSidebarExpanded && (
-                                <div className="pl-4 space-y-1">
-                                    {['all', 'high', 'medium', 'low'].map((priority) => (
-                                        <Button
-                                            key={priority}
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setFilterPriority(priority as any)}
-                                            className={cn(
-                                                "w-full justify-start text-xs",
-                                                filterPriority === priority && "bg-primary/10 text-primary"
-                                            )}
-                                        >
-                                            <Tag className="h-3 w-3 mr-2" />
-                                            {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
-                                        </Button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Divider */}
-                        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2" />
-
-                        {/* Sort Section */}
-                        <div className={cn("space-y-1", !isSidebarExpanded && "flex flex-col items-center")}>
-                            <div className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-lg",
-                                !isSidebarExpanded && "justify-center"
-                            )}>
-                                <SortAsc className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                                {isSidebarExpanded && <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase">Sort</span>}
-                            </div>
-
-                            {isSidebarExpanded ? (
-                                <div className="pl-4 space-y-1">
-                                    {[
-                                        { value: 'none', label: 'None', icon: X },
-                                        { value: 'priority', label: 'By Priority', icon: Tag },
-                                        { value: 'points', label: 'By Points', icon: CalendarIcon },
-                                        { value: 'assignee', label: 'By Assignee', icon: Users },
-                                        { value: 'newest', label: 'By Newest', icon: History }
-                                    ].map((sort) => (
-                                        <Button
-                                            key={sort.value}
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setSortBy(sort.value as any)}
-                                            className={cn(
-                                                "w-full justify-start text-xs",
-                                                sortBy === sort.value && "bg-primary/10 text-primary"
-                                            )}
-                                        >
-                                            <sort.icon className="h-3 w-3 mr-2" />
-                                            {sort.label}
-                                        </Button>
-                                    ))}
-                                </div>
-                            ) : (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => {
-                                        const sortOptions: Array<'none' | 'priority' | 'points' | 'assignee' | 'newest'> = ['none', 'priority', 'points', 'assignee', 'newest'];
-                                        const currentIndex = sortOptions.indexOf(sortBy);
-                                        const nextIndex = (currentIndex + 1) % sortOptions.length;
-                                        setSortBy(sortOptions[nextIndex]);
-                                    }}
-                                    className={cn(sortBy !== 'none' && "bg-primary/10 text-primary")}
-                                    title="Toggle Sort"
-                                >
-                                    <SortAsc className="h-4 w-4" />
-                                </Button>
-                            )}
-                        </div>
-
-                        {/* Divider */}
-                        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2" />
-
-                        {/* Actions Section */}
-                        <div className={cn("space-y-1", !isSidebarExpanded && "flex flex-col items-center")}>
-                            <div className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-lg",
-                                !isSidebarExpanded && "justify-center"
-                            )}>
-                                <Settings className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-                                {isSidebarExpanded && <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase">Actions</span>}
-                            </div>
-
-                            {/* Export Data */}
-                            <Button
-                                variant="ghost"
-                                size={isSidebarExpanded ? "sm" : "icon"}
-                                onClick={handleExportData}
-                                className={cn(
-                                    "w-full justify-start",
-                                    !isSidebarExpanded && "justify-center"
-                                )}
-                                title={isSidebarExpanded ? "" : "Export Data"}
-                            >
-                                <Download className="h-4 w-4" />
-                                {isSidebarExpanded && <span className="ml-2 text-sm">Export Data</span>}
-                            </Button>
-
-                            {/* Refresh Board */}
-                            <Button
-                                variant="ghost"
-                                size={isSidebarExpanded ? "sm" : "icon"}
-                                onClick={() => setColumns(defaultColumns)}
-                                className={cn(
-                                    "w-full justify-start",
-                                    !isSidebarExpanded && "justify-center"
-                                )}
-                                title={isSidebarExpanded ? "" : "Refresh Board"}
-                            >
-                                <RefreshCw className="h-4 w-4" />
-                                {isSidebarExpanded && <span className="ml-2 text-sm">Refresh Board</span>}
-                            </Button>
-
-                            {/* Archive/Clear */}
-                            <Button
-                                variant="ghost"
-                                size={isSidebarExpanded ? "sm" : "icon"}
-                                onClick={handleClearBoard}
-                                className={cn(
-                                    "w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20",
-                                    !isSidebarExpanded && "justify-center"
-                                )}
-                                title={isSidebarExpanded ? "" : "Clear Board"}
-                            >
-                                <Archive className="h-4 w-4" />
-                                {isSidebarExpanded && <span className="ml-2 text-sm">Clear Board</span>}
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Sidebar Footer */}
-                    {isSidebarExpanded && (
-                        <div className="p-4 border-t border-zinc-200/50 dark:border-zinc-800/50">
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                <Palette className="h-3 w-3" />
-                                <span>Customize your board</span>
-                            </div>
-                        </div>
-                    )}
-                </aside>
-            )}
+                    <ExecutionSidebar
+                        columns={columns}
+                        teams={teams}
+                        platforms={platforms}
+                        orgMembers={orgMembers}
+                        user={user}
+                        isSidebarExpanded={isSidebarExpanded}
+                        setIsSidebarExpanded={setIsSidebarExpanded}
+                        showCompletedStories={showCompletedStories}
+                        setShowCompletedStories={setShowCompletedStories}
+                        filterPriority={filterPriority}
+                        setFilterPriority={setFilterPriority}
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
+                        filterPlatforms={filterPlatforms}
+                        setFilterPlatforms={setFilterPlatforms}
+                        filterAssignee={filterAssignee}
+                        setFilterAssignee={setFilterAssignee}
+                        activeQuickView={activeQuickView}
+                        setActiveQuickView={setActiveQuickView}
+                        onExportData={handleExportData}
+                        onRefreshBoard={() => {
+                            router.refresh();
+                            fetchStories();
+                        }}
+                    />
+                )}
 
                 {/* Kanban Board */}
                 <main className={cn("flex-1 overflow-x-auto p-4 lg:p-6", isEmbedded && "p-0")}>
+                    
+                    {/* Active Filter Chips */}
+                    {(filterPlatforms.length > 0 || filterPriority.length > 0 || filterAssignee !== '' || activeQuickView !== 'all') && (
+                        <div className="flex flex-wrap items-center gap-1.5 mb-5 pb-3 border-b border-[#3a302a]/[0.03]">
+                            <div className="flex items-center gap-1.5 mr-2">
+                                <span className="h-1.5 w-1.5 rounded-full bg-[#c2652a] animate-pulse" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-[#3a302a]/60">Active Filters</span>
+                            </div>
+                            
+                            {activeQuickView !== 'all' && (
+                                <Badge variant="outline" className="bg-white/60 backdrop-blur-sm border-[#c2652a]/20 text-[#c2652a] flex items-center gap-1 py-0.5 px-2 rounded-full text-[10px] shadow-sm">
+                                    <span className="opacity-60 font-normal mr-0.5">View:</span>
+                                    {activeQuickView.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                                    <button onClick={() => setActiveQuickView('all')} className="ml-1 hover:bg-[#c2652a]/10 rounded-full p-0.5 transition-colors">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+
+                            {filterPlatforms.map(platformId => {
+                                const platformName = platforms.find(p => p.id === platformId)?.name || 'Platform';
+                                return (
+                                    <Badge key={platformId} variant="outline" className="bg-white/60 backdrop-blur-sm border-[#3a302a]/10 text-[#3a302a]/80 flex items-center gap-1 py-0.5 px-2 rounded-full text-[10px] shadow-sm">
+                                        <span className="opacity-60 font-normal mr-0.5">Platform:</span>
+                                        {platformName}
+                                        <button onClick={() => setFilterPlatforms(filterPlatforms.filter(p => p !== platformId))} className="ml-1 hover:bg-[#3a302a]/5 rounded-full p-0.5 transition-colors">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                );
+                            })}
+
+                            {filterPriority.map(p => {
+                                const colors: Record<string, string> = { critical: 'bg-red-500', high: 'bg-orange-500', medium: 'bg-amber-500', low: 'bg-emerald-500' };
+                                return (
+                                    <Badge key={p} variant="outline" className="bg-white/60 backdrop-blur-sm border-[#3a302a]/10 text-[#3a302a]/80 flex items-center gap-1 py-0.5 px-2 rounded-full text-[10px] shadow-sm">
+                                        <div className={cn("h-1.5 w-1.5 rounded-full mr-0.5", colors[p] || 'bg-gray-500')} />
+                                        <span className="opacity-60 font-normal mr-0.5">Priority:</span>
+                                        {p.charAt(0).toUpperCase() + p.slice(1)}
+                                        <button onClick={() => setFilterPriority(filterPriority.filter(x => x !== p))} className="ml-1 hover:bg-[#3a302a]/5 rounded-full p-0.5 transition-colors">
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    </Badge>
+                                );
+                            })}
+
+                            {filterAssignee !== '' && (
+                                <Badge variant="outline" className="bg-white/60 backdrop-blur-sm border-[#3a302a]/10 text-[#3a302a]/80 flex items-center gap-1 py-0.5 px-2 rounded-full text-[10px] shadow-sm">
+                                    <span className="opacity-60 font-normal mr-0.5">Assignee:</span>
+                                    {filterAssignee === 'unassigned' ? 'Unassigned' : filterAssignee}
+                                    <button onClick={() => setFilterAssignee('')} className="ml-1 hover:bg-[#3a302a]/5 rounded-full p-0.5 transition-colors">
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                            )}
+
+                            <div className="flex-1" />
+
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2.5 text-[10px] text-[#3a302a]/50 hover:text-[#3a302a] hover:bg-[#3a302a]/5 rounded-full"
+                                onClick={() => {
+                                    setFilterPlatforms([]);
+                                    setFilterPriority([]);
+                                    setFilterAssignee('');
+                                    setActiveQuickView('all');
+                                }}
+                            >
+                                Reset All Filters
+                            </Button>
+                        </div>
+                    )}
+
                     {/* Warning Banner for Completed/Archived Sprints */}
                     {(sprint.status === 'completed' || sprint.status === 'archived') && (
                         <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-lg">
@@ -2173,9 +2192,24 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                                                         <CardContent className="p-3 pl-7 space-y-2">
                                                             {/* Top Section: Priority and Menu */}
                                                             <div className="flex items-start justify-between gap-2">
-                                                                <Badge variant="outline" className={cn("text-xs font-medium", getPriorityColor(story.priority))}>
-                                                                    {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
-                                                                </Badge>
+                                                                <div className="flex items-center gap-2">
+                                                                    {story.story_code && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                navigator.clipboard.writeText(story.story_code || '');
+                                                                                toast({ title: 'Copied to clipboard', description: story.story_code });
+                                                                            }}
+                                                                            className="text-[10px] font-black text-[#c2652a] hover:underline flex items-center gap-1 bg-[#c2652a]/5 px-1.5 py-0.5 rounded"
+                                                                        >
+                                                                            {story.story_code}
+                                                                            <Copy className="h-2.5 w-2.5" />
+                                                                        </button>
+                                                                    )}
+                                                                    <Badge variant="outline" className={cn("text-[10px] font-medium h-5", getPriorityColor(story.priority))}>
+                                                                        {story.priority.charAt(0).toUpperCase() + story.priority.slice(1)}
+                                                                    </Badge>
+                                                                </div>
                                                                 <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
                                                                         <Button
@@ -2369,6 +2403,37 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
+                                <label className="text-sm font-medium">Team *</label>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                    value={newStory.team_id || ''}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, team_id: e.target.value }))}
+                                    required
+                                >
+                                    <option value="">Select Team</option>
+                                    {teams.map(team => (
+                                        <option key={team.id} value={team.id}>{team.name} ({team.prefix})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Platform *</label>
+                                <select
+                                    className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                                    value={newStory.platform_id || ''}
+                                    onChange={(e) => setNewStory(prev => ({ ...prev, platform_id: e.target.value }))}
+                                    required
+                                >
+                                    <option value="">Select Platform</option>
+                                    {platforms.map(platform => (
+                                        <option key={platform.id} value={platform.id}>{platform.name} ({platform.code})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Priority</label>
                                 <select
                                     className="w-full h-10 px-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
@@ -2467,9 +2532,16 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                     {/* Top Control Bar */}
                     <div className="flex items-center justify-between p-6 pb-4 border-b border-[#3a302a]/5 sticky top-0 bg-[#faf5ee] z-10">
                         <div className="flex items-center gap-4">
-                            <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3a302a]/40">
-                                SAHARA-{newStory.id?.slice(-4).toUpperCase() || 'NEW'}
-                            </span>
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(editingStory?.story_code || '');
+                                    toast({ title: 'Copied to clipboard', description: editingStory?.story_code });
+                                }}
+                                className="text-[12px] font-black uppercase tracking-[0.2em] text-[#c2652a] hover:underline flex items-center gap-2"
+                            >
+                                {editingStory?.story_code || 'NEW STORY'}
+                                <Copy className="h-3 w-3" />
+                            </button>
                         </div>
                         <div className="flex items-center gap-3">
                             <Button 

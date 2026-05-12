@@ -816,9 +816,16 @@ export function StoryDetailClient({ story, sprintId, sprintInfo }: { story: any,
                             <div className="bg-[#3a302a]/10 p-2 rounded-lg">
                                 <Brain className="h-4 w-4 text-[#3a302a]" />
                             </div>
-                            <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#3a302a]/40">
-                                SAHARA-{newStory.id?.slice(-4).toUpperCase() || 'NEW'}
-                            </span>
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(newStory.story_code || '');
+                                    toast({ title: 'Copied to clipboard', description: newStory.story_code });
+                                }}
+                                className="text-[12px] font-black uppercase tracking-[0.2em] text-[#c2652a] hover:underline flex items-center gap-2"
+                            >
+                                {newStory.story_code || 'NEW STORY'}
+                                <Copy className="h-3 w-3" />
+                            </button>
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1 bg-[#3a302a]/5 p-1 rounded-xl">

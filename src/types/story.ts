@@ -32,6 +32,10 @@ export interface Story {
     text: string;
     severity: 'low' | 'medium' | 'high';
   }[] | null;
+  story_code: string | null;
+  team_id: string | null;
+  platform_id: string | null;
+  org_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_by: string | null;
@@ -53,6 +57,8 @@ export interface CreateStoryInput {
   due_date?: string;
   acceptance_criteria?: string;
   identified_risks?: any[];
+  team_id?: string;
+  platform_id?: string;
 }
 
 export interface UpdateStoryInput {
@@ -72,6 +78,8 @@ export interface UpdateStoryInput {
   comments?: any[];
   activity_log?: any[];
   identified_risks?: any[];
+  team_id?: string;
+  platform_id?: string;
 }
 
 export interface MoveStoryInput {

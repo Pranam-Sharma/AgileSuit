@@ -12,7 +12,7 @@ gsap.registerPlugin(useGSAP);
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Building2, Users, UserCog, Plus, ArrowRight, ShieldAlert, Search, Network, Shield, ChevronUp, Pencil, Filter, List, LayoutGrid, ShieldCheck, User, Zap, Lock, Check } from 'lucide-react';
+import { AlertCircle, Building2, Users, UserCog, Plus, ArrowRight, ShieldAlert, Search, Network, Shield, ChevronUp, Pencil, Filter, List, LayoutGrid, ShieldCheck, User, Zap, Lock, Check, Server } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Sidebar } from '@/modules/dashboard/sidebar';
 import { UserNav } from '@/modules/dashboard/user-nav';
@@ -22,6 +22,8 @@ import { CreateDepartmentDialog } from './create-department-dialog';
 import { CreateTeamDialog } from './create-team-dialog';
 import { ManageUserDialog } from './manage-user-dialog';
 import { AssignTeamMemberDialog } from './assign-team-member-dialog';
+
+import { PlatformManagement } from './platform-management';
 
 export function TeamClient() {
     const { user } = useUser();
@@ -41,7 +43,7 @@ export function TeamClient() {
     const [refreshKey, setRefreshKey] = React.useState(0);
     const triggerRefresh = () => setRefreshKey(prev => prev + 1);
 
-    const [activeTab, setActiveTab] = React.useState<'map' | 'personnel' | 'authority'>('map');
+    const [activeTab, setActiveTab] = React.useState<'map' | 'personnel' | 'authority' | 'infrastructure'>('map');
 
     // Initial Load
     React.useEffect(() => {
@@ -200,6 +202,18 @@ export function TeamClient() {
                                 <Shield className="h-4 w-4" />
                                 Authority Control
                             </button>
+                            {initialRbacContext.roleLevel === 4 && (
+                                <button
+                                    onClick={() => setActiveTab('infrastructure')}
+                                    className={cn(
+                                        "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                                        activeTab === 'infrastructure' ? "bg-slate-900 text-white shadow-md" : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                                    )}
+                                >
+                                    <Server className="h-4 w-4" />
+                                    Infrastructure
+                                </button>
+                            )}
                         </div>
 
                         {/* Tab Contents */}
@@ -653,6 +667,12 @@ export function TeamClient() {
                                             </table>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'infrastructure' && initialRbacContext.roleLevel === 4 && (
+                                <div className="space-y-8 pt-2 gsap-stagger-item animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <PlatformManagement />
                                 </div>
                             )}
                         </div>
