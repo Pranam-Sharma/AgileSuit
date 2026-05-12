@@ -37,6 +37,7 @@ export function CreateTeamDialog({ trigger, onSuccess, departmentId, departmentN
         defaultValues: {
             name: '',
             leadId: '',
+            prefix: '',
         },
     });
 
