@@ -720,9 +720,9 @@ export function SprintBoardClient({ sprint: initialSprint, sprintId, isEmbedded 
                 stories.forEach(dbStory => {
                     const story: Story = {
                         id: dbStory.id,
-                        story_code: dbStory.story_code,
-                        team_id: dbStory.team_id,
-                        platform_id: dbStory.platform_id,
+                        story_code: dbStory.story_code ?? undefined,
+                        team_id: dbStory.team_id ?? undefined,
+                        platform_id: dbStory.platform_id ?? undefined,
                         title: dbStory.title,
                         description: dbStory.description || '',
                         storyPoints: dbStory.story_points || undefined,
